@@ -86,66 +86,86 @@ def summarize(prompt=None, report_type="comprehensive", timeframe_days=None):
     if prompt is None:
         if report_type == "quick":
             prompt = """
-Provide a quick 1-2 sentence summary of my spending, highlighting the top category and total amount.
-"""
+            Provide a quick 1-2 sentence summary of my spending, highlighting the top category and total amount.
+            Keep it brief - no bullet points, no detailed breakdowns, just a concise overview.
+            """
         elif report_type == "comprehensive":
             prompt = f"""
-Analyze my expense data and provide:
+            Analyze my expense data and provide:
 
-1. **Overview**: Total spent and timeframe summary
-2. **Category Breakdown**: List each category with totals, ranked by spending
-3. **Spending Patterns**: Identify trends, frequent purchases, or notable expenses
-4. **Insights**: 2-3 key observations about my spending habits
-5. **Recommendations**: 1-2 actionable suggestions for better financial management
+            1. **Overview**: Total spent and timeframe summary
+            2. **Category Breakdown**: List each category with totals, ranked by spending
+            3. **Spending Patterns**: Identify trends, frequent purchases, or notable expenses
+            4. **Insights**: 2-3 key observations about my spending habits
+            5. **Recommendations**: 1-2 actionable suggestions for better financial management
 
-Context: {time_context}
-Total Expenses: {len(entries)} transactions
-"""
+            Context: {time_context}
+            Total Expenses: {len(entries)} transactions
+            """
         elif report_type == "insights":
             prompt = f"""
-Focus on providing actionable insights about my spending patterns:
+            Focus on providing actionable insights about my spending patterns:
 
-1. What are my biggest spending categories and why might that be concerning or positive?
-2. Are there any unusual or standout expenses I should be aware of?
-3. What spending trends do you notice? (frequency, amounts, timing)
-4. What are 2-3 specific, actionable recommendations for optimizing my spending?
+            1. What are my biggest spending categories and why might that be concerning or positive?
+            2. Are there any unusual or standout expenses I should be aware of?
+            3. What spending trends do you notice? (frequency, amounts, timing)
+            4. What are 2-3 specific, actionable recommendations for optimizing my spending?
 
-Be specific and practical in your analysis.
-"""
+            Be specific and practical in your analysis.
+            """
         elif report_type == "budget_analysis":
             avg_daily = total_spent / max(1, len(set(datetime.fromisoformat(e[3]).date() for e in entries if e[3])))
             prompt = f"""
-Perform a budget-focused analysis:
+            Perform a budget-focused analysis:
 
-1. **Daily Average**: ${avg_daily:.2f} per day
-2. **Category Distribution**: What percentage of spending goes to each category?
-3. **Essential vs Discretionary**: Categorize expenses as needs vs wants
-4. **Budget Recommendations**: Suggest realistic spending limits for each category
-5. **Savings Opportunities**: Identify specific areas where I could reduce spending
+            1. **Daily Average**: ${avg_daily:.2f} per day
+            2. **Category Distribution**: What percentage of spending goes to each category?
+            3. **Essential vs Discretionary**: Categorize expenses as needs vs wants
+            4. **Budget Recommendations**: Suggest realistic spending limits for each category
+            5. **Savings Opportunities**: Identify specific areas where I could reduce spending
 
-Focus on practical budgeting advice and specific dollar amounts.
-"""
+            Focus on practical budgeting advice and specific dollar amounts.
+            """
 
-    # Build the full prompt with rich context
-    full_prompt = f"""
-You are a personal finance advisor analyzing expense data. Be specific, actionable, and insightful.
+    # Build the full prompt with appropriate level of detail based on report type
+    if report_type == "quick":
+        # Minimal context for quick summaries
+        top_category = max(category_totals.items(), key=lambda x: x[1])
+        full_prompt = f"""
+        You are a personal finance advisor. Provide a brief, concise summary.
 
-EXPENSE DATA:
-{time_context}
-Total Spent: ${total_spent:.2f}
-Number of Transactions: {len(entries)}
+        EXPENSE SUMMARY:
+        Total Spent: ${total_spent:.2f}
+        Top Category: {top_category[0]} (${top_category[1]:.2f})
+        Number of Transactions: {len(entries)}
+        {time_context}
 
-CATEGORY TOTALS:
-{category_breakdown}
+        ANALYSIS REQUEST:
+        {prompt}
 
-DETAILED TRANSACTIONS:
-{chr(10).join(formatted_entries[:20])}{'...(more transactions)' if len(formatted_entries) > 20 else ''}
+        Respond in 3-4 sentences, up to a paragraph. No bullet points or detailed breakdowns.
+        """
+    else:
+        # Full context for detailed reports
+        full_prompt = f"""
+        You are a personal finance advisor analyzing expense data. Be specific, actionable, and insightful.
 
-ANALYSIS REQUEST:
-{prompt}
+        EXPENSE DATA:
+        {time_context}
+        Total Spent: ${total_spent:.2f}
+        Number of Transactions: {len(entries)}
 
-Please format your response clearly with headers and bullet points where appropriate. Be concise but thorough.
-"""
+        CATEGORY TOTALS:
+        {category_breakdown}
+
+        DETAILED TRANSACTIONS:
+        {chr(10).join(formatted_entries[:20])}{'...(more transactions)' if len(formatted_entries) > 20 else ''}
+
+        ANALYSIS REQUEST:
+        {prompt}
+
+        Please format your response clearly with headers and bullet points where appropriate. Be concise but thorough.
+        """
     
     try:
         response = query_llm(full_prompt)

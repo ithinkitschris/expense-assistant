@@ -16,14 +16,11 @@ def test_enhanced_parsing():
         "$15 Uber, Ride",
         "$12.38 Chipotle",
         "$8 Amazon, Method Body Soap",
-        "$58 Amazon, MyProtein Powder",
         "$83 Adidas, Shoes",
         "$28 Movie Ticket, In The Mood For Love",
 
         # Complex descriptions
-        "$528 Flight Ticket to Amsterdam, $238 Hotel in Amsterdam, $340 Hotel in Frankfurt, $500 Hotel in Paris",
-        "$830 Car Rental",
-        "$150 Leica Repair",
+        "I finally made a decision to purchase the 2025 Porsche 911 GTS for $193,000 last month and I am so glad I did it. The flight to the dealership cost me $8,200 on Delta First Class, and the accommodations for that trip totaled $9,899 for 4 nights at the Waldorf Astoria.",
 
     ]
     
