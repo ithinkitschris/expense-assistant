@@ -84,7 +84,7 @@ def format_expense_display(expense):
     amount_str = f"${amount:.2f}" if amount else "No amount"
     try:
         dt = datetime.fromisoformat(timestamp)
-        date_str = dt.strftime("%Y-%m-%d %H:%M")
+        date_str = dt.strftime("%d %B %Y")
     except:
         date_str = timestamp[:19] if timestamp else "No date"
     
@@ -149,6 +149,20 @@ def backup_expense(expense_id: int):
         return backup_id
     return None
 
+def get_expense_by_position(position: int, expenses_list: Optional[List] = None):
+    """Get expense by its display position (1-based)"""
+    if expenses_list is None:
+        # Get all expenses in default order
+        conn = sqlite3.connect('expenses.db')
+        c = conn.cursor()
+        c.execute("SELECT id, amount, category, description, timestamp FROM expenses ORDER BY timestamp DESC")
+        expenses_list = c.fetchall()
+        conn.close()
+    
+    if 1 <= position <= len(expenses_list):
+        return expenses_list[position - 1][0]  # Return the expense ID
+    return None
+
 @app.command()
 def add(text: str):
     add_expense(text)
@@ -156,7 +170,7 @@ def add(text: str):
 @app.command()
 def summary(
     days: Optional[int] = typer.Option(None, help="Number of days to look back (default: all time)")
-):
+    ):
     """Generate expense summary with interactive menu selection
     
     Examples:
@@ -263,8 +277,6 @@ def summary(
     else:
         # Treat as custom prompt
         summarize(prompt=subcommand, timeframe_days=days)
-
-
 
 @app.command()
 def clear():
@@ -498,25 +510,84 @@ def list():
         # Format timestamp for display
         try:
             dt = datetime.fromisoformat(timestamp)
-            date_str = dt.strftime("%d-%m-%Y")
+            date_str = dt.strftime("%d %b %Y")
         except:
             date_str = timestamp[:10] if timestamp else "No date"
-        print(f"{i:2d}. {amount_str:>8} | {category_name:12} | {description:25} | {date_str} (ID: {expense_id})")
+        print(f"{i:2d}. {amount_str:>8} | {category_name:12} | {description:25} | {date_str}")
     print("-" * 80)
     print(f"💰 Total: ${total_amount:.2f}")
     print("-" * 80)
 
-@app.command()
-def edit(expense_id: int):
-    """Edit an existing expense entry (interactive mode)"""
-    print("⚠️  The basic edit command is deprecated. Use edit-interactive for a better experience.")
-    print("🔄 Redirecting to interactive edit mode...")
-    print("💡 Tip: You can also use 'expense edit-interactive <id>' directly for the same experience.")
-    edit_interactive(expense_id)
 
 @app.command()
-def edit_interactive(expense_id: int):
-    """Interactive editing mode for comprehensive expense modification"""
+def edit(
+    position: Optional[int] = typer.Argument(None, help="Position number (1, 2, 3, etc.) of expense to edit")
+):
+    """Interactive editing mode - specify position number (1, 2, 3, etc.)"""
+    
+    expense_id = None
+    
+    # Parse position
+    if position:
+        expense_id = get_expense_by_position(position)
+        if not expense_id:
+            print(f"❌ No expense found at position {position}")
+            return
+        print(f"🎯 Found expense at position {position} (ID: {expense_id})")
+    
+    # If no position provided, show list for selection
+    if expense_id is None:
+        print("\n📋 Select an expense to edit:")
+        print("=" * 90)
+        
+        # Get all expenses
+        conn = sqlite3.connect('expenses.db')
+        c = conn.cursor()
+        c.execute("SELECT id, amount, category, description, timestamp FROM expenses ORDER BY timestamp DESC")
+        expenses = c.fetchall()
+        conn.close()
+        
+        if not expenses:
+            print("❌ No expenses found to edit.")
+            return
+        
+        # Show expenses with selection numbers
+        for i, (exp_id, amount, category, description, timestamp) in enumerate(expenses, 1):
+            amount_str = f"${amount:.2f}" if amount else "No amount"
+            try:
+                dt = datetime.fromisoformat(timestamp)
+                date_str = dt.strftime("%d %B %Y")
+            except:
+                date_str = timestamp[:10] if timestamp else "No date"
+            print(f"{i:2d}. {amount_str:>8} | {category:12} | {description:25} | {date_str}")
+        
+        print("-" * 90)
+        print("💡 Tip: You can also use position shortcuts like 'expense edit 1' or 'expense edit 2'")
+        print("-" * 90)
+        
+        # Get user selection
+        while True:
+            try:
+                choice = input(f"Select expense to edit (1-{len(expenses)}) or 'q' to quit: ").strip().lower()
+                if choice == 'q':
+                    print("👋 Edit cancelled.")
+                    return
+                
+                selection = int(choice) - 1
+                if 0 <= selection < len(expenses):
+                    expense_id = expenses[selection][0]  # Get the actual expense ID
+                    break
+                else:
+                    print(f"❌ Please enter a number between 1 and {len(expenses)}.")
+            except ValueError:
+                print("❌ Please enter a valid number or 'q' to quit.")
+    
+    # Now proceed with the existing edit logic
+    # At this point expense_id should never be None, but add safety check
+    if expense_id is None:
+        print("❌ No expense ID provided.")
+        return
+        
     expense = get_expense_by_id(expense_id)
     if not expense:
         print(f"❌ Expense with ID {expense_id} not found.")
@@ -568,7 +639,7 @@ def edit_interactive(expense_id: int):
     # Edit date
     try:
         dt = datetime.fromisoformat(current_timestamp)
-        date_display = dt.strftime("%Y-%m-%d %H:%M")
+        date_display = dt.strftime("%d %B %Y")
     except:
         date_display = current_timestamp
     
@@ -578,7 +649,7 @@ def edit_interactive(expense_id: int):
         try:
             current_timestamp = validate_date(new_date)
             dt = datetime.fromisoformat(current_timestamp)
-            print(f"✅ Date updated to: {dt.strftime('%Y-%m-%d %H:%M')}")
+            print(f"✅ Date updated to: {dt.strftime('%d %B %Y')}")
         except ValueError as e:
             print(f"❌ {e}")
             return
@@ -612,7 +683,7 @@ def edit_multiple(
     search: str = typer.Option("", help="Search term to filter expenses"),
     category: str = typer.Option("", help="Filter by category"),
     days: Optional[int] = typer.Option(None, help="Filter by days back")
-):
+    ):
     """Edit multiple expenses at once based on filters"""
     
     # Find matching expenses
@@ -678,7 +749,7 @@ def search(
     category: str = typer.Option("", help="Filter by category"),
     days: Optional[int] = typer.Option(None, help="Filter by days back"),
     limit: int = typer.Option(20, help="Maximum number of results")
-):
+    ):
     """Search and filter expenses"""
     
     expenses = search_expenses(term, category, days)
@@ -698,8 +769,15 @@ def search(
     print("-" * 90)
 
 @app.command()
-def undo(expense_id: int):
-    """Undo the last edit made to an expense"""
+def undo(position: int):
+    """Undo the last edit made to an expense by position (1, 2, 3, etc.)"""
+    
+    expense_id = get_expense_by_position(position)
+    if not expense_id:
+        print(f"❌ No expense found at position {position}")
+        return
+    print(f"🎯 Found expense at position {position} (ID: {expense_id})")
+    
     conn = sqlite3.connect('expenses.db')
     c = conn.cursor()
     
@@ -745,8 +823,15 @@ def undo(expense_id: int):
         print("❌ Restore cancelled.")
 
 @app.command()
-def delete(expense_id: int):
-    """Delete a specific expense entry"""
+def delete(position: int):
+    """Delete a specific expense entry by position (1, 2, 3, etc.)"""
+    
+    expense_id = get_expense_by_position(position)
+    if not expense_id:
+        print(f"❌ No expense found at position {position}")
+        return
+    print(f"🎯 Found expense at position {position} (ID: {expense_id})")
+    
     conn = sqlite3.connect('expenses.db')
     c = conn.cursor()
     
