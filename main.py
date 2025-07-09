@@ -660,9 +660,11 @@ def edit(
     new_expense = (exp_id, current_amount, current_category, current_description, current_timestamp)
     print(format_expense_display(new_expense))
     
-    confirm = input("\n💾 Save changes? (y/n): ").lower()
-    if confirm in ['y', 'yes']:
-        # Apply changes
+    confirm = input("\n💾 Save changes? (Press Enter to save, 'n' to cancel): ").lower().strip()
+    if confirm == 'n':
+        print("❌ Changes cancelled.")
+    else:
+        # Apply changes (Enter or any other key saves)
         conn = sqlite3.connect('expenses.db')
         c = conn.cursor()
         c.execute('''
@@ -673,8 +675,6 @@ def edit(
         conn.commit()
         conn.close()
         print("✅ Changes saved successfully!")
-    else:
-        print("❌ Changes cancelled.")
 
 @app.command()
 def edit_multiple(
