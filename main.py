@@ -36,8 +36,8 @@ def validate_amount(amount_str: str) -> float:
 
 def validate_category(category: str) -> str:
     """Validate category against allowed values"""
-    valid_categories = ['amazon', 'uber', 'groceries', 'entertainment', 'fashion', 
-                       'travel', 'food', 'rent', 'insurance', 'subscriptions', 'other']
+    valid_categories = ['amazon', 'transportation', 'groceries', 'entertainment', 'fashion', 
+                       'travel', 'food', 'monthly', 'other']
     category = category.lower().strip()
     if category not in valid_categories:
         print(f"⚠️  Category '{category}' not in standard list. Valid categories:")
@@ -162,6 +162,55 @@ def get_expense_by_position(position: int, expenses_list: Optional[List] = None)
     if 1 <= position <= len(expenses_list):
         return expenses_list[position - 1][0]  # Return the expense ID
     return None
+
+def parse_position_input(input_str: str, max_position: int) -> List[int]:
+    """Parse position input like '2', '2,5,10', '1-5', or '2,5-8,10'"""
+    if not input_str.strip():
+        return []
+    
+    positions = []
+    parts = input_str.replace(' ', '').split(',')
+    
+    for part in parts:
+        if '-' in part and part.count('-') == 1:
+            # Handle ranges like "1-5"
+            try:
+                start, end = part.split('-')
+                start, end = int(start), int(end)
+                if start > end:
+                    start, end = end, start  # Swap if backwards
+                positions.extend(range(start, end + 1))
+            except ValueError:
+                print(f"❌ Invalid range format: '{part}'")
+                return []
+        else:
+            # Handle single numbers
+            try:
+                pos = int(part)
+                positions.append(pos)
+            except ValueError:
+                print(f"❌ Invalid position: '{part}'")
+                return []
+    
+    # Remove duplicates and sort
+    positions = sorted(set(positions))
+    
+    # Validate all positions are within range
+    invalid_positions = [pos for pos in positions if pos < 1 or pos > max_position]
+    if invalid_positions:
+        print(f"❌ Invalid positions (out of range 1-{max_position}): {invalid_positions}")
+        return []
+    
+    return positions
+
+def get_expenses_by_positions(positions: List[int], expenses_list: List) -> List[tuple]:
+    """Get expense details for multiple positions"""
+    selected_expenses = []
+    for pos in positions:
+        if 1 <= pos <= len(expenses_list):
+            expense_data = expenses_list[pos - 1]  # Get full expense data
+            selected_expenses.append((pos, expense_data))
+    return selected_expenses
 
 @app.command()
 def add(text: str):
@@ -521,35 +570,40 @@ def list():
 
 @app.command()
 def edit(
-    position: Optional[int] = typer.Argument(None, help="Position number (1, 2, 3, etc.) of expense to edit")
-):
-    """Interactive editing mode - specify position number (1, 2, 3, etc.)"""
+    positions: Optional[str] = typer.Argument(None, help="Position(s) to edit: single (2), multiple (2,5,10), or range (1-5)")
+    ):
+    """Interactive batch editing mode - supports single or multiple expense editing
     
-    expense_id = None
+    Examples:
+        expense edit              # Interactive selection
+        expense edit 2            # Edit position 2
+        expense edit 2,5,10       # Edit positions 2, 5, and 10
+        expense edit 1-5          # Edit positions 1 through 5
+        expense edit 2,5-8,10     # Edit positions 2, 5-8, and 10
+    """
     
-    # Parse position
-    if position:
-        expense_id = get_expense_by_position(position)
-        if not expense_id:
-            print(f"❌ No expense found at position {position}")
+    # Get all expenses first
+    conn = sqlite3.connect('expenses.db')
+    c = conn.cursor()
+    c.execute("SELECT id, amount, category, description, timestamp FROM expenses ORDER BY timestamp DESC")
+    expenses = c.fetchall()
+    conn.close()
+    
+    if not expenses:
+        print("❌ No expenses found to edit.")
+        return
+    
+    selected_positions = []
+    
+    # Parse positions if provided
+    if positions:
+        selected_positions = parse_position_input(positions, len(expenses))
+        if not selected_positions:
             return
-        print(f"🎯 Found expense at position {position} (ID: {expense_id})")
-    
-    # If no position provided, show list for selection
-    if expense_id is None:
-        print("\n📋 Select an expense to edit:")
+    else:
+        # Interactive selection
+        print("\n📋 Select expense(s) to edit:")
         print("=" * 90)
-        
-        # Get all expenses
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
-        c.execute("SELECT id, amount, category, description, timestamp FROM expenses ORDER BY timestamp DESC")
-        expenses = c.fetchall()
-        conn.close()
-        
-        if not expenses:
-            print("❌ No expenses found to edit.")
-            return
         
         # Show expenses with selection numbers
         for i, (exp_id, amount, category, description, timestamp) in enumerate(expenses, 1):
@@ -562,49 +616,71 @@ def edit(
             print(f"{i:2d}. {amount_str:>8} | {category:12} | {description:25} | {date_str}")
         
         print("-" * 90)
-        print("💡 Tip: You can also use position shortcuts like 'expense edit 1' or 'expense edit 2'")
+        print("💡 Examples: '2' (single), '2,5,10' (multiple), '1-5' (range), '2,5-8,10' (mixed)")
         print("-" * 90)
         
         # Get user selection
         while True:
-            try:
-                choice = input(f"Select expense to edit (1-{len(expenses)}) or 'q' to quit: ").strip().lower()
-                if choice == 'q':
-                    print("👋 Edit cancelled.")
-                    return
-                
-                selection = int(choice) - 1
-                if 0 <= selection < len(expenses):
-                    expense_id = expenses[selection][0]  # Get the actual expense ID
-                    break
-                else:
-                    print(f"❌ Please enter a number between 1 and {len(expenses)}.")
-            except ValueError:
-                print("❌ Please enter a valid number or 'q' to quit.")
+            choice = input(f"Select expense(s) to edit (1-{len(expenses)}) or 'q' to quit: ").strip()
+            if choice.lower() == 'q':
+                print("👋 Edit cancelled.")
+                return
+            
+            selected_positions = parse_position_input(choice, len(expenses))
+            if selected_positions:
+                break
     
-    # Now proceed with the existing edit logic
-    # At this point expense_id should never be None, but add safety check
-    if expense_id is None:
-        print("❌ No expense ID provided.")
+    # Get expense details for selected positions
+    selected_expenses = get_expenses_by_positions(selected_positions, expenses)
+    
+    if not selected_expenses:
+        print("❌ No valid expenses selected.")
         return
+    
+    # Show selected expenses
+    print(f"\n🎯 Selected {len(selected_expenses)} expense(s) for editing:")
+    print("-" * 90)
+    for pos, (exp_id, amount, category, description, timestamp) in selected_expenses:
+        amount_str = f"${amount:.2f}" if amount else "No amount"
+        try:
+            dt = datetime.fromisoformat(timestamp)
+            date_str = dt.strftime("%d %B %Y")
+        except:
+            date_str = timestamp[:10] if timestamp else "No date"
+        print(f"Pos {pos:2d}: {amount_str:>8} | {category:12} | {description:25} | {date_str}")
+    print("-" * 90)
+    
+    # For single expense, use traditional individual editing
+    if len(selected_expenses) == 1:
+        pos, expense_data = selected_expenses[0]
+        expense_id = expense_data[0]
         
-    expense = get_expense_by_id(expense_id)
-    if not expense:
-        print(f"❌ Expense with ID {expense_id} not found.")
-        return
-    
-    print(f"\n🔧 Interactive Editing Mode - Expense {expense_id}")
-    print("=" * 60)
-    print("Current values:")
-    print(format_expense_display(expense))
-    print("-" * 60)
-    
-    # Create backup
-    backup_id = backup_expense(expense_id)
-    if backup_id:
-        print(f"📋 Backup created (ID: {backup_id})")
-    
-    # Interactive editing
+        expense = get_expense_by_id(expense_id)
+        if not expense:
+            print(f"❌ Expense with ID {expense_id} not found.")
+            return
+        
+        print(f"\n🔧 Interactive Editing Mode - Expense {expense_id}")
+        print("=" * 60)
+        print("Current values:")
+        print(format_expense_display(expense))
+        print("-" * 60)
+        
+        # Create backup
+        backup_id = backup_expense(expense_id)
+        if backup_id:
+            print(f"📋 Backup created (ID: {backup_id})")
+        
+        # Individual editing for single expense
+        if not edit_single_expense(expense):
+            return
+    else:
+        # Batch editing for multiple expenses
+        if not edit_multiple_expenses(selected_expenses):
+            return
+
+def edit_single_expense(expense):
+    """Edit a single expense with detailed interaction"""
     exp_id, current_amount, current_category, current_description, current_timestamp = expense
     
     # Edit amount
@@ -616,7 +692,7 @@ def edit(
             print(f"✅ Amount updated to: ${current_amount:.2f}")
         except ValueError as e:
             print(f"❌ {e}")
-            return
+            return False
     
     # Edit category
     print(f"\n📂 Category (current: {current_category})")
@@ -627,7 +703,7 @@ def edit(
             print(f"✅ Category updated to: {current_category}")
         except ValueError as e:
             print(f"❌ {e}")
-            return
+            return False
     
     # Edit description
     print(f"\n📝 Description (current: {current_description})")
@@ -652,7 +728,7 @@ def edit(
             print(f"✅ Date updated to: {dt.strftime('%d %B %Y')}")
         except ValueError as e:
             print(f"❌ {e}")
-            return
+            return False
     
     # Show summary and confirm
     print(f"\n📋 Summary of Changes:")
@@ -663,85 +739,264 @@ def edit(
     confirm = input("\n💾 Save changes? (Press Enter to save, 'n' to cancel): ").lower().strip()
     if confirm == 'n':
         print("❌ Changes cancelled.")
-    else:
-        # Apply changes (Enter or any other key saves)
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
-        c.execute('''
-            UPDATE expenses 
-            SET amount = ?, category = ?, description = ?, timestamp = ?
-            WHERE id = ?
-        ''', (current_amount, current_category, current_description, current_timestamp, expense_id))
-        conn.commit()
-        conn.close()
-        print("✅ Changes saved successfully!")
-
-@app.command()
-def edit_multiple(
-    field: str,
-    new_value: str,
-    search: str = typer.Option("", help="Search term to filter expenses"),
-    category: str = typer.Option("", help="Filter by category"),
-    days: Optional[int] = typer.Option(None, help="Filter by days back")
-    ):
-    """Edit multiple expenses at once based on filters"""
-    
-    # Find matching expenses
-    expenses = search_expenses(search, category, days)
-    
-    if not expenses:
-        print("❌ No expenses found matching the criteria.")
-        return
-    
-    # Validate field
-    valid_fields = ['amount', 'category', 'description']
-    if field.lower() not in valid_fields:
-        print(f"❌ Invalid field. Use one of: {', '.join(valid_fields)}")
-        return
-    
-    print(f"\n🎯 Found {len(expenses)} expenses matching your criteria:")
-    print("-" * 80)
-    for expense in expenses[:10]:  # Show first 10
-        print(format_expense_display(expense))
-    if len(expenses) > 10:
-        print(f"... and {len(expenses) - 10} more")
-    print("-" * 80)
-    
-    # Validate new value
-    field = field.lower()
-    processed_value = new_value
-    try:
-        if field == 'amount':
-            processed_value = validate_amount(new_value)
-        elif field == 'category':
-            processed_value = validate_category(new_value)
-        # description needs no validation
-    except ValueError as e:
-        print(f"❌ {e}")
-        return
-    
-    # Confirm bulk edit
-    print(f"\n⚠️  About to update {field} = {processed_value} for {len(expenses)} expenses")
-    confirm = input("Type 'yes' to confirm: ").lower()
-    
-    if confirm != 'yes':
-        print("❌ Bulk edit cancelled.")
-        return
+        return False
     
     # Apply changes
     conn = sqlite3.connect('expenses.db')
     c = conn.cursor()
-    
-    expense_ids = [exp[0] for exp in expenses]
-    placeholders = ','.join(['?'] * len(expense_ids))
-    
-    c.execute(f"UPDATE expenses SET {field} = ? WHERE id IN ({placeholders})", 
-              [processed_value] + expense_ids)
+    c.execute('''
+        UPDATE expenses 
+        SET amount = ?, category = ?, description = ?, timestamp = ?
+        WHERE id = ?
+    ''', (current_amount, current_category, current_description, current_timestamp, exp_id))
     conn.commit()
-    updated_count = c.rowcount
+    conn.close()
+    print("✅ Changes saved successfully!")
+    return True
+
+def edit_multiple_expenses(selected_expenses):
+    """Edit multiple expenses with batch operations"""
+    print(f"\n🔧 Batch Editing Mode - {len(selected_expenses)} expenses")
+    print("=" * 60)
+    
+    # Create backups for all selected expenses
+    backup_ids = []
+    for pos, expense_data in selected_expenses:
+        expense_id = expense_data[0]
+        backup_id = backup_expense(expense_id)
+        if backup_id:
+            backup_ids.append(backup_id)
+    
+    if backup_ids:
+        print(f"📋 Created {len(backup_ids)} backups")
+    
+    print("\n🎯 Batch Editing Options:")
+    print("1. Edit each expense individually")
+    print("2. Apply same changes to all expenses")
+    print("3. Bulk update specific field only")
+    
+    while True:
+        choice = input("Select editing mode (1-3) or 'q' to quit: ").strip()
+        if choice.lower() == 'q':
+            print("👋 Batch edit cancelled.")
+            return False
+        elif choice == '1':
+            return edit_individually(selected_expenses)
+        elif choice == '2':
+            return edit_apply_to_all(selected_expenses)
+        elif choice == '3':
+            return edit_bulk_field(selected_expenses)
+        else:
+            print("❌ Please enter 1, 2, 3, or 'q'")
+
+def edit_individually(selected_expenses):
+    """Edit each expense one by one"""
+    print(f"\n📝 Individual Editing Mode")
+    updated_count = 0
+    
+    for i, (pos, expense_data) in enumerate(selected_expenses, 1):
+        expense_id = expense_data[0]
+        expense = get_expense_by_id(expense_id)
+        
+        if not expense:
+            print(f"❌ Expense {expense_id} not found, skipping...")
+            continue
+        
+        print(f"\n--- Editing {i}/{len(selected_expenses)}: Position {pos} ---")
+        print(format_expense_display(expense))
+        
+        skip = input(f"Edit this expense? (y/n/q to quit): ").strip().lower()
+        if skip == 'q':
+            print("👋 Stopping individual edits.")
+            break
+        elif skip == 'n':
+            print("⏭️ Skipping this expense.")
+            continue
+        
+        if edit_single_expense(expense):
+            updated_count += 1
+    
+    print(f"\n✅ Individual editing complete! Updated {updated_count} out of {len(selected_expenses)} expenses.")
+    return True
+
+def edit_apply_to_all(selected_expenses):
+    """Apply same changes to all selected expenses"""
+    print(f"\n🔄 Apply to All Mode")
+    print("Enter new values (press Enter to skip a field):")
+    
+    # Get new values for all fields
+    new_amount = input("💰 New amount ($ format, e.g., 25.99): ").strip()
+    validated_amount = None
+    if new_amount:
+        try:
+            validated_amount = validate_amount(new_amount)
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+    
+    new_category = input("📂 New category: ").strip()
+    validated_category = None
+    if new_category:
+        try:
+            validated_category = validate_category(new_category)
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+    
+    new_description = input("📝 New description: ").strip()
+    
+    new_date = input("📅 New date (YYYY-MM-DD or MM/DD/YYYY): ").strip()
+    validated_date = None
+    if new_date:
+        try:
+            validated_date = validate_date(new_date)
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+    
+    # Show what will be applied
+    changes = []
+    if validated_amount: changes.append(f"Amount: ${validated_amount:.2f}")
+    if validated_category: changes.append(f"Category: {validated_category}")
+    if new_description: changes.append(f"Description: {new_description}")
+    if validated_date: 
+        dt = datetime.fromisoformat(validated_date)
+        changes.append(f"Date: {dt.strftime('%d %B %Y')}")
+    
+    if not changes:
+        print("❌ No changes specified.")
+        return False
+    
+    print(f"\n📋 Will apply these changes to all {len(selected_expenses)} expenses:")
+    for change in changes:
+        print(f"  • {change}")
+    
+    confirm = input(f"\n⚠️ Apply to all {len(selected_expenses)} expenses? (type 'yes' to confirm): ")
+    if confirm.lower() != 'yes':
+        print("❌ Bulk changes cancelled.")
+        return False
+    
+    # Apply changes to all expenses
+    updated_count = 0
+    conn = sqlite3.connect('expenses.db')
+    c = conn.cursor()
+    
+    for pos, expense_data in selected_expenses:
+        expense_id = expense_data[0]
+        current_amount, current_category, current_description, current_timestamp = expense_data[1:5]
+        
+        # Use new values or keep current ones
+        final_amount = validated_amount if validated_amount else current_amount
+        final_category = validated_category if validated_category else current_category
+        final_description = new_description if new_description else current_description
+        final_timestamp = validated_date if validated_date else current_timestamp
+        
+        c.execute('''
+            UPDATE expenses 
+            SET amount = ?, category = ?, description = ?, timestamp = ?
+            WHERE id = ?
+        ''', (final_amount, final_category, final_description, final_timestamp, expense_id))
+        updated_count += 1
+    
+    conn.commit()
     conn.close()
     
-    print(f"✅ Successfully updated {updated_count} expenses!")
+    print(f"✅ Successfully applied changes to all {updated_count} expenses!")
+    return True
+
+def edit_bulk_field(selected_expenses):
+    """Update a single field for all selected expenses"""
+    print(f"\n🎯 Bulk Field Update Mode")
+    print("Available fields:")
+    print("1. Amount")
+    print("2. Category") 
+    print("3. Description")
+    print("4. Date")
+    
+    while True:
+        field_choice = input("Select field to update (1-4) or 'q' to quit: ").strip()
+        if field_choice.lower() == 'q':
+            return False
+        
+        if field_choice == '1':
+            field_name = "amount"
+            break
+        elif field_choice == '2':
+            field_name = "category"
+            break
+        elif field_choice == '3':
+            field_name = "description"
+            break
+        elif field_choice == '4':
+            field_name = "date"
+            break
+        else:
+            print("❌ Please enter 1-4 or 'q'")
+    
+    # Get new value for the selected field
+    if field_name == "amount":
+        new_value = input(f"💰 Enter new amount for all {len(selected_expenses)} expenses: ").strip()
+        try:
+            validated_value = validate_amount(new_value)
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+        field_column = "amount"
+        display_value = f"${validated_value:.2f}"
+        
+    elif field_name == "category":
+        new_value = input(f"📂 Enter new category for all {len(selected_expenses)} expenses: ").strip()
+        try:
+            validated_value = validate_category(new_value)
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+        field_column = "category"
+        display_value = validated_value
+        
+    elif field_name == "description":
+        validated_value = input(f"📝 Enter new description for all {len(selected_expenses)} expenses: ").strip()
+        if not validated_value:
+            print("❌ Description cannot be empty.")
+            return False
+        field_column = "description"
+        display_value = validated_value
+        
+    elif field_name == "date":
+        new_value = input(f"📅 Enter new date for all {len(selected_expenses)} expenses (YYYY-MM-DD or MM/DD/YYYY): ").strip()
+        try:
+            validated_value = validate_date(new_value)
+            dt = datetime.fromisoformat(validated_value)
+            display_value = dt.strftime('%d %B %Y')
+        except ValueError as e:
+            print(f"❌ {e}")
+            return False
+        field_column = "timestamp"
+    
+    # Confirm bulk update
+    print(f"\n⚠️ About to update {field_name} = '{display_value}' for all {len(selected_expenses)} expenses")
+    confirm = input("Type 'yes' to confirm: ").lower()
+    
+    if confirm != 'yes':
+        print("❌ Bulk update cancelled.")
+        return False
+    
+    # Apply the bulk update
+    conn = sqlite3.connect('expenses.db')
+    c = conn.cursor()
+    
+    expense_ids = [expense_data[0] for pos, expense_data in selected_expenses]
+    placeholders = ','.join(['?'] * len(expense_ids))
+    
+    c.execute(f"UPDATE expenses SET {field_column} = ? WHERE id IN ({placeholders})", 
+              [validated_value] + expense_ids)
+    updated_count = c.rowcount
+    conn.commit()
+    conn.close()
+    
+    print(f"✅ Successfully updated {field_name} for {updated_count} expenses!")
+    return True
+
 
 @app.command()
 def search(
