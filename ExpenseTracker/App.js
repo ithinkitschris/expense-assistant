@@ -322,11 +322,14 @@ export default function App() {
         style={styles.modalContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Swipe indicator */}
+        <View style={styles.modalPill} />
+        
         {/* Header */}
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>New Expense</Text>
           <Pressable onPress={addExpense} disabled={isLoading}>
-            <Text style={[styles.modalSaveButton, isLoading && styles.modalSaveButtonDisabled]}>
+            <Text style={[styles.modalAddButton, isLoading && styles.modalAddButtonDisabled]}>
               {isLoading ? 'Adding...' : 'Add'}
             </Text>
           </Pressable>
@@ -403,10 +406,13 @@ export default function App() {
         style={styles.modalContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Swipe indicator */}
+        <View style={styles.modalPill} />
+        
         <View style={styles.modalHeader}>
-          <Pressable onPress={() => setIsEditModalVisible(false)}>
+          {/* <Pressable onPress={() => setIsEditModalVisible(false)}>
             <Text style={styles.modalCancelButton}>Cancel</Text>
-          </Pressable>
+          </Pressable> */}
           <Text style={styles.modalTitle}>Edit Expense</Text>
           <Pressable onPress={updateExpense} disabled={isLoading}>
             <Text style={[styles.modalSaveButton, isLoading && styles.modalSaveButtonDisabled]}>
@@ -527,9 +533,18 @@ export default function App() {
         {renderCategorySelector()}
       </View>
 
+      {/* Top Gradient Overlay */}
+      <LinearGradient
+        colors={[...currentTheme.gradient].reverse()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.topGradient}
+        pointerEvents="none"
+      />
+
       {/* Bottom Gradient Overlay */}
       <LinearGradient
-        colors={currentTheme.gradient}
+        colors={currentTheme.bottomGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.bottomGradient}

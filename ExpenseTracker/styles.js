@@ -13,10 +13,12 @@ export const themes = {
     categoryBackground: 'rgba(255,255,255,0.85)',
     categorySelected: 'rgba(0,0,0,0.8)',
     categorySelectedText: '#ffffff',
-    addButtonBackground: 'rgba(0,0,0,0.7)',
-    gradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,1)'],
+    addButtonBackground: 'rgba(0,0,0,0.85)',
+    gradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)'],
+    bottomGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)'],
     blurTint: 'light',
-    statusBarStyle: 'dark'
+    statusBarStyle: 'dark',
+    appleBlue: '#007AFF',
   },
   dark: {
     background: '#000000',
@@ -30,9 +32,11 @@ export const themes = {
     categorySelected: 'white',
     categorySelectedText: '#000000',
     addButtonBackground: 'rgba(255,255,255,1)',
-    gradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)'],
+    gradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.9)'],
+    bottomGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)'],
     blurTint: 'dark',
-    statusBarStyle: 'light'
+    statusBarStyle: 'light',
+    appleBlue: '#007AFF',
   }
 };
 
@@ -100,7 +104,7 @@ export const createStyles = (theme) => StyleSheet.create({
   // #region CATEGORY SELECTOR
   categorySelector: {
     position: 'absolute',
-    bottom: 25,
+    bottom: 15,
     left: 0,
     right: 0,
     zIndex: 1,
@@ -129,7 +133,7 @@ export const createStyles = (theme) => StyleSheet.create({
     paddingVertical: 8,
     minWidth: 80,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: 'rgba(255,255,255,0.2)',
     backgroundColor: theme.categoryBackground,
     alignItems: 'center',
     overflow: 'hidden',
@@ -234,7 +238,7 @@ export const createStyles = (theme) => StyleSheet.create({
   // #region ADD BUTTON
   addButtonContainer: {
     position: 'absolute',
-    bottom: 125,
+    bottom: 110,
     right: 20,
     zIndex: 1,
     shadowColor: theme.text,
@@ -245,8 +249,8 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   addButton: {
-    width: 60,
-    height: 60,
+    width: 55,
+    height: 55,
     borderRadius: 50,
     overflow: 'hidden',
     backgroundColor: theme.addButtonBackground,
@@ -265,7 +269,7 @@ export const createStyles = (theme) => StyleSheet.create({
     fontWeight: '300',
     textAlign: 'center',
     paddingLeft: 2,
-    lineHeight: 65,
+    lineHeight: 63,
   },
   
   addButtonDisabled: {
@@ -296,12 +300,21 @@ export const createStyles = (theme) => StyleSheet.create({
   // #endregion
 
   // #region GRADIENTS
+  topGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    zIndex: 0,
+  },
+  
   bottomGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 200,
+    height: 135,
     zIndex: 0,
   },
   // #endregion
@@ -314,13 +327,24 @@ export const createStyles = (theme) => StyleSheet.create({
     overflow: 'hidden',
   },
 
+  modalPill: {
+    width: 40,
+    height: 5,
+    backgroundColor: theme.textSecondary,
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginTop: 14,
+    marginBottom: 0,
+    opacity: 0.3,
+  },
+
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    paddingTop: 40,
+    paddingTop: 20,
   },
 
   modalTitle: {
@@ -335,13 +359,27 @@ export const createStyles = (theme) => StyleSheet.create({
     color: '#007AFF',
   },
 
-  modalSaveButton: {
-    fontSize: 22,
+  modalAddButton: {
+    fontSize: 20,
     color: 'white',
     fontWeight: '500',
     backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 50,
+  },
+
+  modalAddButtonDisabled: {
+    opacity: 0.5,
+  },
+
+  modalSaveButton: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '500',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     borderRadius: 50,
   },
 
@@ -357,11 +395,11 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   modalField: {
-    marginBottom: 30,
+    marginBottom: 35,
   },
 
   modalLabel: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '500',
     color: theme.text,
     marginBottom: 20,

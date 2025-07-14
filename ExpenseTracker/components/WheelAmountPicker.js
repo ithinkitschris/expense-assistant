@@ -44,12 +44,12 @@ const WheelAmountPicker = ({ value, onValueChange, theme }) => {
     <View style={styles.container}>
       
       {isCustomMode ? (
+        // Custom Input
         <View style={styles.customInputContainer}>
-          <Text style={[styles.symbol, { color: theme.text }]}>$</Text>
           <TextInput
             style={[styles.customInput, { 
               color: theme.text, 
-              borderColor: theme.borderColor,
+              borderColor: theme.borderColorLighter,
               backgroundColor: theme.background 
             }]}
             value={customInput}
@@ -64,6 +64,7 @@ const WheelAmountPicker = ({ value, onValueChange, theme }) => {
           />
         </View>
       ) : (
+        // Picker
         <View style={styles.pickerContainer}>
           {/* <Text style={[styles.symbol, { color: theme.text }]}>$</Text> */}
           <View style={styles.pickerWrapper}>
@@ -109,21 +110,23 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     flex: 1,
     position: 'relative',
+    marginTop: -30,
+    height: 150,
   },
   picker: {
     flex: 1,
     
   },
   pickerItem: {
-    fontSize: 72,
+    fontSize: 64,
     fontWeight: '500',
   },
   selectedItemOverlay: {
     position: 'absolute',
-    top: '50%',
+    top: '70%',
     left: '50%',
     transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
-    height: 40,
+    height:70,
     width: 100,
     backgroundColor: 'rgba(255,0,0,0)', // Temporarily visible for debugging
     zIndex: 999,
@@ -134,16 +137,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    height: 150,
     // Remove fixed height - let content determine height
   },
   customInput: {
     flex: 1,
-    fontSize: 50, // Match picker item size
+    fontSize: 72, // Match picker item size
     fontWeight: '500',
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 30,
+    borderColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 20,
     textAlign: 'center',
   },
   symbol: {
