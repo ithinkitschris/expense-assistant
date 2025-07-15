@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, Animated, Dimensions, Alert } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
+import ExpenseItem from './ExpenseItem';
 
 const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = -80;
@@ -12,7 +14,8 @@ const SwipeableExpenseItem = ({
   styles, 
   groceryItems, 
   onEdit, 
-  onDelete 
+  onDelete,
+  enableSwipeActions = true
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const [isSwipedOpen, setIsSwipedOpen] = useState(false);
@@ -116,6 +119,20 @@ const SwipeableExpenseItem = ({
     );
   };
 
+  // If swipe actions are disabled, render a simple non-swipeable version
+  if (!enableSwipeActions) {
+    return (
+      <View style={styles.swipeableContainer}>
+        <ExpenseItem
+          item={item}
+          styles={styles}
+          groceryItems={groceryItems}
+          onPress={() => onEdit(item)} // Tap to edit when swipe is disabled
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.swipeableContainer}>
       {/* Action buttons (always rendered, positioned behind) */}
@@ -124,13 +141,25 @@ const SwipeableExpenseItem = ({
           style={[styles.actionButton, styles.editButton]}
           onPress={handleEdit}
         >
-          <Text style={styles.actionButtonText}>Edit</Text>
+          <SymbolView
+            name="pencil"
+            size={20}
+            type="monochrome"
+            tintColor="white"
+            fallback={<Text style={styles.actionButtonText}>Edit</Text>}
+          />
         </Pressable>
         <Pressable
           style={[styles.actionButton, styles.deleteButton]}
           onPress={handleDelete}
         >
-          <Text style={styles.actionButtonText}>Delete</Text>
+          <SymbolView
+            name="trash.fill"
+            size={20}
+            type="monochrome"
+            tintColor="white"
+            fallback={<Text style={styles.actionButtonText}>Delete</Text>}
+          />
         </Pressable>
       </View>
 
@@ -149,38 +178,12 @@ const SwipeableExpenseItem = ({
             },
           ]}
         >
-          <Pressable 
-            style={styles.expenseItem}
+          <ExpenseItem
+            item={item}
+            styles={styles}
+            groceryItems={groceryItems}
             onPress={handlePress}
-          >
-            {/* Expense Header */}
-            <View style={styles.expenseHeader}>
-              <Text style={styles.category}>{item.category}</Text>
-              <Text style={styles.date}>
-                {new Date(item.timestamp).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </Text>
-            </View>
-
-            {/* Expense Description */} 
-            <Text style={styles.expenseTitle}>{item.description}</Text>
-
-            {/* Grocery Items Display */}
-            {item.category === 'groceries' && groceryItems[item.id] && (
-              <View style={styles.groceryItemsContainer}>
-                <Text style={styles.groceryItemsHeader}>Items:</Text>
-                <Text style={styles.groceryItems}>
-                  {groceryItems[item.id].map(grocery => grocery.name).join(', ')}
-                </Text>
-              </View>
-            )}
-
-            {/* Expense Amount */}
-            <Text style={styles.amount}>${Number(item.amount).toFixed()}</Text>
-          </Pressable>
+          />
         </Animated.View>
       </PanGestureHandler>
     </View>

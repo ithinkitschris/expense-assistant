@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, FlatList, Pressable, TextInput, Alert, ActivityIndicator, ScrollView, Animated, useColorScheme, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, View, FlatList, Pressable, TextInput, Alert, ActivityIndicator, ScrollView, Animated, useColorScheme, Modal, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SymbolView } from 'expo-symbols';
 import { expenseAPI } from './services/api';
 import { createStyles, themes } from './styles';
 import { BlurView } from 'expo-blur';
@@ -9,8 +10,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import WheelAmountPicker from './components/WheelAmountPicker';
 import SwipeableExpenseItem from './components/SwipeableExpenseItem';
+import ExpenseItem from './components/ExpenseItem';
 
 export default function App() {
+  // #region STATE & SETUP
+  
+  // Development Flags
+  const ENABLE_SCROLL_ANIMATIONS = true;
+  const ENABLE_SWIPE_ACTIONS = false; // Enable/disable swipe to edit/delete functionality
+  
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
@@ -41,7 +49,16 @@ export default function App() {
   const [editCategory, setEditCategory] = useState('');
   const [editDescription, setEditDescription] = useState('');
   
-
+  // Calendar state
+  const [selectedDay, setSelectedDay] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const flatListRef = useRef(null);
+  const calendarScrollRef = useRef(null);
+  
+  // Category navigation with horizontal scroll
+  const categoryScrollRef = useRef(null);
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const { width: screenWidth } = Dimensions.get('window');
   
   // System theme detection
   const systemColorScheme = useColorScheme();
@@ -49,17 +66,43 @@ export default function App() {
   // Handle null/undefined cases and provide fallback
   const isDarkMode = systemColorScheme === 'dark';
 
-
-  
   // Debug logging
   useEffect(() => {
     console.log('System color scheme:', systemColorScheme);
     console.log('Is dark mode:', isDarkMode);
     console.log('Current theme being used:', isDarkMode ? 'dark' : 'light');
-  }, [systemColorScheme, isDarkMode]);
+    console.log('textSecondary color:', currentTheme.textSecondary);
+    console.log('categorySelectedText color:', currentTheme.categorySelectedText);
+  }, [systemColorScheme, isDarkMode, currentTheme]);
+
+  // Update selected category when index changes
+  useEffect(() => {
+    if (categories[currentCategoryIndex]) {
+      setSelectedCategory(categories[currentCategoryIndex]);
+    }
+  }, [currentCategoryIndex, categories]);
+
+  // Update index when category changes (from category selector taps)
+  useEffect(() => {
+    const newIndex = categories.indexOf(selectedCategory);
+    if (newIndex !== -1 && newIndex !== currentCategoryIndex) {
+      setCurrentCategoryIndex(newIndex);
+      if (categoryScrollRef.current) {
+        categoryScrollRef.current.scrollToIndex({ 
+          index: newIndex, 
+          animated: true 
+        });
+      }
+    }
+  }, [selectedCategory, categories]);
 
   // Header animation
-  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const expenseCategorySelectorTranslateY = useRef(new Animated.Value(0)).current;
+  const viewSelectorTranslateY = useRef(new Animated.Value(0)).current;
+  const fixedDayHeaderTranslateY = useRef(new Animated.Value(0)).current;
+  const bottomGradientOpacity = useRef(new Animated.Value(1)).current;
+  const bottomGradientTranslateY = useRef(new Animated.Value(0)).current;
+  const dayTitleFontSize = useRef(new Animated.Value(32)).current; // Initial font size
   const lastScrollY = useRef(0);
   const lastScrollX = useRef(0);
   const isHeaderVisible = useRef(true);
@@ -67,6 +110,9 @@ export default function App() {
   // Get current theme
   const currentTheme = themes[isDarkMode ? 'dark' : 'light'];
   const styles = createStyles(currentTheme);
+  // #endregion
+
+  // #region DATA PROCESSING
 
   // Calculate totals by category
   const categoryTotals = expenses.reduce((acc, expense) => {
@@ -79,6 +125,39 @@ export default function App() {
 
   // Calculate total expenses
   const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+  // Group expenses by day
+  const groupExpensesByDay = (expenses) => {
+    const grouped = {};
+    
+    expenses.forEach(expense => {
+      // Use the timestamp field from the API response
+      const date = new Date(expense.timestamp);
+      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = {
+          date: dateKey,
+          displayDate: date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+          shortDate: date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          expenses: []
+        };
+      }
+      
+      grouped[dateKey].expenses.push(expense);
+    });
+    
+    // Convert to array and sort by date (most recent first)
+    return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
 
   // Get current display amount based on selection
   const getDisplayAmount = () => {
@@ -96,6 +175,113 @@ export default function App() {
     return expenses.filter(expense => expense.category === selectedCategory);
   };
 
+  // Get filtered expenses for a specific category (used during transitions)
+  const getFilteredExpensesForCategory = (category) => {
+    if (category === 'All') {
+      return expenses;
+    }
+    return expenses.filter(expense => expense.category === category);
+  };
+
+  // Get filtered expenses grouped by day
+  const getFilteredExpensesByDay = () => {
+    const filteredExpenses = getFilteredExpenses();
+    const dayGroups = groupExpensesByDay(filteredExpenses);
+    
+    // Debug logging
+    console.log('Filtered expenses:', filteredExpenses.length);
+    console.log('Day groups:', dayGroups.length);
+    dayGroups.forEach((group, index) => {
+      console.log(`Day ${index + 1}: ${group.displayDate} - ${group.expenses.length} expenses`);
+    });
+    
+    return dayGroups;
+  };
+
+  // Get filtered expenses grouped by day for a specific category
+  const getFilteredExpensesByDayForCategory = (category) => {
+    const filteredExpenses = getFilteredExpensesForCategory(category);
+    return groupExpensesByDay(filteredExpenses);
+  };
+  // #endregion
+
+  // #region CALENDAR LOGIC
+
+  // Calendar helper functions
+  const getWeekDays = (startDate) => {
+    const days = [];
+    const start = new Date(startDate);
+    
+    // Get the Monday of the current week
+    const dayOfWeek = start.getDay();
+    const diff = start.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Monday is first day
+    start.setDate(diff);
+    
+    // Set time to noon to avoid timezone issues
+    start.setHours(12, 0, 0, 0);
+    
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const getExpenseCountForDay = (date) => {
+    // Use local date string to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    const dayGroups = getFilteredExpensesByDay();
+    const dayData = dayGroups.find(group => group.date === dateStr);
+    return dayData ? dayData.expenses.length : 0;
+  };
+
+  const navigateToDay = (date) => {
+    // Use local date string to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    const dayGroups = getFilteredExpensesByDay();
+    const dayIndex = dayGroups.findIndex(group => group.date === dateStr);
+    
+    if (dayIndex >= 0 && flatListRef.current) {
+      setSelectedDay(dateStr);
+      flatListRef.current.scrollToIndex({ index: dayIndex, animated: true });
+    }
+  };
+
+  const updateCalendarFromFlatList = (index) => {
+    const dayGroups = getFilteredExpensesByDay();
+    if (dayGroups[index]) {
+      const newSelectedDay = dayGroups[index].date;
+      setSelectedDay(newSelectedDay);
+      
+      // Update current week if the selected day is outside current week
+      const selectedDate = new Date(newSelectedDay + 'T12:00:00'); // Set to noon to avoid timezone issues
+      const weekDays = getWeekDays(currentWeek);
+      const isInCurrentWeek = weekDays.some(day => {
+        const year = day.getFullYear();
+        const month = String(day.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(day.getDate()).padStart(2, '0');
+        const dayStr = `${year}-${month}-${dayNum}`;
+        return dayStr === newSelectedDay;
+      });
+      
+      if (!isInCurrentWeek) {
+        setCurrentWeek(selectedDate);
+      }
+    }
+  };
+  // #endregion
+
+  // #region API OPERATIONS
+
   // Load expenses when app starts
   useEffect(() => {
     loadExpenses();
@@ -107,6 +293,19 @@ export default function App() {
       loadAllGroceryItems();
     }
   }, [activeTab]);
+
+  // Initialize selected day when expenses load
+  useEffect(() => {
+    if (expenses.length > 0) {
+      const dayGroups = getFilteredExpensesByDay();
+      if (dayGroups.length > 0) {
+        // Set the most recent day as selected initially
+        const mostRecentDay = dayGroups[0].date;
+        setSelectedDay(mostRecentDay);
+        setCurrentWeek(new Date(mostRecentDay));
+      }
+    }
+  }, [expenses]);
 
   // Load all grocery items from API
   const loadAllGroceryItems = async () => {
@@ -151,10 +350,6 @@ export default function App() {
       loadGroceryItems();
     }
   }, [expenses]);
-
-
-
-
 
   const loadExpenses = async () => {
     try {
@@ -340,28 +535,81 @@ export default function App() {
       setIsLoading(false);
     }
   };
+  // #endregion
+
+  // #region EVENT HANDLERS
 
   const handleHeaderScroll = (event) => {
+    // Skip animations if disabled for development
+    if (!ENABLE_SCROLL_ANIMATIONS) {
+      console.log('Scroll animations disabled for development');
+      return;
+    }
+    
     const currentScrollY = event.nativeEvent.contentOffset.y;
     const scrollingDown = currentScrollY > lastScrollY.current;
     const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
     
     if (scrollingDown && scrollDifference > 10 && isHeaderVisible.current) {
-      // Hide header
+      // Hide header, expense category selector, and bottom gradient
       isHeaderVisible.current = false;
-      Animated.timing(headerTranslateY, {
-        toValue: -200,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(expenseCategorySelectorTranslateY, {
+          toValue: -150,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fixedDayHeaderTranslateY, {
+          toValue: -60,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(viewSelectorTranslateY, {
+          toValue: 100,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bottomGradientTranslateY, {
+          toValue: 200,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dayTitleFontSize, {
+          toValue: 46, // Maximum font size when scrolled
+          duration: 200,
+          useNativeDriver: false,
+        })
+      ]).start();
     } else if (!scrollingDown && !isHeaderVisible.current && scrollDifference > 8) {
-      // Show header only after scrolling up by 100px
+      // Show header, expense category selector, and bottom gradient only after scrolling up by 100px
       isHeaderVisible.current = true;
-      Animated.timing(headerTranslateY, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(expenseCategorySelectorTranslateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fixedDayHeaderTranslateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(viewSelectorTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bottomGradientTranslateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dayTitleFontSize, {
+          toValue: 24, // Minimum font size (initial)
+          duration: 200,
+          useNativeDriver: false,
+        })
+      ]).start();
     }
     
     lastScrollY.current = currentScrollY;
@@ -400,15 +648,161 @@ export default function App() {
     }
   };
 
-  const renderExpense = ({ item }) => (
-    <SwipeableExpenseItem
-      item={item}
-      styles={styles}
-      groceryItems={groceryItems}
-      onEdit={handleExpensePress}
-      onDelete={deleteExpense}
-    />
-  );
+  // Handle horizontal category scroll
+  const handleCategoryHorizontalScroll = (event) => {
+    const { contentOffset, layoutMeasurement } = event.nativeEvent;
+    const currentIndex = Math.round(contentOffset.x / layoutMeasurement.width);
+    
+    if (currentIndex !== currentCategoryIndex && currentIndex >= 0 && currentIndex < categories.length) {
+      setCurrentCategoryIndex(currentIndex);
+    }
+  };
+
+  // Handle horizontal category scroll start
+  const handleCategoryScrollStart = (event) => {
+    const { contentOffset, layoutMeasurement } = event.nativeEvent;
+    const currentIndex = Math.round(contentOffset.x / layoutMeasurement.width);
+    
+    if (currentIndex !== currentCategoryIndex && currentIndex >= 0 && currentIndex < categories.length) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+  // #endregion
+
+  // #region RENDER FUNCTIONS
+
+  const renderFixedDayHeader = () => {
+    const dayGroups = getFilteredExpensesByDay();
+    const currentDayIndex = dayGroups.findIndex(group => group.date === selectedDay);
+    const currentDayData = dayGroups[currentDayIndex];
+    
+    if (!currentDayData) return null;
+    
+    // Fix timezone issue by appending time to ensure local date interpretation
+    const dateObj = new Date(currentDayData.date + 'T12:00:00');
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = months[dateObj.getMonth()];
+    const dayNum = dateObj.getDate();
+    const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Add ordinal suffix (st, nd, rd, th)
+    const ordinal = (() => {
+      if (dayNum > 3 && dayNum < 21) return 'th';
+      switch (dayNum % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    })();
+    
+    const total = currentDayData.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    
+    return (
+      <Animated.View 
+        style={[
+          styles.dayHeader,
+          {
+            transform: [{ translateY: fixedDayHeaderTranslateY }]
+          }
+        ]}
+      >
+        <View style={styles.dayHeaderContent}>
+                  <Animated.Text style={[
+          styles.dayTitle,
+          {
+            fontSize: dayTitleFontSize
+          }
+        ]}>
+          {`${weekday}, ${monthName} ${dayNum}${ordinal}`}
+        </Animated.Text>
+          <Text style={styles.daySubtitle}>
+            Total spend: ${Number.isInteger(total) ? total : total.toFixed(2).replace(/\.00$/, '')}
+          </Text>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const renderDayViewport = ({ item: dayData }) => {
+    const { height } = Dimensions.get('window');
+    
+    return (
+      <View style={[styles.dayContainer, { height }]}>
+        {/* Swipeable Expenses List */}
+        <FlatList
+          data={dayData.expenses}
+          renderItem={({ item: expense }) => (
+            <SwipeableExpenseItem
+              item={expense}
+              styles={styles}
+              groceryItems={groceryItems}
+              onEdit={handleExpensePress}
+              onDelete={deleteExpense}
+              enableSwipeActions={ENABLE_SWIPE_ACTIONS}
+            />
+          )}
+          keyExtractor={(expense) => expense.id}
+          style={styles.dayExpensesList}
+          contentContainerStyle={styles.dayExpensesContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        />
+      </View>
+    );
+  };
+
+  const renderExpensesContentForCategory = (category, containerStyle = {}) => {
+    const { height } = Dimensions.get('window');
+    const dayGroups = getFilteredExpensesByDayForCategory(category);
+    
+    if (dayGroups.length === 0) {
+      return (
+        <View style={[styles.emptyContainer, { height }, containerStyle]}>
+          <Text style={styles.emptyText}>No expenses in {category} category yet!</Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={dayGroups}
+        renderItem={renderDayViewport}
+        keyExtractor={(item) => `${category}-${item.date}`}
+        style={[styles.daysList, containerStyle]}
+        pagingEnabled={true}
+        showsVerticalScrollIndicator={false}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        onScroll={handleHeaderScroll}
+        scrollEventThrottle={16}
+        bounces={false}
+        getItemLayout={(data, index) => ({
+          length: height,
+          offset: height * index,
+          index,
+        })}
+        onMomentumScrollEnd={(event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.y / height);
+          updateCalendarFromFlatList(index);
+        }}
+      />
+    );
+  };
+
+  // Render a full-screen page for each category
+  const renderCategoryPage = ({ item: category }) => {
+    const { height } = Dimensions.get('window');
+    
+    return (
+      <View style={{ width: screenWidth, height }}>
+        {renderExpensesContentForCategory(category)}
+      </View>
+    );
+  };
 
   const renderTabHeader = () => (
     <View style={styles.tabHeader}>
@@ -462,7 +856,74 @@ export default function App() {
     </View>
   );
 
-  const renderGroceryList = () => {
+  const renderCalendar = () => {
+    const weekDays = getWeekDays(currentWeek);
+    // Use local date for today to avoid timezone issues
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    return (
+      <View style={styles.calendarContainer}>
+        <ScrollView
+          ref={calendarScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.calendarScrollView}
+          contentContainerStyle={styles.calendarContent}
+          pagingEnabled={false}
+          decelerationRate="fast"
+          onMomentumScrollEnd={(event) => {
+            // Handle week navigation when scrolling
+            const scrollX = event.nativeEvent.contentOffset.x;
+            const containerWidth = event.nativeEvent.layoutMeasurement.width;
+            const weekOffset = Math.round(scrollX / containerWidth);
+            
+            if (weekOffset !== 0) {
+              const newWeek = new Date(currentWeek);
+              newWeek.setDate(newWeek.getDate() + (weekOffset * 7));
+              setCurrentWeek(newWeek);
+            }
+          }}
+        >
+            {weekDays.map((day, index) => {
+              // Use local date string to avoid timezone issues
+              const year = day.getFullYear();
+              const month = String(day.getMonth() + 1).padStart(2, '0');
+              const dayNum = String(day.getDate()).padStart(2, '0');
+              const dayStr = `${year}-${month}-${dayNum}`;
+              
+              const isSelected = dayStr === selectedDay;
+              const isToday = dayStr === todayStr;
+              const expenseCount = getExpenseCountForDay(day);
+              
+              return (
+                <Pressable
+                  key={dayStr}
+                  style={[
+                    styles.calendarDay,
+                    isToday && styles.calendarToday,
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    navigateToDay(day);
+                  }}
+                >
+                  <Text style={styles.calendarDayText}>
+                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </Text>
+                  <Text style={styles.calendarDayNumber}>
+                    {day.getDate()}
+                  </Text>
+                  {isSelected && <View style={styles.calendarDot} />}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+      </View>
+    );
+  };
+
+  const renderGroceryView = () => {
     if (isLoadingGroceryItems) {
       return (
         <View style={styles.loadingContainer}>
@@ -498,101 +959,271 @@ export default function App() {
     );
   };
 
-  const renderFinanceView = () => (
-    <>
-      {/* Expenses List */}
-      {isLoadingExpenses ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading expenses...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={getFilteredExpenses()}
-          renderItem={renderExpense}
-          keyExtractor={(item) => item.id.toString()}
-          style={styles.expenseList}
-          contentContainerStyle={styles.expenseListBottomPadding}
-          onScroll={handleHeaderScroll}
-          scrollEventThrottle={16}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No expenses yet. Add one above!</Text>
-          }
-        />
-      )}
-
-      {/* Category Selector */}
-      <View style={styles.categorySelector}>
-        {renderCategorySelector()}
-      </View>
-
-      {/* Add Expense Button */}
-      <View style={styles.addButtonContainer}>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setIsAddModalVisible(true);
-          }}
+  const renderExpensesView = () => {
+    const { height } = Dimensions.get('window');
+    const dayGroups = getFilteredExpensesByDay();
+    
+    return (
+      <>
+        {/* Category Selector */}
+        <Animated.View 
+          style={[
+            styles.expenseCategorySelector,
+            {
+              transform: [{ translateY: expenseCategorySelectorTranslateY }]
+            }
+          ]}
         >
-          <BlurView intensity={10} tint={'light'} style={styles.blurContainer}>    
-            <Text style={styles.addButtonText}>+</Text>
-          </BlurView>
-        </Pressable>
-      </View>
-    </>
+          {renderExpenseCategorySelector()}
+        </Animated.View>
+        
+        {/* Calendar View */}
+        {/* {renderCalendar()} */}
+        
+
+        
+        {/* Horizontal Category Pages */}
+        {isLoadingExpenses ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading expenses...</Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={categoryScrollRef}
+            data={categories}
+            renderItem={renderCategoryPage}
+            keyExtractor={(category) => category}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScrollBeginDrag={handleCategoryScrollStart}
+            onMomentumScrollEnd={handleCategoryHorizontalScroll}
+            scrollEventThrottle={16}
+            decelerationRate="fast"
+            bounces={false}
+            getItemLayout={(data, index) => ({
+              length: screenWidth,
+              offset: screenWidth * index,
+              index,
+            })}
+            initialScrollIndex={categories.length > 0 ? currentCategoryIndex : 0}
+            style={{ flex: 1 }}
+          />
+        )}
+
+        {/* Add Expense Button */}
+        <View style={styles.addButtonContainer}>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setIsAddModalVisible(true);
+            }}
+          >
+            <BlurView intensity={25} tint={'light'} style={styles.blurContainer}>    
+              <SymbolView
+                name="plus"
+                size={28}
+                type="monochrome"
+                tintColor={currentTheme.text}
+                fallback={<Text style={styles.addButtonText}>+</Text>}
+              />
+            </BlurView>
+          </Pressable>
+        </View>
+      </>
+    );
+  };
+
+  const renderViewSelector = () => (
+    <View style={styles.viewSelectorWrapper}>
+      {/* Background Container with ScrollView inside */}
+      <BlurView
+        intensity={30}
+        tint={currentTheme.blurTint}
+        style={styles.viewSelectorBackground}
+      >
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.viewSelectorScrollView}
+          contentContainerStyle={styles.viewSelectorContainer}
+          onScroll={handleCategoryScroll}
+          scrollEventThrottle={16}
+        >
+          {/* Expenses Option */}
+          <Pressable
+            style={styles.viewOptionContainer}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setActiveTab('finance');
+            }}
+          >
+            <BlurView 
+              intensity={activeTab === 'finance' ? 50 : 0} 
+              tint={currentTheme.blurTint} 
+              style={[
+                styles.viewOption,
+                activeTab === 'finance' && styles.viewOptionSelected
+              ]}
+            >
+              <SymbolView
+                name="creditcard.fill"
+                size={34}
+                type="monochrome"
+                tintColor={activeTab === 'finance' ? currentTheme.categorySelectedText : currentTheme.text}
+                fallback={null}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[
+                  styles.viewOptionText,
+                  activeTab === 'finance' && styles.viewOptionTextSelected
+                ]}>
+                  Expenses
+                </Text>
+                {/* <Text style={[
+                  styles.viewOptionAmount,
+                  activeTab === 'finance' && styles.viewOptionAmountSelected
+                ]}>
+                  {' '}${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')}
+                </Text> */}
+              </View>
+            </BlurView>
+          </Pressable>
+
+          {/* Groceries Option */}
+          <Pressable
+            style={styles.viewOptionContainer}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setActiveTab('grocery');
+            }}
+          >
+            <BlurView 
+              intensity={activeTab === 'grocery' ? 50 : 0} 
+              tint={currentTheme.blurTint} 
+              style={[
+                styles.viewOption,
+                activeTab === 'grocery' && styles.viewOptionSelected
+              ]}
+            >
+              <SymbolView
+                name="cart.fill"
+                size={34}
+                type="monochrome"
+                tintColor={activeTab === 'grocery' ? currentTheme.categorySelectedText : currentTheme.text}
+                fallback={null}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[
+                  styles.viewOptionText,
+                  activeTab === 'grocery' && styles.viewOptionTextSelected
+                ]}>
+                  Groceries
+                </Text>
+                {/* <Text style={[
+                  styles.viewOptionAmount,
+                  activeTab === 'grocery' && styles.viewOptionAmountSelected
+                ]}>
+                  {' '}{allGroceryItems.length} items
+                </Text> */}
+              </View>
+            </BlurView>
+          </Pressable>
+        </ScrollView>
+      </BlurView>
+    </View>
   );
 
-  const renderCategorySelector = () => (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      style={styles.categorySelector}
-      contentContainerStyle={styles.categorySelectorContent}
-      onScroll={handleCategoryScroll}
-      scrollEventThrottle={16}
-    >
-      {categories.map((category) => (
-        
-        // Category Container
-        <Pressable
-          key={category}
-          style={styles.categoryOptionContainer}
-          onPress={() => handleCategoryPress(category)}
-        >
-          {/* Category Button */}
-          <BlurView 
-            intensity={selectedCategory === category ? 10 : 20} 
-            tint={currentTheme.blurTint} 
-            style={[
-              styles.categoryOption,
-              selectedCategory === category && styles.categoryOptionSelected
-            ]}
-          >
-            {/* Category Name */}
-            <Text style={[
-              styles.categoryOptionText,
-              selectedCategory === category && styles.categoryOptionTextSelected
-            ]}>
-              {category}
-            </Text>
+  // Helper function to get SF Symbol for category
+  const getCategoryIcon = (category) => {
+    const iconMap = {
+      'All': 'chart.bar.fill',
+      'amazon': 'shippingbox.fill',
+      'transportation': 'car.fill',
+      'groceries': 'cart.fill',
+      'entertainment': 'tv.fill',
+      'fashion': 'tshirt.fill',
+      'travel': 'airplane',
+      'food': 'fork.knife',
+      'monthly': 'calendar',
+      'other': 'ellipsis.circle.fill'
+    };
+    return iconMap[category] || 'dollarsign.circle.fill';
+  };
 
-            {/* Category Amount */}
-            <Text style={[
-              styles.categoryOptionAmount,
-              selectedCategory === category && styles.categoryOptionAmountSelected
-            ]}>
-              ${category === 'All' ? 
-                (Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')) :
-                (Number.isInteger(categoryTotals[category] || 0) ? 
-                  (categoryTotals[category] || 0) : 
-                  (categoryTotals[category] || 0).toFixed(2).replace(/\.00$/, ''))
-              }
-            </Text>
-          </BlurView>
-        </Pressable>
-      ))}
-    </ScrollView>
+  const renderExpenseCategorySelector = () => (
+    <View>
+      {/* Background Container with ScrollView inside */}
+      <BlurView
+        intensity={30}
+        tint={currentTheme.blurTint}
+        style={styles.expenseCategorySelectorBackground}
+      >
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.expenseCategorySelectorScrollView}
+          contentContainerStyle={styles.expenseCategorySelectorContainer}
+          onScroll={handleCategoryScroll}
+          scrollEventThrottle={16}
+        >
+          {categories.map((category) => (
+            
+            // Category Container
+            <Pressable
+              key={category}
+              style={styles.expenseCategoryOptionContainer}
+              onPress={() => handleCategoryPress(category)}
+            >
+              {/* Category Button */}
+              <BlurView 
+                intensity={selectedCategory === category ? 50 : 0} 
+                tint={currentTheme.blurTint} 
+                style={[
+                  styles.expenseCategoryOption,
+                  selectedCategory === category && styles.expenseCategoryOptionSelected
+                ]}
+              >
+                {/* Show icon when unselected, name when selected */}
+                {selectedCategory === category ? (
+                  <Text style={[
+                    styles.expenseCategoryOptionText,
+                    styles.expenseCategoryOptionTextSelected
+                  ]}>
+                    {category}
+                  </Text>
+                ) : (
+                  <SymbolView
+                    name={getCategoryIcon(category)}
+                    size={22}
+                    type="outline"
+                    tintColor="#999999"
+                    fallback={null}
+                  />
+                )}
+
+                {/* Category Amount - Only show when selected */}
+                {selectedCategory === category && (
+                  <Text style={[
+                    styles.expenseCategoryOptionAmount,
+                    styles.expenseCategoryOptionAmountSelected
+                  ]}>
+                    ${category === 'All' ? 
+                      (Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')) :
+                      (Number.isInteger(categoryTotals[category] || 0) ? 
+                        (categoryTotals[category] || 0) : 
+                        (categoryTotals[category] || 0).toFixed(2).replace(/\.00$/, ''))
+                    }
+                  </Text>
+                )}
+              </BlurView>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </BlurView>
+    </View>
   );
 
   const renderGroceryConfirmModal = () => (
@@ -671,8 +1302,6 @@ export default function App() {
       </KeyboardAvoidingView>
     </Modal>
   );
-
-
 
   const renderAddModal = () => {
     if (addCategory === 'groceries' && isGroceryStep === 2) {
@@ -851,17 +1480,19 @@ export default function App() {
       </KeyboardAvoidingView>
     </Modal>
   );
+  // #endregion
+
+  // #region MAIN RENDER
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
         
-        {/* Tab Header */}
-        {renderTabHeader()}
+        {/* Fixed Day Header - Render before gradients so it appears above them */}
+        {!isLoadingExpenses && activeTab === 'finance' && getFilteredExpensesByDay().length > 0 && 
+          renderFixedDayHeader()
+        }
         
-        {/* Content based on active tab */}
-        {activeTab === 'finance' ? renderFinanceView() : renderGroceryList()}
-
         {/* Top Gradient Overlay */}
         <LinearGradient
           colors={[...currentTheme.topGradient].reverse()}
@@ -872,13 +1503,40 @@ export default function App() {
         />
 
         {/* Bottom Gradient Overlay */}
-        <LinearGradient
-          colors={currentTheme.bottomGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.bottomGradient}
+        <Animated.View
+          style={[
+            styles.bottomGradient,
+            { 
+              opacity: bottomGradientOpacity,
+              transform: [{ translateY: bottomGradientTranslateY }]
+            }
+          ]}
           pointerEvents="none"
-        />
+        >
+          <LinearGradient
+            colors={currentTheme.bottomGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{ flex: 1 }}
+          />
+        </Animated.View>
+        
+        {/* Tab Header */}
+        {/* {renderTabHeader()} */}
+        
+        {/* Content based on active tab */}
+        {activeTab === 'finance' ? renderExpensesView() : renderGroceryView()}
+
+        {/* Global View Selector */}
+        <Animated.View 
+          style={[
+            {
+              transform: [{ translateY: viewSelectorTranslateY }]
+            }
+          ]}
+        >
+          {renderViewSelector()}
+        </Animated.View>
 
         {/* Add Modal */}
         {renderAddModal()}
@@ -890,5 +1548,6 @@ export default function App() {
       </View>
     </GestureHandlerRootView>
   );
+  // #endregion
 }
 
