@@ -15,6 +15,7 @@ export const themes = {
     categorySelectedText: '#ffffff',
     addButtonBackground: 'rgba(0,0,0,0.85)',
     gradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)'],
+    topGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.9)'],
     bottomGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)'],
     blurTint: 'light',
     statusBarStyle: 'dark',
@@ -29,10 +30,11 @@ export const themes = {
     borderColorLighter: 'rgba(255,255,255,0.2)',
     headerBlur: 'rgba(255,255,255,0.15)',
     categoryBackground: 'rgba(0,0,0,0)',
-    categorySelected: 'white',
-    categorySelectedText: '#000000',
+    categorySelected: 'rgba(255,255,255,0.3)',
+    categorySelectedText: '#007AFF',
     addButtonBackground: 'rgba(255,255,255,1)',
     gradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.9)'],
+    topGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)'],
     bottomGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)'],
     blurTint: 'dark',
     statusBarStyle: 'light',
@@ -51,7 +53,7 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseList: {
     flex: 1,
     paddingHorizontal: 0,
-    paddingTop: 100,
+    paddingTop: 20,
   },
   
   expenseListBottomPadding: {
@@ -129,8 +131,8 @@ export const createStyles = (theme) => StyleSheet.create({
   
   categoryOption: {
     borderRadius: 50,
-    paddingHorizontal: 30,
-    paddingVertical: 8,
+    paddingHorizontal: 27,
+    paddingVertical: 7,
     minWidth: 80,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
@@ -144,7 +146,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   categoryOptionText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     color: theme.text,
     textTransform: 'capitalize',
@@ -214,22 +216,45 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   expenseTitle: {
-    fontSize: 62,
+    fontSize: 58,
     fontWeight: '500',
     color: theme.text,
     paddingTop: 10,
     letterSpacing: -0.2,
-    lineHeight: 60,
+    lineHeight: 55,
   },
   
   amount: {
-    fontSize: 62,
+    fontSize: 58,
     fontWeight: '300',
     color: theme.text,
     letterSpacing: -1,
-    marginTop: -8,
+    marginTop: -7,
     marginLeft: 1,
     marginBottom: 3,
+  },
+
+  groceryItemsContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+    paddingHorizontal: 0,
+  },
+
+  groceryItemsHeader: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.textSecondary,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  groceryItems: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: theme.text,
+    lineHeight: 22,
+    opacity: 0.8,
   },
   
   
@@ -305,7 +330,7 @@ export const createStyles = (theme) => StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 80,
+    height: 150,
     zIndex: 0,
   },
   
@@ -451,6 +476,161 @@ export const createStyles = (theme) => StyleSheet.create({
 
   modalCategoryTextSelected: {
     color: theme.categorySelectedText,
+  },
+
+  // Grocery confirmation modal styles
+  groceryConfirmList: {
+    marginTop: 15,
+  },
+
+  groceryConfirmItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+  },
+
+  groceryConfirmItemText: {
+    fontSize: 18,
+    color: theme.text,
+    fontWeight: '400',
+  },
+
+  groceryConfirmItemTextExisting: {
+    fontSize: 18,
+    color: theme.text,
+    fontWeight: '400',
+    opacity: 0.5,
+  },
+
+
+
+  modalCancelButton: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '400',
+  },
+
+  // #endregion
+
+  // #region SWIPEABLE EXPENSE ITEM
+  swipeableContainer: {
+    marginBottom: 48,
+    position: 'relative',
+  },
+
+  actionButtonsContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  actionButton: {
+    width: 80,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  editButton: {
+    backgroundColor: '#007AFF',
+  },
+
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+  },
+
+  actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
+  swipeableContent: {
+    backgroundColor: theme.background,
+  },
+  // #endregion
+
+  // #region TAB HEADER
+  tabHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    zIndex: 1,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.categoryBackground,
+    borderWidth: 1,
+    borderColor: theme.borderColorLighter,
+  },
+
+  tabButtonActive: {
+    backgroundColor: theme.categorySelected,
+  },
+
+  tabButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.text,
+  },
+
+  tabButtonTextActive: {
+    color: theme.categorySelectedText,
+  },
+  // #endregion
+
+  // #region GROCERY LIST
+  groceryList: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+
+  groceryListContent: {
+    paddingBottom: 100,
+  },
+
+  groceryListItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    backgroundColor: theme.categoryBackground,
+    borderRadius: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: theme.borderColorLighter,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  groceryListItemName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.text,
+    flex: 1,
+  },
+
+  groceryListItemDate: {
+    fontSize: 12,
+    color: theme.textSecondary,
+    marginLeft: 10,
   },
   // #endregion
 }); 

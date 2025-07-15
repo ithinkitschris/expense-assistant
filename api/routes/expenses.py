@@ -20,7 +20,16 @@ import os
 # Import your existing CLI functions
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from add_expense import add_expense
-from main import get_expense_by_id, validate_amount, validate_category, validate_date, format_expense_display
+
+# Define get_expense_by_id locally to avoid circular import
+def get_expense_by_id(expense_id: int):
+    """Get expense details by ID"""
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, amount, category, description, timestamp FROM expenses WHERE id = ?", (expense_id,))
+    expense = c.fetchone()
+    conn.close()
+    return expense
 
 # Import our API schemas
 from api.models.schemas import (
@@ -34,7 +43,9 @@ router = APIRouter()
 
 def get_db_connection():
     """Get database connection"""
-    return sqlite3.connect('expenses.db')
+    # Use absolute path to avoid any working directory issues
+    db_path = '/Users/chris/Documents/GitHub/expense-assistant/expenses.db'
+    return sqlite3.connect(db_path)
 
 
 def expense_row_to_dict(row):
@@ -339,4 +350,214 @@ async def delete_expense(expense_id: int):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete expense: {str(e)}"
+        ) 
+
+
+@router.post("/expenses/{expense_id}/parse-grocery-items", response_model=SuccessResponse)
+async def parse_grocery_items(expense_id: int):
+    """
+    Parse grocery items from an expense description
+    This will use AI (Gemma3n) to extract individual grocery items
+    """
+    try:
+        # Check if expense exists
+        expense = get_expense_by_id(expense_id)
+        if not expense:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Expense with ID {expense_id} not found"
+            )
+        
+        # Extract expense details
+        expense_id, amount, category, description, timestamp = expense
+        
+        # Only parse grocery expenses
+        if category != 'groceries':
+            raise HTTPException(
+                status_code=400,
+                detail="Only grocery expenses can be parsed for items"
+            )
+        
+        # Parse grocery items using AI (placeholder for now)
+        parsed_items = parse_grocery_items_with_ai(description)
+        
+        # Save parsed items to database
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Clear existing items for this expense
+        c.execute("DELETE FROM grocery_items WHERE expense_id = ?", (expense_id,))
+        
+        # Insert new items
+        for item in parsed_items:
+            c.execute('''
+                INSERT INTO grocery_items (expense_id, item_name, date_purchased, is_consumed)
+                VALUES (?, ?, ?, ?)
+            ''', (expense_id, item, timestamp, False))
+        
+        conn.commit()
+        conn.close()
+        
+        return SuccessResponse(
+            message=f"Parsed {len(parsed_items)} items from grocery expense",
+            data={
+                "expense_id": expense_id,
+                "items": parsed_items
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse grocery items: {str(e)}"
+        )
+
+
+@router.get("/expenses/{expense_id}/grocery-items")
+async def get_grocery_items_for_expense(expense_id: int):
+    """
+    Get all grocery items for a specific expense
+    """
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Get grocery items for this expense
+        c.execute('''
+            SELECT id, item_name, date_purchased, is_consumed 
+            FROM grocery_items 
+            WHERE expense_id = ? 
+            ORDER BY item_name
+        ''', (expense_id,))
+        
+        items = c.fetchall()
+        conn.close()
+        
+        return {
+            "expense_id": expense_id,
+            "items": [{
+                "id": item[0],
+                "name": item[1],
+                "date_purchased": item[2],
+                "is_consumed": item[3]
+            } for item in items]
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get grocery items: {str(e)}"
+        )
+
+
+@router.get("/grocery-items")
+async def get_all_grocery_items():
+    """
+    Get all grocery items across all expenses
+    """
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Get all grocery items with expense details
+        c.execute('''
+            SELECT gi.id, gi.item_name, gi.date_purchased, gi.is_consumed, 
+                   gi.expense_id, e.amount, e.description
+            FROM grocery_items gi
+            JOIN expenses e ON gi.expense_id = e.id
+            ORDER BY gi.date_purchased DESC, gi.item_name
+        ''')
+        
+        items = c.fetchall()
+        conn.close()
+        
+        return {
+            "items": [{
+                "id": item[0],
+                "name": item[1],
+                "date_purchased": item[2],
+                "is_consumed": item[3],
+                "expense_id": item[4],
+                "expense_amount": item[5],
+                "expense_description": item[6]
+            } for item in items]
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get grocery items: {str(e)}"
+        )
+
+
+def parse_grocery_items_with_ai(description: str) -> List[str]:
+    """
+    Parse grocery items from description using AI
+    This is a placeholder function - will integrate with Gemma3n later
+    """
+    # Simple regex-based parsing for now
+    import re
+    
+    # Convert to lowercase for easier matching
+    text = description.lower()
+    
+    # Common grocery items patterns
+    grocery_keywords = [
+        'milk', 'eggs', 'bread', 'butter', 'cheese', 'yogurt', 'chicken', 'beef', 
+        'fish', 'salmon', 'tuna', 'rice', 'pasta', 'tomatoes', 'potatoes', 'onions',
+        'carrots', 'bananas', 'apples', 'oranges', 'lettuce', 'spinach', 'broccoli',
+        'peppers', 'cucumber', 'avocado', 'berries', 'strawberries', 'grapes',
+        'cereal', 'oatmeal', 'soup', 'sauce', 'oil', 'vinegar', 'salt', 'pepper',
+        'flour', 'sugar', 'coffee', 'tea', 'juice', 'water', 'soda', 'beer', 'wine'
+    ]
+    
+    # Find items that match our keywords
+    found_items = []
+    for keyword in grocery_keywords:
+        if keyword in text:
+            found_items.append(keyword)
+    
+    # If no specific items found, try to split by common separators
+    if not found_items:
+        # Remove common non-food words
+        text = re.sub(r'\b(grocery|store|shopping|trip|bought|got|purchased|at|the|and|some|from)\b', '', text)
+        # Split by common separators
+        potential_items = re.split(r'[,\s]+', text.strip())
+        # Filter out empty strings and very short words
+        found_items = [item for item in potential_items if len(item) > 2]
+    
+    # Remove duplicates and return
+    return list(set(found_items)) if found_items else ['groceries']
+
+
+@router.post("/parse-grocery-items")
+async def parse_grocery_items_only(request: dict):
+    """
+    Parse grocery items from a description without creating an expense
+    Used for the grocery flow preview step
+    """
+    try:
+        description = request.get('description', '')
+        if not description.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Description is required"
+            )
+        
+        # Parse grocery items using AI (placeholder for now)
+        parsed_items = parse_grocery_items_with_ai(description)
+        
+        return {
+            "items": parsed_items,
+            "description": description
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse grocery items: {str(e)}"
         ) 

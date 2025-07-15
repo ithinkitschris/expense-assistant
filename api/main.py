@@ -71,7 +71,9 @@ async def health_check():
     # Test database connection
     try:
         import sqlite3
-        conn = sqlite3.connect('expenses.db')
+        # Database is in the parent directory of the api folder
+        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'expenses.db')
+        conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM expenses")
         expense_count = c.fetchone()[0]
