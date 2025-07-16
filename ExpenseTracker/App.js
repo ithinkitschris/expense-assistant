@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, FlatList, Pressable, TextInput, Alert, ActivityIndicator, ScrollView, Animated, useColorScheme, Modal, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SymbolView } from 'expo-symbols';
 import { expenseAPI } from './services/api';
 import { createStyles, themes } from './styles';
@@ -9,7 +8,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import WheelAmountPicker from './components/WheelAmountPicker';
-import SwipeableExpenseItem from './components/SwipeableExpenseItem';
 import ExpenseItem from './components/ExpenseItem';
 
 export default function App() {
@@ -17,7 +15,6 @@ export default function App() {
   
   // Development Flags
   const ENABLE_SCROLL_ANIMATIONS = true;
-  const ENABLE_SWIPE_ACTIONS = false; // Enable/disable swipe to edit/delete functionality
   
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +55,8 @@ export default function App() {
   // Category navigation with horizontal scroll
   const categoryScrollRef = useRef(null);
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const isProgrammaticScroll = useRef(false);
+  const programmaticScrollTimeout = useRef(null);
   const { width: screenWidth } = Dimensions.get('window');
   
   // System theme detection
@@ -66,14 +65,7 @@ export default function App() {
   // Handle null/undefined cases and provide fallback
   const isDarkMode = systemColorScheme === 'dark';
 
-  // Debug logging
-  useEffect(() => {
-    console.log('System color scheme:', systemColorScheme);
-    console.log('Is dark mode:', isDarkMode);
-    console.log('Current theme being used:', isDarkMode ? 'dark' : 'light');
-    console.log('textSecondary color:', currentTheme.textSecondary);
-    console.log('categorySelectedText color:', currentTheme.categorySelectedText);
-  }, [systemColorScheme, isDarkMode, currentTheme]);
+
 
   // Update selected category when index changes
   useEffect(() => {
@@ -88,10 +80,21 @@ export default function App() {
     if (newIndex !== -1 && newIndex !== currentCategoryIndex) {
       setCurrentCategoryIndex(newIndex);
       if (categoryScrollRef.current) {
+        // Clear any existing timeout
+        if (programmaticScrollTimeout.current) {
+          clearTimeout(programmaticScrollTimeout.current);
+        }
+        
+        isProgrammaticScroll.current = true;
         categoryScrollRef.current.scrollToIndex({ 
           index: newIndex, 
           animated: true 
         });
+        // Clear the flag after animation completes
+        programmaticScrollTimeout.current = setTimeout(() => {
+          isProgrammaticScroll.current = false;
+          programmaticScrollTimeout.current = null;
+        }, 400);
       }
     }
   }, [selectedCategory, categories]);
@@ -167,40 +170,17 @@ export default function App() {
     return categoryTotals[selectedCategory] || 0;
   };
 
-  // Filter expenses based on selected category
-  const getFilteredExpenses = () => {
-    if (selectedCategory === 'All') {
-      return expenses;
-    }
-    return expenses.filter(expense => expense.category === selectedCategory);
-  };
-
-  // Get filtered expenses for a specific category (used during transitions)
-  const getFilteredExpensesForCategory = (category) => {
+  // Single filtering function that handles both cases
+  const getFilteredExpenses = (category = selectedCategory) => {
     if (category === 'All') {
       return expenses;
     }
     return expenses.filter(expense => expense.category === category);
   };
 
-  // Get filtered expenses grouped by day
-  const getFilteredExpensesByDay = () => {
-    const filteredExpenses = getFilteredExpenses();
-    const dayGroups = groupExpensesByDay(filteredExpenses);
-    
-    // Debug logging
-    console.log('Filtered expenses:', filteredExpenses.length);
-    console.log('Day groups:', dayGroups.length);
-    dayGroups.forEach((group, index) => {
-      console.log(`Day ${index + 1}: ${group.displayDate} - ${group.expenses.length} expenses`);
-    });
-    
-    return dayGroups;
-  };
-
-  // Get filtered expenses grouped by day for a specific category
-  const getFilteredExpensesByDayForCategory = (category) => {
-    const filteredExpenses = getFilteredExpensesForCategory(category);
+  // Single day grouping function that handles both cases  
+  const getFilteredExpensesByDay = (category = selectedCategory) => {
+    const filteredExpenses = getFilteredExpenses(category);
     return groupExpensesByDay(filteredExpenses);
   };
   // #endregion
@@ -650,26 +630,59 @@ export default function App() {
 
   // Handle horizontal category scroll
   const handleCategoryHorizontalScroll = (event) => {
-    const { contentOffset, layoutMeasurement } = event.nativeEvent;
-    const currentIndex = Math.round(contentOffset.x / layoutMeasurement.width);
-    
-    if (currentIndex !== currentCategoryIndex && currentIndex >= 0 && currentIndex < categories.length) {
-      setCurrentCategoryIndex(currentIndex);
+    // Ignore scroll events when programmatically scrolling
+    if (isProgrammaticScroll.current) {
+      return;
     }
-  };
-
-  // Handle horizontal category scroll start
-  const handleCategoryScrollStart = (event) => {
+    
     const { contentOffset, layoutMeasurement } = event.nativeEvent;
-    const currentIndex = Math.round(contentOffset.x / layoutMeasurement.width);
+    const scrollPosition = contentOffset.x;
+    const pageWidth = layoutMeasurement.width;
+    
+    // Use Math.round for consistent behavior in both directions
+    const currentIndex = Math.round(scrollPosition / pageWidth);
+    
+    console.log('Scroll event:', {
+      contentOffset: scrollPosition,
+      layoutMeasurement: pageWidth,
+      calculatedIndex: currentIndex,
+      currentCategoryIndex,
+      categories: categories.length
+    });
     
     if (currentIndex !== currentCategoryIndex && currentIndex >= 0 && currentIndex < categories.length) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      console.log('Updating category index from', currentCategoryIndex, 'to', currentIndex);
+      setCurrentCategoryIndex(currentIndex);
     }
   };
   // #endregion
 
   // #region RENDER FUNCTIONS
+
+  // Split complex render function into focused components
+  const renderExpensesList = (category) => {
+    const filteredExpenses = getFilteredExpenses(category);
+    
+    return (
+      <FlatList
+        data={filteredExpenses}
+        renderItem={({ item: expense }) => (
+          <ExpenseItem
+            item={expense}
+            styles={styles}
+            groceryItems={groceryItems}
+            onEdit={handleExpensePress}
+            onDelete={deleteExpense}
+          />
+        )}
+        keyExtractor={(expense) => `${category}-${expense.id}`}
+        style={[styles.categoryExpensesList, { marginTop: -20 }]}
+        contentContainerStyle={styles.categoryExpensesContent}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+      />
+    );
+  };
 
   const renderFixedDayHeader = () => {
     const dayGroups = getFilteredExpensesByDay();
@@ -727,22 +740,21 @@ export default function App() {
     );
   };
 
-  const renderDayViewport = ({ item: dayData }) => {
+  const renderSingleDay = ({ item: dayData }) => {
     const { height } = Dimensions.get('window');
     
     return (
       <View style={[styles.dayContainer, { height }]}>
-        {/* Swipeable Expenses List */}
+        {/* Expenses List */}
         <FlatList
           data={dayData.expenses}
           renderItem={({ item: expense }) => (
-            <SwipeableExpenseItem
+            <ExpenseItem
               item={expense}
               styles={styles}
               groceryItems={groceryItems}
               onEdit={handleExpensePress}
               onDelete={deleteExpense}
-              enableSwipeActions={ENABLE_SWIPE_ACTIONS}
             />
           )}
           keyExtractor={(expense) => expense.id}
@@ -755,29 +767,34 @@ export default function App() {
     );
   };
 
-  const renderExpensesContentForCategory = (category, containerStyle = {}) => {
+  const renderDayPager = (category) => {
     const { height } = Dimensions.get('window');
-    const dayGroups = getFilteredExpensesByDayForCategory(category);
+    const dayGroups = getFilteredExpensesByDay(category);
     
-    if (dayGroups.length === 0) {
-      return (
-        <View style={[styles.emptyContainer, { height }, containerStyle]}>
-          <Text style={styles.emptyText}>No expenses in {category} category yet!</Text>
-        </View>
-      );
-    }
-
+    const handleDayPagerScroll = (event) => {
+      // Handle header scroll animations only for 'All' category
+      if (category === 'All') {
+        handleHeaderScroll(event);
+      }
+      
+      // Update day header in real-time during scroll
+      const index = Math.round(event.nativeEvent.contentOffset.y / height);
+      if (dayGroups[index]) {
+        setSelectedDay(dayGroups[index].date);
+      }
+    };
+    
     return (
       <FlatList
         data={dayGroups}
-        renderItem={renderDayViewport}
+        renderItem={renderSingleDay}
         keyExtractor={(item) => `${category}-${item.date}`}
-        style={[styles.daysList, containerStyle]}
+        style={styles.daysList}
         pagingEnabled={true}
         showsVerticalScrollIndicator={false}
         snapToAlignment="start"
         decelerationRate="fast"
-        onScroll={handleHeaderScroll}
+        onScroll={handleDayPagerScroll}
         scrollEventThrottle={16}
         bounces={false}
         getItemLayout={(data, index) => ({
@@ -793,13 +810,32 @@ export default function App() {
     );
   };
 
+  // Main function that determines the appropriate view layout for a category
+  const renderCategoryView = (category, containerStyle = {}) => {
+    const { height } = Dimensions.get('window');
+    const filteredExpenses = getFilteredExpenses(category);
+    
+    if (filteredExpenses.length === 0) {
+      return (
+        <View style={[styles.emptyContainer, { height }, containerStyle]}>
+          <Text style={styles.emptyText}>No expenses in {category} category yet!</Text>
+        </View>
+      );
+    }
+
+    // Use day pager for "All" category, simple list for specific categories
+    return category === 'All' 
+      ? renderDayPager(category)
+      : renderExpensesList(category);
+  };
+
   // Render a full-screen page for each category
   const renderCategoryPage = ({ item: category }) => {
     const { height } = Dimensions.get('window');
     
     return (
       <View style={{ width: screenWidth, height }}>
-        {renderExpensesContentForCategory(category)}
+        {renderCategoryView(category)}
       </View>
     );
   };
@@ -979,9 +1015,7 @@ export default function App() {
         
         {/* Calendar View */}
         {/* {renderCalendar()} */}
-        
 
-        
         {/* Horizontal Category Pages */}
         {isLoadingExpenses ? (
           <View style={styles.loadingContainer}>
@@ -995,9 +1029,10 @@ export default function App() {
             renderItem={renderCategoryPage}
             keyExtractor={(category) => category}
             horizontal
-            pagingEnabled
+            pagingEnabled={true}
             showsHorizontalScrollIndicator={false}
-            onScrollBeginDrag={handleCategoryScrollStart}
+            onScroll={handleCategoryHorizontalScroll}
+            onScrollBeginDrag={handleCategoryHorizontalScroll}
             onMomentumScrollEnd={handleCategoryHorizontalScroll}
             scrollEventThrottle={16}
             decelerationRate="fast"
@@ -1092,7 +1127,7 @@ export default function App() {
             </BlurView>
           </Pressable>
 
-          {/* Groceries Option */}
+          {/* Pantry Option */}
           <Pressable
             style={styles.viewOptionContainer}
             onPress={() => {
@@ -1109,7 +1144,7 @@ export default function App() {
               ]}
             >
               <SymbolView
-                name="cart.fill"
+                name="basket.fill"
                 size={34}
                 type="monochrome"
                 tintColor={activeTab === 'grocery' ? currentTheme.categorySelectedText : currentTheme.text}
@@ -1120,7 +1155,7 @@ export default function App() {
                   styles.viewOptionText,
                   activeTab === 'grocery' && styles.viewOptionTextSelected
                 ]}>
-                  Groceries
+                  Pantry
                 </Text>
                 {/* <Text style={[
                   styles.viewOptionAmount,
@@ -1139,18 +1174,17 @@ export default function App() {
   // Helper function to get SF Symbol for category
   const getCategoryIcon = (category) => {
     const iconMap = {
-      'All': 'chart.bar.fill',
       'amazon': 'shippingbox.fill',
-      'transportation': 'car.fill',
+      'transportation': 'tram.fill',
       'groceries': 'cart.fill',
-      'entertainment': 'tv.fill',
+      'entertainment': 'gamecontroller.fill',
       'fashion': 'tshirt.fill',
       'travel': 'airplane',
       'food': 'fork.knife',
       'monthly': 'calendar',
-      'other': 'ellipsis.circle.fill'
+      'subscriptions': 'dollarsign.circle.fill',
     };
-    return iconMap[category] || 'dollarsign.circle.fill';
+    return iconMap[category] || 'chart.bar.fill';
   };
 
   const renderExpenseCategorySelector = () => (
@@ -1199,7 +1233,7 @@ export default function App() {
                     name={getCategoryIcon(category)}
                     size={22}
                     type="outline"
-                    tintColor="#999999"
+                    tintColor={currentTheme.categoryIconColor}
                     fallback={null}
                   />
                 )}
@@ -1485,68 +1519,69 @@ export default function App() {
   // #region MAIN RENDER
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        
-        {/* Fixed Day Header - Render before gradients so it appears above them */}
-        {!isLoadingExpenses && activeTab === 'finance' && getFilteredExpensesByDay().length > 0 && 
-          renderFixedDayHeader()
-        }
-        
-        {/* Top Gradient Overlay */}
+    <View style={styles.container}>
+      
+             {/* Fixed Day Header - Only show for "All" category (day-based view) */}
+       {!isLoadingExpenses && activeTab === 'finance' && selectedCategory === 'All' && getFilteredExpensesByDay().length > 0 && 
+         renderFixedDayHeader()
+       }
+      
+      {/* Top Gradient Overlay */}
+      <LinearGradient
+        colors={[...currentTheme.topGradient].reverse()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[
+          styles.topGradient,
+          selectedCategory !== 'All' && { marginTop: -120 }
+        ]}
+        pointerEvents="none"
+      />
+
+      {/* Bottom Gradient Overlay */}
+      <Animated.View
+        style={[
+          styles.bottomGradient,
+          { 
+            opacity: bottomGradientOpacity,
+            transform: [{ translateY: bottomGradientTranslateY }]
+          }
+        ]}
+        pointerEvents="none"
+      >
         <LinearGradient
-          colors={[...currentTheme.topGradient].reverse()}
+          colors={currentTheme.bottomGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={styles.topGradient}
-          pointerEvents="none"
+          style={{ flex: 1 }}
         />
+      </Animated.View>
+      
+      {/* Tab Header */}
+      {/* {renderTabHeader()} */}
+      
+      {/* Content based on active tab */}
+      {activeTab === 'finance' ? renderExpensesView() : renderGroceryView()}
 
-        {/* Bottom Gradient Overlay */}
-        <Animated.View
-          style={[
-            styles.bottomGradient,
-            { 
-              opacity: bottomGradientOpacity,
-              transform: [{ translateY: bottomGradientTranslateY }]
-            }
-          ]}
-          pointerEvents="none"
-        >
-          <LinearGradient
-            colors={currentTheme.bottomGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ flex: 1 }}
-          />
-        </Animated.View>
-        
-        {/* Tab Header */}
-        {/* {renderTabHeader()} */}
-        
-        {/* Content based on active tab */}
-        {activeTab === 'finance' ? renderExpensesView() : renderGroceryView()}
+      {/* Global View Selector */}
+      <Animated.View 
+        style={[
+          {
+            transform: [{ translateY: viewSelectorTranslateY }]
+          }
+        ]}
+      >
+        {renderViewSelector()}
+      </Animated.View>
 
-        {/* Global View Selector */}
-        <Animated.View 
-          style={[
-            {
-              transform: [{ translateY: viewSelectorTranslateY }]
-            }
-          ]}
-        >
-          {renderViewSelector()}
-        </Animated.View>
+      {/* Add Modal */}
+      {renderAddModal()}
 
-        {/* Add Modal */}
-        {renderAddModal()}
+      {/* Edit Modal */}
+      {renderEditModal()}
 
-        {/* Edit Modal */}
-        {renderEditModal()}
-
-        <StatusBar style={currentTheme.statusBarStyle} />
-      </View>
-    </GestureHandlerRootView>
+      <StatusBar style={currentTheme.statusBarStyle} />
+    </View>
   );
   // #endregion
 }

@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 export const themes = {
   light: {
     background: '#ffffff',
-    expenseCardBackground: 'rgba(255,255,255,0.8)',
+    expenseCardBackground: 'rgba(255,255,255,0.08)',
     text: '#000000',
     textInvert: 'white',
     textSecondary: '#666666',
@@ -16,6 +16,7 @@ export const themes = {
     categoryBackground: 'rgba(255,255,255,0.85)',
     categorySelected: 'rgba(0,0,0,0.1)',
     categorySelectedText: '#0091ff',
+    categoryIconColor: '#999999',
     addButtonBackground: 'rgba(0,0,0,0.85)',
     gradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)'],
     topGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.98)'],
@@ -26,7 +27,7 @@ export const themes = {
   },
   dark: {
     background: '#000000',
-    expenseCardBackground: 'rgba(255,255,255,0.08)',
+    expenseCardBackground: 'rgba(255,255,255,0.07)',
     text: '#ffffff',
     textInvert: 'black',
     textSecondary: 'rgba(255,255,255,0.6)',
@@ -38,6 +39,7 @@ export const themes = {
     categoryBackground: 'rgba(255,255,255,0.03)',
     categorySelected: 'rgba(255,255,255,0.25)',
     categorySelectedText: '#0091ff',
+    categoryIconColor: '#888888',
     addButtonBackground: 'rgba(255,255,255,0.05)',
     gradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.9)'],
     topGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)' , 'rgba(0,0,0,0.9)'],
@@ -139,6 +141,17 @@ export const createStyles = (theme) => StyleSheet.create({
     paddingBottom: 20,
   },
   
+  // Category-specific expense list styles
+  categoryExpensesList: {
+    flex: 1,
+    paddingTop: 120, // Space for category selector
+  },
+  
+  categoryExpensesContent: {
+    paddingBottom: 150, // Space for bottom UI elements
+    paddingTop: 20,
+  },
+  
   dayHeader: {
     position: 'absolute',
     top: 110, // Below calendar area
@@ -187,8 +200,8 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCategorySelector: {
     position: 'absolute',
     top: 60,
-    left: 10,
-    right: 10,
+    left: 24,
+    right: 24,
     zIndex: 1,
     backgroundColor: 'rgba(255,255,255,0)',
     overflow: 'hidden',
@@ -274,7 +287,7 @@ export const createStyles = (theme) => StyleSheet.create({
     position: 'absolute',
     bottom: 27,
     left: 15,
-    right: 245,
+    right: 250,
     zIndex: 2,
     overflow: 'hidden',
     borderRadius: 20,
@@ -317,7 +330,7 @@ export const createStyles = (theme) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 2,
     paddingBottom: 7,
-    minWidth: 60,
+    minWidth: 80,
     alignItems: 'center',
     overflow: 'hidden',
   },
@@ -352,54 +365,14 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   // #endregion
 
-  // #region SWIPEABLE EXPENSE ITEM
-  swipeableContainer: {
-    marginBottom: 12,
-    position: 'relative',
-  },
-
-  actionButtonsContainer: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  actionButton: {
-    width: 80,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  editButton: {
-    backgroundColor: theme.appleBlue,
-  },
-
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-  },
-
-  actionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-
-  swipeableContent: {
-    backgroundColor: theme.background,
-  },
-  // #endregion
-
   // #region EXPENSE ITEMS
   expenseItem: {
     backgroundColor: theme.expenseCardBackground,
     marginHorizontal: 10,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
-    borderRadius: 30,
+    borderRadius: 35,
     paddingHorizontal: 20,
     paddingTop: 15,
     paddingBottom: 25,
@@ -413,16 +386,8 @@ export const createStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'start',
+    marginBottom: 15,
   },
-
-  expenseContentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    gap: 15,
-  },
-
-
 
   category: {
     alignSelf: 'center',
@@ -431,7 +396,6 @@ export const createStyles = (theme) => StyleSheet.create({
     gap: 6,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
-    marginBottom: 15,
     marginLeft: 0,
     opacity: 0.4,
   },
@@ -453,13 +417,28 @@ export const createStyles = (theme) => StyleSheet.create({
     alignSelf: 'flex-start',
     opacity: 1,
   },
+
+  menuButton: {
+    padding: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0)',
+    opacity: 0.5,
+    borderWidth: 0,
+    borderColor: theme.glassBorderColor,
+  },
+
+  expenseContentContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
   
   expenseTitle: {
     fontSize: 48,
     fontWeight: '500',
-    lineHeight: 44,
+    lineHeight: 48,
     color: theme.text,
-    paddingTop: 5,
     letterSpacing: -0.1,
     flex: 4,
   },
@@ -469,7 +448,7 @@ export const createStyles = (theme) => StyleSheet.create({
     fontWeight: '300',
     color: theme.text,
     textAlign: 'right',
-    letterSpacing: -0.8,
+    letterSpacing: -0.3,
     flex: 1,
   },
 
@@ -500,8 +479,8 @@ export const createStyles = (theme) => StyleSheet.create({
   // #region ADD BUTTON
   addButtonContainer: {
     position: 'absolute',
-    bottom: 25,
-    right: 10,
+    bottom: 28,
+    right: 14,
     zIndex: 1,
     elevation: 5,
     margin: 2,
