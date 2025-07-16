@@ -1,55 +1,5 @@
 import { StyleSheet } from 'react-native';
 
-// Theme definitions
-export const themes = {
-  light: {
-    background: '#ffffff',
-    expenseCardBackground: 'rgba(255,255,255,0.08)',
-    text: '#000000',
-    textInvert: 'white',
-    textSecondary: '#666666',
-    textTertiary: '#999999',
-    borderColor: 'rgba(0,0,0,0.5)',
-    borderColorLighter: 'rgba(0,0,0,0.1)',
-    glassBorderColor: 'white',
-    headerBlur: 'rgba(0,0,0,0.75)',
-    categoryBackground: 'rgba(255,255,255,0.85)',
-    categorySelected: 'rgba(0,0,0,0.1)',
-    categorySelectedText: '#0091ff',
-    categoryIconColor: '#999999',
-    addButtonBackground: 'rgba(0,0,0,0.85)',
-    gradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)'],
-    topGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.98)'],
-    bottomGradient: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)'],
-    blurTint: 'light',
-    statusBarStyle: 'dark',
-    appleBlue: '#007AFF',
-  },
-  dark: {
-    background: '#000000',
-    expenseCardBackground: 'rgba(255,255,255,0.07)',
-    text: '#ffffff',
-    textInvert: 'black',
-    textSecondary: 'rgba(255,255,255,0.6)',
-    textTertiary: 'rgba(255,255,255,0.3)',
-    borderColor: 'rgba(255,255,255,0.5)',
-    borderColorLighter: 'rgba(255,255,255,0.1)',
-    glassBorderColor: 'rgba(255,255,255,0.05)',
-    headerBlur: 'rgba(255,255,255,0.15)',
-    categoryBackground: 'rgba(255,255,255,0.03)',
-    categorySelected: 'rgba(255,255,255,0.25)',
-    categorySelectedText: '#0091ff',
-    categoryIconColor: '#888888',
-    addButtonBackground: 'rgba(255,255,255,0.05)',
-    gradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.9)'],
-    topGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)' , 'rgba(0,0,0,0.9)'],
-    bottomGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)'],
-    blurTint: 'dark',
-    statusBarStyle: 'light',
-    appleBlue: '#007AFF',
-  }
-};
-
 export const createStyles = (theme) => StyleSheet.create({
 
   // #region BASE STYLES
@@ -66,6 +16,10 @@ export const createStyles = (theme) => StyleSheet.create({
     color: theme.textTertiary,
   },
   
+  categoryIconColor: {
+    color: theme.categoryIconColor,
+  },
+  
   // Common button styles
   buttonBase: {
     borderRadius: 50,
@@ -79,7 +33,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   buttonSecondary: {
-    backgroundColor: theme.categoryBackground,
+    backgroundColor: theme.glassBackground,
     borderWidth: 1,
     borderColor: theme.borderColorLighter,
   },
@@ -96,14 +50,7 @@ export const createStyles = (theme) => StyleSheet.create({
     borderColor: theme.borderColorLighter,
   },
   
-  // Common shadow styles
-  shadowBase: {
-    shadowColor: theme.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+
   // #endregion
 
   // #region CONTAINERS
@@ -175,7 +122,7 @@ export const createStyles = (theme) => StyleSheet.create({
     color: theme.text,
     textAlign: 'left',
     marginBottom: 1,
-    letterSpacing: 0,
+    letterSpacing: -0.2,
   },
   
   daySubtitle: {
@@ -186,13 +133,7 @@ export const createStyles = (theme) => StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.3,
   },
-  
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
+
   // #endregion
 
   // #region EXPENSE CATEGORY SELECTOR
@@ -200,26 +141,23 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCategorySelector: {
     position: 'absolute',
     top: 60,
-    left: 24,
-    right: 24,
+    left: 28,
+    right: 28,
     zIndex: 1,
-    backgroundColor: 'rgba(255,255,255,0)',
-    overflow: 'hidden',
-    borderRadius: 20,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    backgroundColor: theme.glassBackground,
+    borderRadius: 35,
+    borderWidth: 1,
+    borderColor: theme.glassBorderColor,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
     elevation: 5,
   },
   
   expenseCategorySelectorBackground: {
     flex: 1,
-    backgroundColor: theme.categoryBackground,
     borderRadius: 35,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    
     elevation: 3,
     overflow: 'hidden',
   },
@@ -271,13 +209,13 @@ export const createStyles = (theme) => StyleSheet.create({
   
   expenseCategoryOptionTextSelected: {
     fontWeight: '600',
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
   },
   
   expenseCategoryOptionAmount: {
     fontSize: 15,
     fontWeight: '500',
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
     letterSpacing: -0.5,
   },
   // #endregion
@@ -286,24 +224,24 @@ export const createStyles = (theme) => StyleSheet.create({
   viewSelectorWrapper: {
     position: 'absolute',
     bottom: 27,
-    left: 15,
-    right: 250,
-    zIndex: 2,
-    overflow: 'hidden',
-    borderRadius: 20,
+    left: 20,
+    right: 245,
+    zIndex: 5,
+
+    borderRadius: 35,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+    elevation: 3,
   },
   
   viewSelectorBackground: {
     flex: 1,
-    backgroundColor: theme.categoryBackground,
+    backgroundColor: theme.glassBackground,
     borderRadius: 35,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: theme.glassBorderColor,
     overflow: 'hidden',
   },
   
@@ -349,7 +287,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   viewOptionTextSelected: {
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
   },
   
   viewOptionAmount: {
@@ -360,62 +298,65 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   viewOptionAmountSelected: {
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
     opacity: 0.8,
   },
   // #endregion
 
   // #region EXPENSE ITEMS
-  expenseItem: {
+  expenseCard: {
     backgroundColor: theme.expenseCardBackground,
-    marginHorizontal: 10,
-    marginBottom: 15,
+    marginHorizontal: 15,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
     borderRadius: 35,
-    paddingHorizontal: 20,
-    paddingTop: 15,
+    paddingHorizontal: 25,
+    paddingTop: 10,
     paddingBottom: 25,
-    shadowColor: theme.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
   },
   
   expenseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'start',
-    marginBottom: 15,
+    marginBottom: 10,
   },
 
   category: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
-    marginLeft: 0,
-    opacity: 0.4,
+    marginLeft: -1,
+    opacity: 1,
   },
 
   categoryText: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.textSecondary,
     fontWeight: '500',
     letterSpacing: -0.2,
     textTransform: 'capitalize',
+    opacity: 0.5,
   },
   
   date: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
-    color: theme.textTertiary,
-    marginLeft: 4,
-    letterSpacing: -0.5,
-    alignSelf: 'flex-start',
-    opacity: 1,
+    color: theme.textSecondary,
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+    marginTop: 2.3,
+    marginLeft: -2,
+    opacity: 0.5,
   },
 
   menuButton: {
@@ -435,21 +376,25 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   expenseTitle: {
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: '500',
-    lineHeight: 48,
+    lineHeight: 42,
     color: theme.text,
     letterSpacing: -0.1,
+    paddingTop: 2,
     flex: 4,
   },
   
   amount: {
-    fontSize: 41,
+    fontSize: 38,
     fontWeight: '300',
+    lineHeight: 48,
     color: theme.text,
     textAlign: 'right',
-    letterSpacing: -0.3,
+    paddingTop: 2,
+    letterSpacing: -0.8,
     flex: 1,
+    opacity: 1,
   },
 
   groceryItemsContainer: {
@@ -480,20 +425,26 @@ export const createStyles = (theme) => StyleSheet.create({
   addButtonContainer: {
     position: 'absolute',
     bottom: 28,
-    right: 14,
+    right: 19,
     zIndex: 1,
     elevation: 5,
     margin: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 50,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+    elevation: 3,
   },
   
   addButton: {
     width: 62,
     height: 62,
     borderRadius: 50,
-    borderWidth: 0,
-    borderColor: 'rgba(255,255,255,0.2)',
     overflow: 'hidden',
-    backgroundColor: theme.addButtonBackground,
+    backgroundColor: theme.glassBackground,
   },
   
   blurContainer: {
@@ -529,13 +480,33 @@ export const createStyles = (theme) => StyleSheet.create({
     fontSize: 16,
     color: theme.textSecondary,
   },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 0,
+  },
   
   emptyText: {
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 28,
+    color: theme.text,
+    marginTop: 10,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+
+  emptySubtitle: {
+    textAlign: 'center',
+    fontSize: 14,
     color: theme.textSecondary,
-    marginTop: 50,
+    marginTop: 4,
     paddingHorizontal: 20,
+    lineHeight: 20,
+    fontWeight: '400',
+    letterSpacing: -0.1,
   },
   // #endregion
 
@@ -554,7 +525,7 @@ export const createStyles = (theme) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 160,
+    height: 80,
     zIndex: 0,
   },
   // #endregion
@@ -672,7 +643,7 @@ export const createStyles = (theme) => StyleSheet.create({
   modalCategoryOption: {
     paddingHorizontal: 22,
     paddingVertical: 10,
-    backgroundColor: theme.categoryBackground,
+    backgroundColor: theme.glassBackground,
     borderRadius: 50,
     marginRight: 10,
     borderWidth: 1,
@@ -691,7 +662,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   modalCategoryTextSelected: {
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
   },
 
   // Grocery confirmation modal styles
@@ -742,7 +713,7 @@ export const createStyles = (theme) => StyleSheet.create({
     marginHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.categoryBackground,
+    backgroundColor: theme.glassBackground,
     borderWidth: 1,
     borderColor: theme.borderColorLighter,
   },
@@ -758,7 +729,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   tabButtonTextActive: {
-    color: theme.categorySelectedText,
+    color: theme.appleBlue,
   },
   // #endregion
 
@@ -776,14 +747,14 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   calendarBackground: {
-    backgroundColor: theme.categoryBackground,
+    backgroundColor: theme.glassBackground,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: theme.borderColorLighter,
-    shadowColor: theme.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
     elevation: 3,
     overflow: 'hidden',
   },
@@ -847,40 +818,63 @@ export const createStyles = (theme) => StyleSheet.create({
   // #endregion
 
   // #region GROCERY LIST
+  groceryHeader: {
+    position: 'absolute',
+    top: 65,
+    left: 30,
+    zIndex: 1,
+  },
+
+  groceryHeaderTitle: {
+    fontSize: 46,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.2,
+  },
+
+  groceryHeaderSubtitle: {
+    fontSize: 16,
+    color: theme.textSecondary,
+    fontWeight: '400',
+  },
+
   groceryList: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 220, // Account for floating header
   },
 
   groceryListContent: {
-    paddingBottom: 100,
+    paddingBottom: 0,
   },
 
   groceryListItem: {
-    paddingVertical: 15,
+    paddingVertical: 30,
     paddingHorizontal: 20,
-    backgroundColor: theme.categoryBackground,
-    borderRadius: 15,
+    backgroundColor: theme.glassBackground,
+    borderRadius: 35,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: theme.borderColorLighter,
+    borderColor: theme.glassBorderColor,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
 
   groceryListItemName: {
-    fontSize: 16,
+    fontSize: 32,
     fontWeight: '500',
+    lineHeight: 32,
     color: theme.text,
-    flex: 1,
+    flex: 5,
   },
 
   groceryListItemDate: {
     fontSize: 12,
     color: theme.textSecondary,
     marginLeft: 10,
+    textAlign: 'right',
+    flex: 1,
   },
   // #endregion
 }); 

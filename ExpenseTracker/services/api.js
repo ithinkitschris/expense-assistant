@@ -143,6 +143,21 @@ export const expenseAPI = {
     }
   },
 
+  // Add grocery item directly to pantry
+  addGroceryItemDirectly: async (itemName) => {
+    try {
+      console.log('🛒 Adding grocery item directly:', itemName);
+      console.log('📡 API URL:', `${API_BASE_URL}/grocery-items/add`);
+      const response = await api.post('/grocery-items/add', { name: itemName });
+      console.log('✅ Add Item Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.log('❌ Add Item Error:', error);
+      console.log('❌ Error response:', error.response?.data);
+      throw new Error(error.response?.data?.detail || 'Failed to add grocery item');
+    }
+  },
+
   // Delete an expense
   deleteExpense: async (expenseId) => {
     try {

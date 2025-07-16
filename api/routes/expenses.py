@@ -560,4 +560,59 @@ async def parse_grocery_items_only(request: dict):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to parse grocery items: {str(e)}"
+        )
+
+
+@router.post("/grocery-items/add")
+async def add_grocery_item_directly(request: dict):
+    """
+    Add a grocery item directly to the pantry without creating an expense
+    """
+    try:
+        item_name = request.get('name', '').strip()
+        if not item_name:
+            raise HTTPException(
+                status_code=400,
+                detail="Item name is required"
+            )
+        
+        # Create a dummy expense for the grocery item
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Insert a minimal expense record (amount 0, category 'groceries')
+        c.execute('''
+            INSERT INTO expenses (amount, category, description, timestamp)
+            VALUES (?, ?, ?, ?)
+        ''', (0, 'groceries', f'Added {item_name} to pantry', datetime.now().isoformat()))
+        
+        expense_id = c.lastrowid
+        
+        # Insert the grocery item
+        c.execute('''
+            INSERT INTO grocery_items (expense_id, item_name, date_purchased, is_consumed)
+            VALUES (?, ?, ?, ?)
+        ''', (expense_id, item_name, datetime.now().isoformat(), False))
+        
+        item_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return {
+            "message": f"Added {item_name} to pantry",
+            "item": {
+                "id": item_id,
+                "name": item_name,
+                "expense_id": expense_id,
+                "date_purchased": datetime.now().isoformat(),
+                "is_consumed": False
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to add grocery item: {str(e)}"
         ) 
