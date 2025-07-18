@@ -44,7 +44,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   cardBase: {
-    backgroundColor: theme.expenseCardBackground,
+    backgroundColor: theme.itemCardBackground,
     borderRadius: 35,
     borderWidth: 1,
     borderColor: theme.borderColorLighter,
@@ -305,7 +305,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
   // #region EXPENSE ITEMS
   expenseCard: {
-    backgroundColor: theme.expenseCardBackground,
+    backgroundColor: theme.itemCardBackground,
     marginHorizontal: 15,
     marginBottom: 8,
     borderWidth: 1,
@@ -378,7 +378,7 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseTitle: {
     fontSize: 44,
     fontWeight: '500',
-    lineHeight: 42,
+    lineHeight: 44 ,
     color: theme.text,
     letterSpacing: -0.1,
     paddingTop: 2,
@@ -687,6 +687,91 @@ export const createStyles = (theme) => StyleSheet.create({
     fontWeight: '400',
     opacity: 0.5,
   },
+
+  // Grocery item editing styles
+  modalLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  addItemContainer: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+
+  addItemButton: {
+    backgroundColor: theme.appleBlue,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+
+  addItemButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
+  groceryItemDisplayContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  groceryItemActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  groceryItemActionButton: {
+    padding: 4,
+  },
+
+  groceryItemActionButtonText: {
+    fontSize: 16,
+  },
+
+  groceryItemEditContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  groceryItemEditInput: {
+    flex: 1,
+    fontSize: 18,
+    color: theme.text,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: theme.glassBackground,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.borderColorLighter,
+  },
+
+  groceryItemEditButtons: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+
+  groceryItemEditButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.glassBackground,
+    borderWidth: 1,
+    borderColor: theme.borderColorLighter,
+  },
+
+  groceryItemEditButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+  },
   // #endregion
 
   // #region TAB HEADER
@@ -841,40 +926,28 @@ export const createStyles = (theme) => StyleSheet.create({
   groceryList: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 220, // Account for floating header
+    paddingTop: 150, // Account for floating header
   },
 
   groceryListContent: {
-    paddingBottom: 0,
+    paddingBottom: 100,
   },
 
-  groceryListItem: {
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    backgroundColor: theme.glassBackground,
-    borderRadius: 35,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: theme.glassBorderColor,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  pantrySection: {
+    marginBottom: 50,
   },
 
-  groceryListItemName: {
+  pantrySectionTitle: {
     fontSize: 32,
     fontWeight: '500',
-    lineHeight: 32,
-    color: theme.text,
-    flex: 5,
+    color: theme.textSecondary,
+    marginBottom: 15,
+    marginLeft: 10,
+    letterSpacing: 0,
   },
 
-  groceryListItemDate: {
-    fontSize: 12,
-    color: theme.textSecondary,
-    marginLeft: 10,
-    textAlign: 'right',
-    flex: 1,
+  consumedItemName: {
+    opacity: 0.2,
   },
   // #endregion
 }); 

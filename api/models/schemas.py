@@ -140,3 +140,13 @@ class SuccessResponse(BaseModel):
                 "data": {"id": 123}
             }
         } 
+
+
+class PantryItemResponse(BaseModel):
+    id: int
+    name: str
+    quantity: float = Field(default=1, description="Item quantity")
+    unit: str = Field(default="pieces", description="Measurement unit")
+    created_at: Optional[str]
+    is_consumed: bool
+    grocery_type: str = Field(default="other", description="Food category type") 

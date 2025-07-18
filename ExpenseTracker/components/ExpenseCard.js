@@ -3,6 +3,12 @@ import { View, Text, Pressable, TouchableOpacity, ActionSheetIOS, Platform, Aler
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 
+// Helper function to capitalize grocery item names
+const capitalizeGroceryName = (name) => {
+  if (!name) return '';
+  return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+};
+
 const ExpenseCard = ({ 
   item, 
   styles, 
@@ -244,7 +250,7 @@ const ExpenseCardWithDate = ({
         <View style={styles.groceryItemsContainer}>
           <Text style={styles.groceryItemsHeader}>Items:</Text>
           <Text style={styles.groceryItems}>
-            {item.groceryItems.map(groceryItem => groceryItem.name).join(', ')}
+            {item.groceryItems.map(groceryItem => capitalizeGroceryName(groceryItem.name)).join(', ')}
           </Text>
         </View>
       )}

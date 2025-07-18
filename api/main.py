@@ -7,6 +7,7 @@ This connects your existing CLI functionality to a web API.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from datetime import datetime
 import sys
 import os
@@ -16,14 +17,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import route modules (we'll create these next)
 from api.routes import expenses, summary
+from api.routes.pantry import pantry_router
 
 # Create the FastAPI application
 app = FastAPI(
-    title="Expense Tracker API",
-    description="API for managing personal expenses with AI-powered parsing and analytics",
-    version="1.0.0",
-    docs_url="/docs",  # Interactive API documentation
-    redoc_url="/redoc"  # Alternative API documentation
+    title="Expense Assistant API",
+    description="API for managing expenses, parsing receipts, and getting summaries.",
+    version="1.0.0"
 )
 
 # Configure CORS to allow React Native to connect
@@ -41,26 +41,14 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Include route modules
-app.include_router(expenses.router, prefix="/api/v1", tags=["expenses"])
-app.include_router(summary.router, prefix="/api/v1", tags=["summary"])
-
+# Include your API routers
+app.include_router(expenses.router, prefix="/api/v1", tags=["Expenses"])
+app.include_router(summary.router, prefix="/api/v1", tags=["Summary"])
+app.include_router(pantry_router, prefix="/api/v1", tags=["Pantry"])
 
 @app.get("/")
 async def root():
-    """
-    Health check endpoint - confirms the API is running
-    """
-    return {
-        "message": "Expense Tracker API is running!",
-        "version": "1.0.0",
-        "timestamp": datetime.now().isoformat(),
-        "endpoints": {
-            "expenses": "/api/v1/expenses",
-            "summary": "/api/v1/summary",
-            "docs": "/docs"
-        }
-    }
+    return {"message": "Welcome to the Expense Assistant API!"}
 
 
 @app.get("/health")
@@ -102,9 +90,9 @@ async def not_found_handler(request, exc):
     """
     Custom 404 handler
     """
-    return HTTPException(
+    return JSONResponse(
         status_code=404,
-        detail={
+        content={
             "error": "Endpoint not found",
             "available_endpoints": [
                 "/api/v1/expenses",

@@ -20,15 +20,15 @@ import os
 # Import your existing CLI functions
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from add_expense import add_expense
+from api.dependencies import get_db
+from api.utils.parsing import parse_grocery_items_and_categories
 
 # Define get_expense_by_id locally to avoid circular import
-def get_expense_by_id(expense_id: int):
+def get_expense_by_id(expense_id: int, db: sqlite3.Connection):
     """Get expense details by ID"""
-    conn = get_db_connection()
-    c = conn.cursor()
+    c = db.cursor()
     c.execute("SELECT id, amount, category, description, timestamp FROM expenses WHERE id = ?", (expense_id,))
     expense = c.fetchone()
-    conn.close()
     return expense
 
 # Import our API schemas
@@ -39,13 +39,6 @@ from api.models.schemas import (
 
 # Create the router
 router = APIRouter()
-
-
-def get_db_connection():
-    """Get database connection"""
-    # Use absolute path to avoid any working directory issues
-    db_path = '/Users/chris/Documents/GitHub/expense-assistant/expenses.db'
-    return sqlite3.connect(db_path)
 
 
 def expense_row_to_dict(row):
@@ -89,13 +82,12 @@ async def add_expense_natural_language(expense_input: NaturalLanguageExpense):
 
 
 @router.post("/expenses/", response_model=ExpenseResponse)
-async def create_expense_structured(expense: ExpenseCreate):
+async def create_expense_structured(expense: ExpenseCreate, db: sqlite3.Connection = Depends(get_db)):
     """
     Add expense using structured data (form input)
     """
     try:
-        conn = get_db_connection()
-        c = conn.cursor()
+        c = db.cursor()
         
         # Use current time if no timestamp provided
         timestamp = expense.timestamp or datetime.now()
@@ -107,8 +99,7 @@ async def create_expense_structured(expense: ExpenseCreate):
         ''', (expense.amount, expense.category.value, expense.description, timestamp.isoformat()))
         
         expense_id = c.lastrowid
-        conn.commit()
-        conn.close()
+        db.commit()
         
         # Return the created expense
         if expense_id is None:
@@ -133,15 +124,15 @@ async def list_expenses(
     limit: int = Query(50, ge=1, le=1000, description="Number of expenses to return"),
     offset: int = Query(0, ge=0, description="Number of expenses to skip"),
     category: Optional[str] = Query(None, description="Filter by category"),
-    days: Optional[int] = Query(None, ge=1, description="Filter by days back")
+    days: Optional[int] = Query(None, ge=1, description="Filter by days back"),
+    db: sqlite3.Connection = Depends(get_db)
 ):
     """
     List expenses with optional filtering
     Uses the same database queries as your CLI
     """
     try:
-        conn = get_db_connection()
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with filters
         query = "SELECT id, amount, category, description, timestamp FROM expenses WHERE 1=1"
@@ -192,8 +183,6 @@ async def list_expenses(
         c.execute(amount_query, amount_params)
         total_amount = c.fetchone()[0] or 0
         
-        conn.close()
-        
         # Convert rows to response format
         expenses = []
         for row in expense_rows:
@@ -214,13 +203,13 @@ async def list_expenses(
 
 
 @router.get("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def get_expense(expense_id: int):
+async def get_expense(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
     """
     Get a specific expense by ID
     Uses your existing get_expense_by_id function
     """
     try:
-        expense = get_expense_by_id(expense_id)
+        expense = get_expense_by_id(expense_id, db)
         if not expense:
             raise HTTPException(
                 status_code=404,
@@ -241,21 +230,20 @@ async def get_expense(expense_id: int):
 
 
 @router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def update_expense(expense_id: int, expense_update: ExpenseUpdate):
+async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db: sqlite3.Connection = Depends(get_db)):
     """
     Update an existing expense
     """
     try:
         # Check if expense exists
-        existing_expense = get_expense_by_id(expense_id)
+        existing_expense = get_expense_by_id(expense_id, db)
         if not existing_expense:
             raise HTTPException(
                 status_code=404,
                 detail=f"Expense with ID {expense_id} not found"
             )
         
-        conn = get_db_connection()
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build update query with only provided fields
         update_fields = []
@@ -289,11 +277,10 @@ async def update_expense(expense_id: int, expense_update: ExpenseUpdate):
         params.append(expense_id)
         
         c.execute(query, params)
-        conn.commit()
-        conn.close()
+        db.commit()
         
         # Return updated expense
-        updated_expense = get_expense_by_id(expense_id)
+        updated_expense = get_expense_by_id(expense_id, db)
         expense_dict = expense_row_to_dict(updated_expense)
         if not expense_dict:
             raise HTTPException(status_code=500, detail="Failed to retrieve updated expense")
@@ -309,35 +296,32 @@ async def update_expense(expense_id: int, expense_update: ExpenseUpdate):
 
 
 @router.delete("/expenses/{expense_id}", response_model=SuccessResponse)
-async def delete_expense(expense_id: int):
+async def delete_expense(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
     """
     Delete an expense by ID
     Uses similar logic to your CLI delete function
     """
     try:
         # Check if expense exists
-        expense = get_expense_by_id(expense_id)
+        expense = get_expense_by_id(expense_id, db)
         if not expense:
             raise HTTPException(
                 status_code=404,
                 detail=f"Expense with ID {expense_id} not found"
             )
         
-        conn = get_db_connection()
-        c = conn.cursor()
+        c = db.cursor()
         
         # Delete the expense
         c.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
         
         if c.rowcount == 0:
-            conn.close()
             raise HTTPException(
                 status_code=404,
                 detail=f"Expense with ID {expense_id} not found"
             )
         
-        conn.commit()
-        conn.close()
+        db.commit()
         
         return SuccessResponse(
             message=f"Expense {expense_id} deleted successfully",
@@ -352,57 +336,62 @@ async def delete_expense(expense_id: int):
             detail=f"Failed to delete expense: {str(e)}"
         ) 
 
-
-@router.post("/expenses/{expense_id}/parse-grocery-items", response_model=SuccessResponse)
-async def parse_grocery_items(expense_id: int):
+@router.post("/expenses/{expense_id}/parse-grocery-to-pantry", response_model=SuccessResponse)
+async def parse_grocery_to_pantry(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
     """
-    Parse grocery items from an expense description
-    This will use AI (Gemma3n) to extract individual grocery items
+    Parse a grocery expense description and add the items to the pantry
     """
     try:
-        # Check if expense exists
-        expense = get_expense_by_id(expense_id)
+        # Get the expense to extract the description
+        expense = get_expense_by_id(expense_id, db)
         if not expense:
             raise HTTPException(
                 status_code=404,
                 detail=f"Expense with ID {expense_id} not found"
             )
         
-        # Extract expense details
-        expense_id, amount, category, description, timestamp = expense
-        
-        # Only parse grocery expenses
-        if category != 'groceries':
+        description = expense[3]  # description is the 4th column (index 3)
+        if not description or not description.strip():
             raise HTTPException(
                 status_code=400,
-                detail="Only grocery expenses can be parsed for items"
+                detail="Expense has no description to parse"
             )
         
-        # Parse grocery items using AI (placeholder for now)
-        parsed_items = parse_grocery_items_with_ai(description)
+        # Parse the description into grocery items using the unified parsing function
+        parsed_items = parse_grocery_items_and_categories(description)
         
-        # Save parsed items to database
-        conn = get_db_connection()
-        c = conn.cursor()
+        if not parsed_items:
+            raise HTTPException(
+                status_code=400,
+                detail="No grocery items found in the expense description"
+            )
         
-        # Clear existing items for this expense
-        c.execute("DELETE FROM grocery_items WHERE expense_id = ?", (expense_id,))
+        # Add each parsed item to the pantry
+        c = db.cursor()
+        added_items = []
         
-        # Insert new items
         for item in parsed_items:
+            grocery_type = item["category"]
+            item_name = item["item"]
+            
             c.execute('''
-                INSERT INTO grocery_items (expense_id, item_name, date_purchased, is_consumed)
-                VALUES (?, ?, ?, ?)
-            ''', (expense_id, item, timestamp, False))
+                INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
+                VALUES (?, ?, ?, datetime('now'), ?, ?)
+            ''', (item_name, 1, 'pieces', False, grocery_type))
+            
+            added_items.append({
+                "name": item_name,
+                "category": grocery_type
+            })
         
-        conn.commit()
-        conn.close()
+        db.commit()
         
         return SuccessResponse(
-            message=f"Parsed {len(parsed_items)} items from grocery expense",
+            message=f"Successfully parsed and added {len(added_items)} items to pantry",
             data={
                 "expense_id": expense_id,
-                "items": parsed_items
+                "parsed_items": added_items,
+                "original_description": description
             }
         )
         
@@ -411,208 +400,5 @@ async def parse_grocery_items(expense_id: int):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to parse grocery items: {str(e)}"
-        )
-
-
-@router.get("/expenses/{expense_id}/grocery-items")
-async def get_grocery_items_for_expense(expense_id: int):
-    """
-    Get all grocery items for a specific expense
-    """
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Get grocery items for this expense
-        c.execute('''
-            SELECT id, item_name, date_purchased, is_consumed 
-            FROM grocery_items 
-            WHERE expense_id = ? 
-            ORDER BY item_name
-        ''', (expense_id,))
-        
-        items = c.fetchall()
-        conn.close()
-        
-        return {
-            "expense_id": expense_id,
-            "items": [{
-                "id": item[0],
-                "name": item[1],
-                "date_purchased": item[2],
-                "is_consumed": item[3]
-            } for item in items]
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get grocery items: {str(e)}"
-        )
-
-
-@router.get("/grocery-items")
-async def get_all_grocery_items():
-    """
-    Get all grocery items across all expenses
-    """
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Get all grocery items with expense details
-        c.execute('''
-            SELECT gi.id, gi.item_name, gi.date_purchased, gi.is_consumed, 
-                   gi.expense_id, e.amount, e.description
-            FROM grocery_items gi
-            JOIN expenses e ON gi.expense_id = e.id
-            ORDER BY gi.date_purchased DESC, gi.item_name
-        ''')
-        
-        items = c.fetchall()
-        conn.close()
-        
-        return {
-            "items": [{
-                "id": item[0],
-                "name": item[1],
-                "date_purchased": item[2],
-                "is_consumed": item[3],
-                "expense_id": item[4],
-                "expense_amount": item[5],
-                "expense_description": item[6]
-            } for item in items]
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get grocery items: {str(e)}"
-        )
-
-
-def parse_grocery_items_with_ai(description: str) -> List[str]:
-    """
-    Parse grocery items from description using AI
-    This is a placeholder function - will integrate with Gemma3n later
-    """
-    # Simple regex-based parsing for now
-    import re
-    
-    # Convert to lowercase for easier matching
-    text = description.lower()
-    
-    # Common grocery items patterns
-    grocery_keywords = [
-        'milk', 'eggs', 'bread', 'butter', 'cheese', 'yogurt', 'chicken', 'beef', 
-        'fish', 'salmon', 'tuna', 'rice', 'pasta', 'tomatoes', 'potatoes', 'onions',
-        'carrots', 'bananas', 'apples', 'oranges', 'lettuce', 'spinach', 'broccoli',
-        'peppers', 'cucumber', 'avocado', 'berries', 'strawberries', 'grapes',
-        'cereal', 'oatmeal', 'soup', 'sauce', 'oil', 'vinegar', 'salt', 'pepper',
-        'flour', 'sugar', 'coffee', 'tea', 'juice', 'water', 'soda', 'beer', 'wine'
-    ]
-    
-    # Find items that match our keywords
-    found_items = []
-    for keyword in grocery_keywords:
-        if keyword in text:
-            found_items.append(keyword)
-    
-    # If no specific items found, try to split by common separators
-    if not found_items:
-        # Remove common non-food words
-        text = re.sub(r'\b(grocery|store|shopping|trip|bought|got|purchased|at|the|and|some|from)\b', '', text)
-        # Split by common separators
-        potential_items = re.split(r'[,\s]+', text.strip())
-        # Filter out empty strings and very short words
-        found_items = [item for item in potential_items if len(item) > 2]
-    
-    # Remove duplicates and return
-    return list(set(found_items)) if found_items else ['groceries']
-
-
-@router.post("/parse-grocery-items")
-async def parse_grocery_items_only(request: dict):
-    """
-    Parse grocery items from a description without creating an expense
-    Used for the grocery flow preview step
-    """
-    try:
-        description = request.get('description', '')
-        if not description.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Description is required"
-            )
-        
-        # Parse grocery items using AI (placeholder for now)
-        parsed_items = parse_grocery_items_with_ai(description)
-        
-        return {
-            "items": parsed_items,
-            "description": description
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to parse grocery items: {str(e)}"
-        )
-
-
-@router.post("/grocery-items/add")
-async def add_grocery_item_directly(request: dict):
-    """
-    Add a grocery item directly to the pantry without creating an expense
-    """
-    try:
-        item_name = request.get('name', '').strip()
-        if not item_name:
-            raise HTTPException(
-                status_code=400,
-                detail="Item name is required"
-            )
-        
-        # Create a dummy expense for the grocery item
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Insert a minimal expense record (amount 0, category 'groceries')
-        c.execute('''
-            INSERT INTO expenses (amount, category, description, timestamp)
-            VALUES (?, ?, ?, ?)
-        ''', (0, 'groceries', f'Added {item_name} to pantry', datetime.now().isoformat()))
-        
-        expense_id = c.lastrowid
-        
-        # Insert the grocery item
-        c.execute('''
-            INSERT INTO grocery_items (expense_id, item_name, date_purchased, is_consumed)
-            VALUES (?, ?, ?, ?)
-        ''', (expense_id, item_name, datetime.now().isoformat(), False))
-        
-        item_id = c.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return {
-            "message": f"Added {item_name} to pantry",
-            "item": {
-                "id": item_id,
-                "name": item_name,
-                "expense_id": expense_id,
-                "date_purchased": datetime.now().isoformat(),
-                "is_consumed": False
-            }
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to add grocery item: {str(e)}"
+            detail=f"Failed to parse grocery to pantry: {str(e)}"
         ) 

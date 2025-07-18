@@ -85,46 +85,89 @@ export const expenseAPI = {
     }
   },
 
-  // Parse grocery items from an expense
-  parseGroceryItems: async (expenseId) => {
+  // Delete an expense
+  deleteExpense: async (expenseId) => {
     try {
-      console.log('🛒 Parsing grocery items for expense:', expenseId);
-      console.log('📡 API URL:', `${API_BASE_URL}/expenses/${expenseId}/parse-grocery-items`);
-      const response = await api.post(`/expenses/${expenseId}/parse-grocery-items`);
-      console.log('✅ Parse Response:', response.data);
+      console.log('🗑️ Deleting expense:', expenseId);
+      console.log('📡 API URL:', `${API_BASE_URL}/expenses/${expenseId}`);
+      const response = await api.delete(`/expenses/${expenseId}`);
+      console.log('✅ Delete Response:', response.data);
       return response.data;
     } catch (error) {
-      console.log('❌ Parse Error:', error);
+      console.log('❌ Delete Error:', error);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to parse grocery items');
+      throw new Error(error.response?.data?.detail || 'Failed to delete expense');
     }
   },
 
-  // Get grocery items for a specific expense
-  getGroceryItemsForExpense: async (expenseId) => {
+  // NEW PANTRY ENDPOINTS (replacing old grocery endpoints)
+
+  // Get all pantry items
+  getAllPantryItems: async () => {
     try {
-      console.log('🛒 Getting grocery items for expense:', expenseId);
-      const response = await api.get(`/expenses/${expenseId}/grocery-items`);
-      console.log('✅ Items Response:', response.data);
+      console.log('🛒 Getting all pantry items');
+      const response = await api.get('/pantry-items');
+      console.log('✅ All Pantry Items Response:', response.data);
       return response.data;
     } catch (error) {
-      console.log('❌ Get Items Error:', error);
+      console.log('❌ Get All Pantry Items Error:', error);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to get grocery items');
+      throw new Error(error.response?.data?.detail || 'Failed to get all pantry items');
     }
   },
 
-  // Get all grocery items
-  getAllGroceryItems: async () => {
+  // Add pantry item directly
+  addPantryItemDirectly: async (itemName, quantity = 1, unit = 'pieces') => {
     try {
-      console.log('🛒 Getting all grocery items');
-      const response = await api.get('/grocery-items');
-      console.log('✅ All Items Response:', response.data);
+      console.log('🛒 Adding pantry item directly:', itemName, quantity, unit);
+      console.log('📡 API URL:', `${API_BASE_URL}/pantry-items/add`);
+      const response = await api.post('/pantry-items/add', { 
+        name: itemName, 
+        quantity: quantity, 
+        unit: unit 
+      });
+      console.log('✅ Add Pantry Item Response:', response.data);
       return response.data;
     } catch (error) {
-      console.log('❌ Get All Items Error:', error);
+      console.log('❌ Add Pantry Item Error:', error);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to get all grocery items');
+      throw new Error(error.response?.data?.detail || 'Failed to add pantry item');
+    }
+  },
+
+  // Update pantry item
+  updatePantryItem: async (itemId, itemName, quantity = 1, unit = 'pieces', isConsumed = false, groceryType = 'other') => {
+    try {
+      console.log('✏️ Updating pantry item:', itemId, itemName, quantity, unit, isConsumed, groceryType);
+      console.log('📡 API URL:', `${API_BASE_URL}/pantry-items/${itemId}`);
+      const response = await api.put(`/pantry-items/${itemId}`, { 
+        name: itemName, 
+        quantity: quantity, 
+        unit: unit,
+        is_consumed: isConsumed,
+        grocery_type: groceryType
+      });
+      console.log('✅ Update Pantry Item Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.log('❌ Update Pantry Item Error:', error);
+      console.log('❌ Error response:', error.response?.data);
+      throw new Error(error.response?.data?.detail || 'Failed to update pantry item');
+    }
+  },
+
+  // Delete pantry item
+  deletePantryItem: async (itemId) => {
+    try {
+      console.log('🗑️ Deleting pantry item:', itemId);
+      console.log('📡 API URL:', `${API_BASE_URL}/pantry-items/${itemId}`);
+      const response = await api.delete(`/pantry-items/${itemId}`);
+      console.log('✅ Delete Pantry Item Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.log('❌ Delete Pantry Item Error:', error);
+      console.log('❌ Error response:', error.response?.data);
+      throw new Error(error.response?.data?.detail || 'Failed to delete pantry item');
     }
   },
 
@@ -143,33 +186,18 @@ export const expenseAPI = {
     }
   },
 
-  // Add grocery item directly to pantry
-  addGroceryItemDirectly: async (itemName) => {
+  // Parse grocery expense and add to pantry
+  parseGroceryToPantry: async (expenseId) => {
     try {
-      console.log('🛒 Adding grocery item directly:', itemName);
-      console.log('📡 API URL:', `${API_BASE_URL}/grocery-items/add`);
-      const response = await api.post('/grocery-items/add', { name: itemName });
-      console.log('✅ Add Item Response:', response.data);
+      console.log('🛒 Parsing grocery expense to pantry:', expenseId);
+      console.log('📡 API URL:', `${API_BASE_URL}/expenses/${expenseId}/parse-grocery-to-pantry`);
+      const response = await api.post(`/expenses/${expenseId}/parse-grocery-to-pantry`);
+      console.log('✅ Parse to Pantry Response:', response.data);
       return response.data;
     } catch (error) {
-      console.log('❌ Add Item Error:', error);
+      console.log('❌ Parse to Pantry Error:', error);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to add grocery item');
-    }
-  },
-
-  // Delete an expense
-  deleteExpense: async (expenseId) => {
-    try {
-      console.log('🗑️ Deleting expense:', expenseId);
-      console.log('📡 API URL:', `${API_BASE_URL}/expenses/${expenseId}`);
-      const response = await api.delete(`/expenses/${expenseId}`);
-      console.log('✅ Delete Response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.log('❌ Delete Error:', error);
-      console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to delete expense');
+      throw new Error(error.response?.data?.detail || 'Failed to parse grocery to pantry');
     }
   }
 };
