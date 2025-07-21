@@ -14,23 +14,9 @@ const ExpenseCard = ({
   styles, 
   onPress,
   onEdit,
-  onDelete
+  onDelete,
+  getCategoryIcon
 }) => {
-  // Helper function to get SF Symbol for category
-  const getCategoryIcon = (category) => {
-    const iconMap = {
-      'amazon': 'shippingbox.fill',
-      'transportation': 'tram.fill',
-      'groceries': 'cart.fill',
-      'entertainment': 'gamecontroller.fill',
-      'fashion': 'tshirt.fill',
-      'travel': 'airplane',
-      'food': 'fork.knife',
-      'monthly': 'calendar',
-      'other': 'ellipsis.circle.fill'
-    };
-    return iconMap[category] || 'dollarsign.circle.fill';
-  };
 
   const showActionSheet = () => {
     // Light haptic feedback
@@ -126,7 +112,8 @@ const ExpenseCardWithDate = ({
   styles, 
   onPress,
   onEdit,
-  onDelete
+  onDelete,
+  getCategoryIcon
 }) => {
   const showActionSheet = () => {
     // Light haptic feedback
@@ -200,21 +187,21 @@ const ExpenseCardWithDate = ({
       {/* Header */}
       <View style={styles.expenseHeader}>
         
-        {/* Date */}
+        {/* Category and Date */}
         <View style={styles.category}>
           <SymbolView
-            name={getCalendarIcon(item.timestamp)}
+            name={getCategoryIcon(item.category)}
             size={18}
             type="monochrome"
             tintColor={styles.categoryIconColor.color}
             fallback={null}
           />
           <Text style={styles.date}>
-          {new Date(item.timestamp).toLocaleDateString('en-US', { 
-            month: 'long', 
-            // day: 'numeric' 
-          })}
-        </Text>
+            {new Date(item.timestamp).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric' 
+            })}
+          </Text>
         </View>
 
         

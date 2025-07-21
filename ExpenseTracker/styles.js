@@ -332,7 +332,7 @@ export const createStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
     marginLeft: -1,

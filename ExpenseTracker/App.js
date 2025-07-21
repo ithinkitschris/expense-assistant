@@ -1475,6 +1475,7 @@ export default function App() {
                 groceryItems={groceryItems}
                 onEdit={handleExpensePress}
                 onDelete={deleteExpense}
+                getCategoryIcon={getCategoryIcon}
               />
             )}
             keyExtractor={(expense) => expense.id}
@@ -1500,6 +1501,7 @@ export default function App() {
               groceryItems={groceryItems}
               onEdit={handleExpensePress}
               onDelete={deleteExpense}
+              getCategoryIcon={getCategoryIcon}
             />
           )}
           keyExtractor={(expense) => `${category}-${expense.id}`}
