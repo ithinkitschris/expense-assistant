@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.4.2",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "react-native-ios-kit": "^0.0.22"
   }

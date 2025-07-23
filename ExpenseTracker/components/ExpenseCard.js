@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, Pressable, TouchableOpacity, ActionSheetIOS, Platform, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet } from 'react-native';
 
 // Helper function to capitalize grocery item names
 const capitalizeGroceryName = (name) => {
@@ -9,19 +11,73 @@ const capitalizeGroceryName = (name) => {
   return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 };
 
-const ExpenseCard = ({ 
-  item, 
-  styles, 
+// Helper to shift hue of a hex color
+function hexToHSL(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+  const r = parseInt(hex.substring(0,2), 16) / 255;
+  const g = parseInt(hex.substring(2,4), 16) / 255;
+  const b = parseInt(hex.substring(4,6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch(max){
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h = h * 60;
+  }
+  return { h, s: s * 100, l: l * 100 };
+}
+function hslToHex(h, s, l, alpha = 1) {
+  s /= 100;
+  l /= 100;
+  let c = (1 - Math.abs(2 * l - 1)) * s,
+      x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+      m = l - c/2,
+      r = 0, g = 0, b = 0;
+  if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+  else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+  else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+  else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+  else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+  else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  let hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  if (alpha < 1) {
+    hex += Math.round(alpha * 255).toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+function shiftHue(hex, degree, alpha = 1) {
+  const { h, s, l } = hexToHSL(hex);
+  const newH = (h + degree) % 360;
+  return hslToHex(newH, s, l, alpha);
+}
+
+// Base Expense Card component with customizable header
+const ExpenseCardBase = ({
+  item,
+  styles,
   onPress,
   onEdit,
   onDelete,
-  getCategoryIcon
+  getCategoryIcon,
+  cardColor,
+  renderHeader,
+  cardType = 'total', // 'total' or 'category'
+  categoryColor, // new prop for dynamic color
+  ...rest
 }) => {
-
   const showActionSheet = () => {
-    // Light haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -33,217 +89,141 @@ const ExpenseCard = ({
           if (buttonIndex === 1 && onEdit) {
             onEdit(item);
           } else if (buttonIndex === 2 && onDelete) {
-            // Show confirmation dialog before deleting
             Alert.alert(
               'Delete Expense',
               `Are you sure you want to delete "${item.description}"?`,
               [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: () => onDelete(item.id),
-                },
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => onDelete(item.id) },
               ]
             );
           }
         }
       );
     } else {
-      // Fallback for Android - you could implement a custom modal here
-      // or use a cross-platform library like react-native-action-sheet
       console.log('Action sheet not supported on Android');
     }
   };
 
-  // Expense Card
-  return (
-    <Pressable 
-      style={styles.expenseCard}
-      onPress={onPress}
-    >
-      {/* Expense Header */}
-      <View style={styles.expenseHeader}>
-
-        {/* Category */}
-        <View style={styles.category}>
-          <SymbolView
-            name={getCategoryIcon(item.category)}
-            size={24}
-            type="monochrome"
-            tintColor={styles.categoryIconColor.color}
-            fallback={null}
-          />
-          <Text style={styles.categoryText}>{item.category}</Text>
-        </View>
-
-        {/* Menu Button */}
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={showActionSheet}
-          activeOpacity={0.6}
-        >
-          <SymbolView
-            name="ellipsis"
-            size={14}
-            type="monochrome"
-            tintColor={styles.categoryIconColor.color}
-            fallback={null}
-          />
-        </TouchableOpacity>
-        
-      </View>
-
-      {/* Expense Description and Amount Container */}
-      <View style={styles.expenseContentContainer}>
-        <Text style={styles.expenseTitle}>{item.description}</Text>
-        <Text style={styles.amount}>${Number(item.amount).toFixed()}</Text>
-      </View>
-    </Pressable>
-  );
-};
-
-// Component for displaying date instead of category
-const ExpenseCardWithDate = ({ 
-  item, 
-  styles, 
-  onPress,
-  onEdit,
-  onDelete,
-  getCategoryIcon
-}) => {
-  const showActionSheet = () => {
-    // Light haptic feedback
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Edit', 'Delete'],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: 2,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1 && onEdit) {
-            onEdit(item);
-          } else if (buttonIndex === 2 && onDelete) {
-            // Show confirmation dialog before deleting
-            Alert.alert(
-              'Delete Expense',
-              `Are you sure you want to delete "${item.description}"?`,
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: () => onDelete(item.id),
-                },
-              ]
-            );
-          }
-        }
-      );
-    } else {
-      // Fallback for Android - you could implement a custom modal here
-      // or use a cross-platform library like react-native-action-sheet
-      console.log('Action sheet not supported on Android');
-    }
-  };
-  // Array of SF Symbol calendar icons for days 1-31
-  const calendarIcons = [
-    '1.calendar', '2.calendar', '3.calendar', '4.calendar', '5.calendar',
-    '6.calendar', '7.calendar', '8.calendar', '9.calendar', '10.calendar',
-    '11.calendar', '12.calendar', '13.calendar', '14.calendar', '15.calendar',
-    '16.calendar', '17.calendar', '18.calendar', '19.calendar', '20.calendar',
-    '21.calendar', '22.calendar', '23.calendar', '24.calendar', '25.calendar',
-    '26.calendar', '27.calendar', '28.calendar', '29.calendar', '30.calendar',
-    '31.calendar'
-  ];
-
-  // Get the day of the month from the expense timestamp
-  const getDayOfMonth = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.getDate(); // Returns 1-31
-  };
-
-  // Get the appropriate calendar icon for the day
-  const getCalendarIcon = (timestamp) => {
-    const day = getDayOfMonth(timestamp);
-    // Array is 0-indexed, so subtract 1 from day
-    return calendarIcons[day - 1] || 'calendar';
-  };
+  // Choose style based on cardType
+  const cardStyle = cardType === 'category' ? styles.expenseCardCategory : styles.expenseCardTotal;
+  const gradientColors = cardColor ? [cardColor, shiftHue(cardColor, 20)] : [cardStyle.backgroundColor, cardStyle.backgroundColor];
   return (
     <Pressable
-      style={styles.expenseCard}
+      style={[cardStyle, { padding: 0, overflow: 'hidden' }]}
       onPress={() => onPress && onPress(item)}
       onLongPress={() => onEdit && onEdit(item)}
     >
-      {/* Header */}
-      <View style={styles.expenseHeader}>
-        
-        {/* Category and Date */}
-        <View style={styles.category}>
-          <SymbolView
-            name={getCategoryIcon(item.category)}
-            size={18}
-            type="monochrome"
-            tintColor={styles.categoryIconColor.color}
-            fallback={null}
-          />
-          <Text style={styles.date}>
-            {new Date(item.timestamp).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric' 
-            })}
-          </Text>
-        </View>
-
-        
-
-        {/* Menu Button */}
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={showActionSheet}
-          activeOpacity={0.6}
-        >
-          <SymbolView
-            name="ellipsis"
-            size={16}
-            type="monochrome"
-            tintColor={styles.categoryIconColor.color}
-            fallback={null}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <View style={styles.expenseContentContainer}>
-        <Text style={styles.expenseTitle}>
-          {item.description}
-        </Text>
-        <Text style={styles.amount}>
-          ${Number.isInteger(item.amount) ? item.amount : item.amount.toFixed(2).replace(/\.00$/, '')}
-        </Text>
-      </View>
-
-      {/* Grocery Items */}
-      {item.category === 'groceries' && item.groceryItems && item.groceryItems.length > 0 && (
-        <View style={styles.groceryItemsContainer}>
-          <Text style={styles.groceryItemsHeader}>Items:</Text>
-          <Text style={styles.groceryItems}>
-            {item.groceryItems.map(groceryItem => capitalizeGroceryName(groceryItem.name)).join(', ')}
-          </Text>
-        </View>
+      {cardType !== 'category' && (
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.2, y: 1.8 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: cardStyle.borderRadius || 35 }]}
+        />
       )}
+      <View>
+        {cardType === 'category'
+          ? renderHeader({ item, styles, getCategoryIcon, showActionSheet, categoryColor })
+          : renderHeader({ item, styles, getCategoryIcon, showActionSheet })}
+        {/* Expense Description and Amount Container */}
+        <View style={styles.expenseContentContainer}>
+          <Text
+            style={[
+              cardType === 'category' ? styles.expenseCardCategoryTitle : styles.expenseCardTotalTitle,
+              cardType === 'category' && categoryColor ? { color: categoryColor } : null
+            ]}
+          >
+            {item.description}
+          </Text>
+          <Text style={cardType === 'category' ? styles.expenseCardCategoryAmount : styles.expenseCardTotalAmount}>
+            {Number.isInteger(item.amount) ? `$${item.amount}` : `$${Number(item.amount).toFixed(2).replace(/\.00$/, '')}`}
+          </Text>
+        </View>
+      </View>
     </Pressable>
   );
 };
 
-export default ExpenseCard;
-export { ExpenseCardWithDate }; 
+// Header for total mode
+const CategoryHeader = ({ item, styles, getCategoryIcon, showActionSheet }) => (
+  <View style={styles.expenseHeader}>
+
+    {/* Category icon and text */}
+    <View style={styles.category}>
+      <SymbolView
+        name={getCategoryIcon(item.category)}
+        size={24}
+        type="monochrome"
+        tintColor="#FFFFFF"
+        fallback={null}
+      />
+      <Text style={styles.categoryText}>{item.category}</Text>
+    </View>
+    
+    {/* Menu button */}
+    <TouchableOpacity
+      style={styles.menuButton}
+      onPress={showActionSheet}
+      activeOpacity={0.6}
+    >
+      <SymbolView
+        name="ellipsis"
+        size={14}
+        type="monochrome"
+        tintColor="white"
+        fallback={null}
+      />
+    </TouchableOpacity>
+  </View>
+);
+
+// Header for category mode
+const DateHeader = ({ item, styles, getCategoryIcon, showActionSheet, categoryColor }) => (
+  <View style={styles.expenseHeader}>
+
+    {/* Date icon and text */}
+    <View style={styles.category}>
+      <SymbolView
+        name={getCategoryIcon(item.category)}
+        size={22}
+        type="monochrome"
+        tintColor={categoryColor}
+        fallback={null}
+      />
+      <Text style={styles.date}>
+        {new Date(item.timestamp).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })}
+      </Text>
+    </View>
+
+    {/* Menu button */}
+    <TouchableOpacity
+      style={styles.menuButton}
+      onPress={showActionSheet}
+      activeOpacity={0.6}
+    >
+      <SymbolView
+        name="ellipsis"
+        size={18}
+        type="monochrome"
+        tintColor="white"
+        fallback={null}
+      />
+    </TouchableOpacity>
+  </View>
+);
+
+// Wrapper for total (category mode)
+const ExpenseCardTotal = (props) => (
+  <ExpenseCardBase {...props} renderHeader={CategoryHeader} cardType="total" />
+);
+
+// Wrapper for category (date mode)
+const ExpenseCardCategory = (props) => (
+  <ExpenseCardBase {...props} renderHeader={DateHeader} cardType="category" />
+);
+
+export { ExpenseCardTotal, ExpenseCardCategory }; 

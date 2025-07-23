@@ -13,17 +13,17 @@ GROCERY_TYPES = {
         'sort_order': 1
     },
     'meat': {
-        'display_name': 'Meat & Seafood',
+        'display_name': 'Meat',
         'keywords': ['chicken', 'beef', 'pork', 'sausage', 'bacon', 'fish', 'salmon', 'shrimp', 'eggs'],
         'sort_order': 2
     },
     'dairy': {
-        'display_name': 'Dairy & Cheese',
+        'display_name': 'Dairy',
         'keywords': ['milk', 'cheese', 'yogurt', 'butter', 'cream'],
         'sort_order': 3
     },
     'bread': {
-        'display_name': 'Bakery & Bread',
+        'display_name': 'Bread',
         'keywords': ['bread', 'bagel', 'croissant', 'muffin', 'tortilla'],
         'sort_order': 4
     },
@@ -33,7 +33,7 @@ GROCERY_TYPES = {
         'sort_order': 5
     },
     'frozen': {
-        'display_name': 'Frozen Foods',
+        'display_name': 'Frozen',
         'keywords': ['frozen', 'ice cream', 'pizza'],
         'sort_order': 6
     },
@@ -48,7 +48,7 @@ GROCERY_TYPES = {
         'sort_order': 8
     },
     'condiments': {
-        'display_name': 'Condiments & Spices',
+        'display_name': 'Condiments',
         'keywords': ['ketchup', 'mustard', 'mayo', 'sauce', 'dressing', 'syrup', 'jam'],
         'sort_order': 9
     },

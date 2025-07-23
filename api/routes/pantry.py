@@ -5,7 +5,7 @@ from datetime import datetime
 
 from api.dependencies import get_db
 from api.models.schemas import PantryItemResponse, SuccessResponse
-from api.utils.grocery_categories import get_grocery_type_sort_order
+from api.utils.grocery_categories import get_grocery_type_sort_order, GROCERY_TYPES
 from api.utils.parsing import parse_grocery_items_and_categories, categorize_grocery_item_rule_based
 
 pantry_router = APIRouter()
@@ -207,3 +207,13 @@ async def parse_grocery_items_only(request: dict):
             status_code=500,
             detail=f"Failed to parse grocery items: {str(e)}"
         )
+
+@pantry_router.get("/grocery-categories", response_model=list)
+async def get_grocery_categories():
+    """
+    Get the canonical list of grocery categories (keys and display names)
+    """
+    return [
+        {"key": key, "label": value["display_name"]}
+        for key, value in GROCERY_TYPES.items()
+    ]

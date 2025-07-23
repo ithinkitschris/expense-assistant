@@ -13,7 +13,8 @@ const PantryCard = ({
   onDecrease, 
   onIncrease, 
   onLongPress,
-  isConsumed = false 
+  isConsumed = false,
+  groceryType = 'other'
 }) => {
   useEffect(() => {
     let timer;
@@ -96,16 +97,36 @@ const PantryCard = ({
     return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
+
+
+  // Get color for grocery type
+  const getGroceryTypeColor = (type) => {
+    const colorMap = {
+      'produce': theme.systemMint,      // Green for fresh produce
+      'meat': theme.systemPink,           // Red for meat
+      'dairy': theme.systemGray,          // Blue for dairy
+      'bread': theme.systemBrown,       // Orange for bread/bakery
+      'pantry': theme.systemOrange,        // Gray for pantry staples
+      'frozen': theme.systemCyan,        // Light blue for frozen
+      'beverages': theme.systemIndigo,   // Purple for beverages
+      'snacks': theme.systemPurple,      // Yellow for snacks
+      'condiments': theme.systemPink,    // Pink for condiments
+      'other': theme.systemGray,         // Gray for other
+      'consumed': theme.systemGray       // Gray for consumed items
+    };
+    return colorMap[type] || colorMap['other'];
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
         { 
-          backgroundColor: theme.itemCardBackground, 
-          borderColor: theme.glassBorderColor 
+          backgroundColor: 'rgba(0,0,0,0.2)', // black with 20% opacity
+          borderColor: 'rgba(255,255,255,0.1)' // white at 15% opacity
         },
         pressed && { 
-          backgroundColor: theme.systemGray6,
+          backgroundColor: getGroceryTypeColor(groceryType) + '33', // 20% opacity
           transform: [{ scale: 0.98 }]
         }
       ]}
@@ -116,17 +137,29 @@ const PantryCard = ({
     >
       {/* Item Card Content */}
       <View style={styles.itemContent}>
-        <Text style={[
-          styles.itemName,
-          { color: theme.text },
-          isConsumed && styles.consumedItemName
-        ]}>
+        <Text 
+          style={[
+            styles.itemName,
+            { color: theme.text}, // Use theme text color
+            isConsumed && styles.consumedItemName
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {capitalizeGroceryName(item.name)}
         </Text>
       </View>
 
       {/* Quantity Controls */}
-      <View style={[styles.quantityContainer, { backgroundColor: theme.glassBackground, borderColor: theme.borderColorLighter }]}>
+      <View
+        style={[
+          styles.quantityContainer,
+          {
+            backgroundColor: getGroceryTypeColor(groceryType) + 'CC', // category color at 50% opacity
+          }
+        ]}
+      >
+        
         {isExpanded ? (
           // Expanded state with +/- buttons
           <>
@@ -135,7 +168,7 @@ const PantryCard = ({
               style={[
                 styles.button,
                 styles.minusButton,
-                { backgroundColor: theme.categorySelected, borderColor: theme.glassBorderColor, opacity: buttonOpacity }
+                { backgroundColor: 'rgba(255,255,255,0.5)', borderColor: theme.glassBorderColor, opacity: buttonOpacity }
               ]}
               onPress={handleDecrease}
               disabled={disabled || item.quantity <= 0}
@@ -143,9 +176,9 @@ const PantryCard = ({
             >
               <SymbolView
                 name="minus"
-                size={18}
+                size={16}
                 type="monochrome"
-                tintColor={theme.textSecondary}
+                tintColor="#000000"
                 fallback={<Text style={[styles.buttonText, { color: theme.text }]}>-</Text>}
               />
             </Pressable>
@@ -154,7 +187,7 @@ const PantryCard = ({
             <View style={styles.quantityDisplay}>
               <Text style={[
                 styles.quantityText, 
-                { color: theme.appleBlue, fontWeight: '400', fontSize: 30 }
+                { color: theme.text, fontWeight: '600', fontSize: 30 }
               ]}> 
                 {Math.round(item.quantity)} 
               </Text>
@@ -165,7 +198,7 @@ const PantryCard = ({
               style={[
                 styles.button,
                 styles.plusButton,
-                { backgroundColor: theme.categorySelected, borderColor: theme.glassBorderColor, opacity: plusButtonOpacity }
+                { backgroundColor: 'rgba(255,255,255,0.5)', borderColor: theme.glassBorderColor, opacity: plusButtonOpacity }
               ]}
               onPress={handleIncrease}
               disabled={disabled}
@@ -173,9 +206,9 @@ const PantryCard = ({
             >
               <SymbolView
                 name="plus"
-                size={18}
+                size={16}
                 type="monochrome"
-                tintColor={theme.textSecondary}
+                tintColor="000000"
                 fallback={<Text style={[styles.buttonText, { color: theme.text }]}>+</Text>}
               />
             </Pressable>
@@ -203,15 +236,16 @@ const PantryCard = ({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 5,
-    paddingLeft: 25,
+    paddingLeft: 15,
     paddingRight: 5,
     borderRadius: 50,
-    marginBottom: 6,
+    marginBottom: 5,
     borderWidth: 1,
-    gap: 15,
+    gap: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    
   },
   itemContent: {
     flex: 1,
@@ -219,8 +253,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   itemName: {
-    fontSize: 24,
-    fontWeight: '400',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.25,
   },
   consumedItemName: {
     opacity: 0.2,
@@ -228,7 +263,6 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 0,
     borderRadius: 50,
     paddingVertical: 5,
     paddingHorizontal: 5,
@@ -236,12 +270,10 @@ const styles = StyleSheet.create({
   collapsedQuantity: {
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 40,
-    paddingHorizontal: 8,
-    paddingVertical: 1.45,
+    minWidth: 21,
   },
   button: {
-    padding: 6,
+    padding: 8,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
@@ -256,22 +288,24 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 0,
     fontWeight: '600',
   },
   quantityDisplay: {
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 50,
+    minWidth: 0,
     borderWidth: 0,
-    paddingHorizontal: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 0,
   },
   quantityText: {
-    fontSize: 22,
-    fontWeight: '400',
+    fontSize: 20,
+    fontWeight: '500',
     textAlign: 'center',
     letterSpacing: 1,
+    paddingLeft: 2,
   },
 });
 

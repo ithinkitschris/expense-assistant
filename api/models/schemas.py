@@ -21,6 +21,7 @@ class ExpenseCategory(str, Enum):
     TRAVEL = "travel"
     FOOD = "food"
     MONTHLY = "monthly"
+    FURNITURE = "furniture"
     OTHER = "other"
 
 

@@ -304,7 +304,7 @@ export const createStyles = (theme) => StyleSheet.create({
   // #endregion
 
   // #region EXPENSE ITEMS
-  expenseCard: {
+  expenseCardTotal: {
     backgroundColor: theme.itemCardBackground,
     marginHorizontal: 15,
     marginBottom: 8,
@@ -318,6 +318,65 @@ export const createStyles = (theme) => StyleSheet.create({
     shadowOffset: theme.shadowOffset,
     shadowOpacity: theme.shadowOpacity,
     shadowRadius: theme.shadowRadius,
+  },
+  // Text styles for ExpenseCardTotal
+  expenseCardTotalTitle: {
+    fontSize: 42,
+    fontWeight: '600',
+    lineHeight: 40,
+    color: theme.text,
+    letterSpacing: -0.2,
+    paddingTop: 2,
+    flex: 4,
+  },
+  expenseCardTotalAmount: {
+    fontSize: 38,
+    fontWeight: '300',
+    lineHeight: 48,
+    color: theme.text,
+    textAlign: 'right',
+    paddingTop: 2,
+    letterSpacing: -0.8,
+    flex: 1,
+    opacity: 1,
+  },
+
+  // Separate style for ExpenseCardCategory
+  expenseCardCategory: {
+    backgroundColor: theme.itemCardBackground,
+    marginHorizontal: 15,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: theme.glassBorderColor,
+    borderRadius: 35,
+    paddingHorizontal: 25,
+    paddingTop: 10,
+    paddingBottom: 25,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+  },
+  // Text styles for ExpenseCardCategory
+  expenseCardCategoryTitle: {
+    fontSize: 42,
+    fontWeight: '500',
+    lineHeight: 40,
+    color: theme.categoryColor || theme.appleBlue,
+    letterSpacing: -0.1,
+    paddingTop: 2,
+    flex: 4,
+  },
+  expenseCardCategoryAmount: {
+    fontSize: 38,
+    fontWeight: '300',
+    lineHeight: 48,
+    color: theme.text,
+    textAlign: 'right',
+    paddingTop: 2,
+    letterSpacing: -0.8,
+    flex: 1,
+    opacity: 1,
   },
   
   expenseHeader: {
@@ -335,28 +394,27 @@ export const createStyles = (theme) => StyleSheet.create({
     gap: 7,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
-    marginLeft: -1,
+    marginLeft: -2,
     opacity: 1,
   },
 
   categoryText: {
-    fontSize: 12,
-    color: theme.textSecondary,
+    fontSize: 14,
+    color: theme.text,
     fontWeight: '500',
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
     textTransform: 'capitalize',
-    opacity: 0.5,
+    opacity: 1,
   },
   
   date: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
-    color: theme.textSecondary,
-    letterSpacing: -0.2,
+    color: theme.text,
+    letterSpacing: -0.3,
     textTransform: 'capitalize',
     marginTop: 2.3,
-    marginLeft: -2,
-    opacity: 0.5,
+    opacity: 1,
   },
 
   menuButton: {
@@ -364,7 +422,7 @@ export const createStyles = (theme) => StyleSheet.create({
     borderRadius: 20,
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0)',
-    opacity: 0.5,
+    opacity: 1,
     borderWidth: 0,
     borderColor: theme.glassBorderColor,
   },
@@ -376,11 +434,11 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   expenseTitle: {
-    fontSize: 44,
-    fontWeight: '500',
-    lineHeight: 44 ,
+    fontSize: 42,
+    fontWeight: '600',
+    lineHeight: 40 ,
     color: theme.text,
-    letterSpacing: -0.1,
+    letterSpacing: -0.2,
     paddingTop: 2,
     flex: 4,
   },
@@ -430,7 +488,7 @@ export const createStyles = (theme) => StyleSheet.create({
     elevation: 5,
     margin: 2,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.25)',
     borderRadius: 50,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
@@ -516,7 +574,7 @@ export const createStyles = (theme) => StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 180,
+    height: 160,
     zIndex: 1,
   },
   
@@ -926,24 +984,64 @@ export const createStyles = (theme) => StyleSheet.create({
   groceryList: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 150, // Account for floating header
+    paddingTop: 160, // Account for floating header
   },
 
   groceryListContent: {
     paddingBottom: 100,
   },
 
-  pantrySection: {
-    marginBottom: 50,
+  pantrySectionContainer: {
+    marginBottom: 15,
+    marginHorizontal: -5,
   },
 
+  pantrySectionBackground: {
+    borderRadius: 35,
+    borderWidth: 1,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+    elevation: 3,
+  },
+
+  pantrySection: {
+    paddingHorizontal: 15,
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+
+  pantrySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginLeft: 5,
+    gap: 8,
+  },
   pantrySectionTitle: {
+    fontSize: 36,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.4,
+  },
+  fallbackIcon: {
     fontSize: 32,
-    fontWeight: '500',
-    color: theme.textSecondary,
-    marginBottom: 15,
-    marginLeft: 10,
-    letterSpacing: 0,
+    fontWeight: '600',
+  },
+
+  pantryColumnsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  pantryColumn: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+
+  pantryCardContainer: {
+    marginBottom: 0,
   },
 
   consumedItemName: {

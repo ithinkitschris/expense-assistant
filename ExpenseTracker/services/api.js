@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Your FastAPI server URL - replace with your computer's IP address
 // Run this command to find your IP: ifconfig | grep "inet " | grep -v 127.0.0.1
-const API_BASE_URL = 'http://192.168.1.154:8000/api/v1';  // Replace XXX with your actual IP
+const API_BASE_URL = 'http://192.168.1.172:8000/api/v1';  // Replace XXX with your actual IP
 
 // Create axios instance with default config
 const api = axios.create({
