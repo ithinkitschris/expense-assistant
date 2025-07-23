@@ -15,6 +15,11 @@ import ExpenseCard, { ExpenseCardWithDate } from './components/ExpenseCard';
 import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import { ActionSheetIOS } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+// #region CONSTANTS
+// (Removed groceryCategories; now fetched from backend)
+// #endregion
 
 export default function App() {
   // #region STATE & SETUP
@@ -95,6 +100,13 @@ export default function App() {
     // MinusQuantityPlus expansion state
     const [expandedQuantityId, setExpandedQuantityId] = useState(null);
 
+    // Add state for editTimestamp and picker visibility
+    const [editTimestamp, setEditTimestamp] = useState('');
+
+    // Add state for grocery categories (fetched from backend)
+    const [groceryCategories, setGroceryCategories] = useState([]);
+    const [isLoadingGroceryCategories, setIsLoadingGroceryCategories] = useState(true);
+
     // #endregion
 
     // #region useEffect
@@ -136,12 +148,12 @@ export default function App() {
               useNativeDriver: true,
             }),
             Animated.timing(viewSelectorTranslateY, {
-              toValue: 100,
+              toValue: 0,
               duration: 300,
               useNativeDriver: true,
             }),
             Animated.timing(bottomGradientTranslateY, {
-              toValue: 200,
+              toValue: 0,
               duration: 300,
               useNativeDriver: true,
             }),
@@ -149,6 +161,16 @@ export default function App() {
               toValue: 46, // Maximum font size when scrolled
               duration: 200,
               useNativeDriver: false,
+            }),
+            Animated.timing(groceryHeaderTranslateY, {
+              toValue: -200,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(topGradientTranslateY, {
+              toValue: -100,
+              duration: 200,
+              useNativeDriver: true,
             })
           ]).start();
         } else if (!hideUI && !isHeaderVisible.current) {
@@ -179,6 +201,16 @@ export default function App() {
               toValue: 24, // Minimum font size (initial)
               duration: 200,
               useNativeDriver: false,
+            }),
+            Animated.timing(groceryHeaderTranslateY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(topGradientTranslateY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
             })
           ]).start();
         }
@@ -216,6 +248,8 @@ export default function App() {
       const bottomGradientOpacity = useRef(new Animated.Value(1)).current;
       const bottomGradientTranslateY = useRef(new Animated.Value(0)).current;
       const dayTitleFontSize = useRef(new Animated.Value(32)).current; // Initial font size
+      const groceryHeaderTranslateY = useRef(new Animated.Value(0)).current;
+      const topGradientTranslateY = useRef(new Animated.Value(0)).current;
       const lastScrollY = useRef(0);
       const lastScrollX = useRef(0);
       const isHeaderVisible = useRef(true);
@@ -223,6 +257,26 @@ export default function App() {
       // Get current theme
       const currentTheme = themes[isDarkMode ? 'dark' : 'light'];
       const styles = createStyles(currentTheme);
+
+      // Fetch grocery categories from backend on mount
+      useEffect(() => {
+        const fetchGroceryCategories = async () => {
+          setIsLoadingGroceryCategories(true);
+          try {
+            const response = await fetch('http://192.168.1.172:8000/api/v1/grocery-categories');
+            if (!response.ok) throw new Error('Failed to fetch grocery categories');
+            const data = await response.json();
+            console.log('Fetched groceryCategories:', data); // Debug log
+            setGroceryCategories(data);
+          } catch (error) {
+            console.error('Error fetching grocery categories:', error);
+            setGroceryCategories([]);
+          } finally {
+            setIsLoadingGroceryCategories(false);
+          }
+        };
+        fetchGroceryCategories();
+      }, []);
 
     // #endregion
 
@@ -454,20 +508,17 @@ export default function App() {
 
     try {
       setIsParsingGroceries(true);
-      
       // Parse grocery items using the API service
       const data = await expenseAPI.parseGroceryItemsFromDescription(addDescription);
-      // Convert all items to sentence case (first letter capitalized)
-      const sentenceCaseItems = (data.items || []).map(item => 
-        (item.item || '').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-      );
-      setParsedGroceryItems(sentenceCaseItems);
-      
+      // Always use {name, category} structure
+      const items = (data.items || []).map(item => ({
+        name: (item.item || '').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+        category: item.category || 'other'
+      }));
+      setParsedGroceryItems(items);
       // Load existing grocery items for context
       await loadExistingGroceryItems();
-      
       setIsGroceryStep(2);
-      
     } catch (error) {
       Alert.alert('Error', `Failed to parse grocery items: ${error.message}`);
     } finally {
@@ -490,15 +541,17 @@ export default function App() {
   // Grocery item editing functions
   const startEditingGroceryItem = (index, currentText) => {
     setEditingGroceryItemIndex(index);
-    setEditingGroceryItemText(currentText);
+    setEditingGroceryItemText(currentText.name);
   };
 
   const saveGroceryItemEdit = () => {
     if (editingGroceryItemText.trim()) {
       const updatedItems = [...parsedGroceryItems];
-      // Convert to sentence case (first letter capitalized)
-      const sentenceCaseText = editingGroceryItemText.trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-      updatedItems[editingGroceryItemIndex] = sentenceCaseText;
+      // Only update the name, keep the category
+      updatedItems[editingGroceryItemIndex] = {
+        ...updatedItems[editingGroceryItemIndex],
+        name: editingGroceryItemText.trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+      };
       setParsedGroceryItems(updatedItems);
     }
     setEditingGroceryItemIndex(-1);
@@ -511,23 +564,16 @@ export default function App() {
   };
 
   const deleteGroceryItem = (index) => {
-    const itemName = parsedGroceryItems[index];
+    const itemName = parsedGroceryItems[index].name;
     Alert.alert(
       'Delete Item',
       `Are you sure you want to delete "${itemName}"?`,
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            const updatedItems = parsedGroceryItems.filter((_, i) => i !== index);
-            setParsedGroceryItems(updatedItems);
-          },
-        },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => {
+          const updatedItems = parsedGroceryItems.filter((_, i) => i !== index);
+          setParsedGroceryItems(updatedItems);
+        }}
       ]
     );
   };
@@ -539,9 +585,9 @@ export default function App() {
 
   const saveNewItem = () => {
     if (newItemText.trim()) {
-      // Convert to sentence case (first letter capitalized)
+      // Add with default category 'other'
       const sentenceCaseText = newItemText.trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-      setParsedGroceryItems([...parsedGroceryItems, sentenceCaseText]);
+      setParsedGroceryItems([...parsedGroceryItems, { name: sentenceCaseText, category: 'other' }]);
     }
     setIsAddingNewItem(false);
     setNewItemText('');
@@ -555,16 +601,18 @@ export default function App() {
   const confirmGroceryList = async () => {
     try {
       setIsLoading(true);
-      
       // Create the expense
       const amount = parseInt(addAmount);
       const response = await expenseAPI.addExpenseStructured(amount, 'groceries', addDescription);
-      
-      // Parse and save the grocery items to pantry
-      if (response.id) {
-        await expenseAPI.parseGroceryToPantry(response.id);
+      // Save the grocery items to pantry using parsedGroceryItems (array of {name, category})
+      for (const item of parsedGroceryItems) {
+        await expenseAPI.addPantryItemDirectly(
+          item.name,
+          1, // Default quantity to 1 for each grocery item
+          'pieces', // Default unit to 'pieces', or adjust as needed
+          item.category || 'other'
+        );
       }
-      
       // Close modal and clear form
       setIsAddModalVisible(false);
       setIsGroceryStep(1);
@@ -573,19 +621,15 @@ export default function App() {
       setAddAmount('0');
       setAddCategory('');
       setAddDescription('');
-      
       // Clear editing state
       setEditingGroceryItemIndex(-1);
       setEditingGroceryItemText('');
       setIsAddingNewItem(false);
       setNewItemText('');
-      
       // Reload expenses to show the new one
       await loadExpenses();
-      
       // Show success alert
-      Alert.alert('Success', 'Grocery expense added successfully!');
-      
+      Alert.alert('Success', 'Grocery expense and pantry items added successfully!');
     } catch (error) {
       Alert.alert('Error', `Failed to add grocery expense: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
@@ -642,23 +686,20 @@ export default function App() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     // Validate amount is a positive number
     const amount = parseFloat(editAmount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
-
     try {
       setIsLoading(true);
-      
       const updateData = {
         amount: amount,
         category: editCategory,
-        description: editDescription.trim()
+        description: editDescription.trim(),
+        timestamp: editTimestamp ? new Date(editTimestamp).toISOString() : undefined
       };
-
       await expenseAPI.updateExpense(editingExpense.id, updateData);
       
       // Close modal and clear edit state
@@ -716,7 +757,8 @@ export default function App() {
         await expenseAPI.addPantryItemDirectly(
           item.name,
           parseFloat(addPantryItemQuantity),
-          addPantryItemUnit
+          addPantryItemUnit,
+          item.category // Pass category if available
         );
       }
       
@@ -776,7 +818,8 @@ export default function App() {
         await expenseAPI.addPantryItemDirectly(
           item.name,
           parseFloat(addPantryItemQuantity),
-          addPantryItemUnit
+          addPantryItemUnit,
+          item.category // Pass category if available
         );
       }
       
@@ -811,8 +854,8 @@ export default function App() {
       return;
     }
     
-    // Only handle scroll-based UI hiding for 'All' category
-    if (selectedCategory !== 'All') {
+    // Handle scroll-based UI hiding for 'All' category and pantry view
+    if (selectedCategory !== 'All' && activeTab !== 'pantry') {
       return;
     }
     
@@ -821,12 +864,12 @@ export default function App() {
     const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
     
     // Set hideUI immediately when scrolling down starts (smaller threshold)
-    if (scrollingDown && scrollDifference > 2 && !hideUI) {
+    if (scrollingDown && scrollDifference > 10 && !hideUI) {
       setHideUI(true);
     }
     
     // Clear hideUI when scrolling up starts
-    if (!scrollingDown && scrollDifference > 2 && hideUI) {
+    if (!scrollingDown && scrollDifference > 5 && hideUI) {
       setHideUI(false);
     }
     
@@ -855,6 +898,8 @@ export default function App() {
     
     // Show the edit modal
     setIsEditModalVisible(true);
+    // When opening the edit modal, set editTimestamp
+    setEditTimestamp(expense.timestamp ? new Date(expense.timestamp).toISOString() : new Date().toISOString());
   };
 
   const handleCategoryScroll = (event) => {
@@ -924,7 +969,8 @@ export default function App() {
         item.name,
         newQuantity,
         item.unit,
-        isConsumed
+        isConsumed,
+        item.grocery_type // Always use the item's current category
       );
     } catch (error) {
       // Revert optimistic update on error
@@ -998,7 +1044,7 @@ export default function App() {
         parseFloat(editPantryItemQuantity),
         editPantryItemUnit,
         editingPantryItem.is_consumed,
-        editPantryItemCategory
+        editPantryItemCategory // Always use the selected/edited category
       );
       setIsEditPantryModalVisible(false);
       setEditingPantryItem(null);
@@ -1175,12 +1221,19 @@ export default function App() {
       return (
         <>
           {/* Floating Grocery Header */}
-          <View style={styles.groceryHeader}>
+          <Animated.View 
+            style={[
+              styles.groceryHeader,
+              {
+                transform: [{ translateY: groceryHeaderTranslateY }]
+              }
+            ]}
+          >
             <Text style={styles.groceryHeaderTitle}>Pantry</Text>
             <Text style={styles.groceryHeaderSubtitle}>
               {uniqueActiveItems.length} active, {uniqueConsumedItems.length} consumed
             </Text>
-          </View>
+          </Animated.View>
           
           <FlatList
             data={allSections}
@@ -1189,6 +1242,8 @@ export default function App() {
             style={styles.groceryList}
             contentContainerStyle={styles.groceryListContent}
             showsVerticalScrollIndicator={false}
+            onScroll={handleHeaderScroll}
+            scrollEventThrottle={16}
             ListEmptyComponent={
               <EmptyState
                 title="No grocery items yet"
@@ -1464,7 +1519,7 @@ export default function App() {
       const { height } = Dimensions.get('window');
       
       return (
-        <View style={[styles.dayContainer, { height }]}>
+        <View style={[styles.dayContainer, { height }]}> 
           {/* Expenses List */}
           <FlatList
             data={dayData.expenses}
@@ -1476,6 +1531,7 @@ export default function App() {
                 onEdit={handleExpensePress}
                 onDelete={deleteExpense}
                 getCategoryIcon={getCategoryIcon}
+                cardColor={getCategoryColor(expense.category)}
               />
             )}
             keyExtractor={(expense) => expense.id}
@@ -1502,6 +1558,7 @@ export default function App() {
               onEdit={handleExpensePress}
               onDelete={deleteExpense}
               getCategoryIcon={getCategoryIcon}
+              cardColor={getCategoryColor(expense.category)}
             />
           )}
           keyExtractor={(expense) => `${category}-${expense.id}`}
@@ -1639,44 +1696,194 @@ export default function App() {
     const renderPantrySection = ({ item: section }) => {
       if (section.items.length === 0) return null;
       
+      // Debug: Log the categories and section
+      console.log('Rendering pantry section:', section.groceryType, groceryCategories);
+      
       // Get display name for grocery type
       const getGroceryTypeDisplayName = (type) => {
-        const typeNames = {
-          'produce': 'Produce',
-          'meat': 'Meat & Protein',
-          'dairy': 'Dairy & Eggs',
-          'bread': 'Bread & Bakery',
-          'pantry': 'Pantry Staples',
-          'frozen': 'Frozen Foods',
-          'beverages': 'Beverages',
-          'snacks': 'Snacks & Treats',
-          'condiments': 'Condiments & Sauces',
-          'other': 'Other',
-          'consumed': 'Consumed'
-        };
-        return typeNames[type] || type;
+        if (type === 'consumed') return 'Consumed';
+        const found = groceryCategories.find(cat => cat.key === type);
+        return found ? found.label : type;
       };
       
+      // Get SF Symbol for grocery type
+      const getGroceryTypeIcon = (type) => {
+        const iconMap = {
+          'produce': 'leaf.fill',           // Leaf for fresh produce
+          'meat': 'fork.knife',             // Fork and knife for meat
+          'dairy': 'waterbottle.fill',      // Water bottle for dairy
+          'bread': 'birthday.cake.fill',    // Cake for bread/bakery
+          'pantry': 'shippingbox.fill',     // Box for pantry staples
+          'frozen': 'snowflake',            // Snowflake for frozen
+          'beverages': 'cup.and.saucer.fill', // Cup for beverages
+          'snacks': 'popcorn.fill',         // Popcorn for snacks
+          'condiments': 'drop.circle.fill',   // Circle drop for condiments
+          'other': 'questionmark.circle.fill', // Question mark for other
+          'consumed': 'checkmark.circle.fill'  // Checkmark for consumed items
+        };
+        return iconMap[type] || iconMap['other'];
+      };
+
+      // Get color for grocery type
+      const getGroceryTypeColor = (type) => {
+        const colorMap = {
+          'produce': currentTheme.systemMint,      // Green for fresh produce
+          'meat': currentTheme.systemPink,           // Red for meat
+          'dairy': currentTheme.systemGray,          // Blue for dairy
+          'bread': currentTheme.systemBrown,       // Orange for bread/bakery
+          'pantry': currentTheme.systemOrange,        // Gray for pantry staples
+          'frozen': currentTheme.systemCyan,        // Light blue for frozen
+          'beverages': currentTheme.systemIndigo,   // Purple for beverages
+          'snacks': currentTheme.systemPurple,      // Yellow for snacks
+          'condiments': currentTheme.systemPink,    // Pink for condiments
+          'other': currentTheme.systemGray,         // Gray for other
+          'consumed': currentTheme.systemGray       // Gray for consumed items
+        };
+        return colorMap[type] || colorMap['other'];
+      };
+      
+      // Split items into two columns for vertical flow layout
+      const leftColumn = [];
+      const rightColumn = [];
+      
+      section.items.forEach((item, index) => {
+        if (index % 2 === 0) {
+          leftColumn.push(item);
+        } else {
+          rightColumn.push(item);
+        }
+      });
+      
+      // Helper: Convert hex to HSL
+      function hexToHSL(hex) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+        const r = parseInt(hex.substring(0,2), 16) / 255;
+        const g = parseInt(hex.substring(2,4), 16) / 255;
+        const b = parseInt(hex.substring(4,6), 16) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        if (max === min) {
+          h = s = 0;
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch(max){
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h = h * 60;
+        }
+        return { h, s: s * 100, l: l * 100 };
+      }
+
+      // Helper: Convert HSL to hex (with alpha)
+      function hslToHex(h, s, l, alpha = 1) {
+        s /= 100;
+        l /= 100;
+        let c = (1 - Math.abs(2 * l - 1)) * s,
+            x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+            m = l - c/2,
+            r = 0, g = 0, b = 0;
+        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+        let hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        if (alpha < 1) {
+          hex += Math.round(alpha * 255).toString(16).padStart(2, '0');
+        }
+        return hex;
+      }
+
+      // Helper: Shift hue
+      function shiftHue(hex, degree, alpha = 1) {
+        const { h, s, l } = hexToHSL(hex);
+        const newH = (h + degree) % 360;
+        return hslToHex(newH, s, l, alpha);
+      }
+
       return (
-        <View style={styles.pantrySection}>
-          <Text style={styles.pantrySectionTitle}>
-            {getGroceryTypeDisplayName(section.groceryType)}
-          </Text>
-          {section.items.map((item) => (
-            <PantryCard
-              key={item.id}
-              item={item}
-              theme={currentTheme}
-              disabled={isLoading}
-              isExpanded={expandedQuantityId === item.id}
-              onExpand={() => setExpandedQuantityId(item.id)}
-              onCollapse={() => setExpandedQuantityId(null)}
-              onDecrease={() => handleQuantityChange(item, -1)}
-              onIncrease={() => handleQuantityChange(item, 1)}
-              onLongPress={() => showPantryActionSheet(item)}
-              isConsumed={section.type === 'consumed'}
-            />
-          ))}
+        <View style={styles.pantrySectionContainer}>
+          <LinearGradient
+            colors={[
+              getGroceryTypeColor(section.groceryType), // 80% opacity
+              shiftHue(getGroceryTypeColor(section.groceryType), 20) // 18 degree hue shift, 85% opacity
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.pantrySectionBackground,
+              { borderColor: getGroceryTypeColor(section.groceryType) }
+            ]}
+          >
+            <View style={styles.pantrySection}>
+              <View style={styles.pantrySectionHeader}>
+                <SymbolView
+                  name={getGroceryTypeIcon(section.groceryType)}
+                  size={24}
+                  type="monochrome"
+                  tintColor={currentTheme.text}
+                  fallback={<Text style={[styles.fallbackIcon, { color: currentTheme.text }]}>•</Text>}
+                />
+                <Text style={[
+                  styles.pantrySectionTitle,
+                  { color: currentTheme.text } // Use theme text color for pantry section header
+                ]}>
+                  {getGroceryTypeDisplayName(section.groceryType)}
+                </Text>
+              </View>
+              <View style={styles.pantryColumnsContainer}>
+                {/* Left Column */}
+                <View style={styles.pantryColumn}>
+                  {leftColumn.map((item) => (
+                    <View key={item.id} style={styles.pantryCardContainer}>
+                      <PantryCard
+                        item={item}
+                        theme={currentTheme}
+                        disabled={isLoading}
+                        isExpanded={expandedQuantityId === item.id}
+                        onExpand={() => setExpandedQuantityId(item.id)}
+                        onCollapse={() => setExpandedQuantityId(null)}
+                        onDecrease={() => handleQuantityChange(item, -1)}
+                        onIncrease={() => handleQuantityChange(item, 1)}
+                        onLongPress={() => showPantryActionSheet(item)}
+                        isConsumed={section.type === 'consumed'}
+                        groceryType={section.groceryType}
+                      />
+                    </View>
+                  ))}
+                </View>
+                
+                {/* Right Column */}
+                <View style={styles.pantryColumn}>
+                  {rightColumn.map((item) => (
+                    <View key={item.id} style={styles.pantryCardContainer}>
+                      <PantryCard
+                        item={item}
+                        theme={currentTheme}
+                        disabled={isLoading}
+                        isExpanded={expandedQuantityId === item.id}
+                        onExpand={() => setExpandedQuantityId(item.id)}
+                        onCollapse={() => setExpandedQuantityId(null)}
+                        onDecrease={() => handleQuantityChange(item, -1)}
+                        onIncrease={() => handleQuantityChange(item, 1)}
+                        onLongPress={() => showPantryActionSheet(item)}
+                        isConsumed={section.type === 'consumed'}
+                        groceryType={section.groceryType}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
       );
     };
@@ -1739,7 +1946,7 @@ export default function App() {
               <View style={styles.modalField}>
                 <Text style={styles.modalLabel}>Category</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {['amazon', 'transportation', 'groceries', 'entertainment', 'fashion', 'travel', 'food', 'monthly', 'other'].map((cat) => (
+                  {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'other', 'transportation', 'travel'].map((cat) => (
                     <Pressable
                       key={cat}
                       style={[
@@ -1861,7 +2068,7 @@ export default function App() {
                       </View>
                     ) : (
                       <View style={styles.groceryItemDisplayContainer}>
-                        <Text style={styles.groceryConfirmItemText}>• {item}</Text>
+                        <Text style={styles.groceryConfirmItemText}>• {item.name}</Text>
                         <View style={styles.groceryItemActions}>
                           <Pressable onPress={() => startEditingGroceryItem(index, item)} style={styles.groceryItemActionButton}>
                             <Text style={styles.groceryItemActionButtonText}>✏️</Text>
@@ -1940,11 +2147,7 @@ export default function App() {
         >
           {/* Swipe indicator */}
           <View style={styles.modalPill} />
-          
           <View style={styles.modalHeader}>
-            {/* <Pressable onPress={() => setIsEditModalVisible(false)}>
-              <Text style={styles.modalCancelButton}>Cancel</Text>
-            </Pressable> */}
             <Text style={styles.modalTitle}>Edit Expense</Text>
             <Pressable onPress={updateExpense} disabled={isLoading}>
               <Text style={[styles.modalSaveButton, isLoading && styles.modalSaveButtonDisabled]}>
@@ -1952,12 +2155,14 @@ export default function App() {
               </Text>
             </Pressable>
           </View>
-          
+
+          {/* Content */}
           <ScrollView 
             style={styles.modalContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
+            {/* Amount */}
             <View style={styles.modalField}>
               <Text style={styles.modalLabel}>Amount</Text>
               <TextInput
@@ -1968,11 +2173,12 @@ export default function App() {
                 keyboardType="numeric"
               />
             </View>
-            
+
+            {/* Category */}
             <View style={styles.modalField}>
               <Text style={styles.modalLabel}>Category</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {['amazon', 'transportation', 'groceries', 'entertainment', 'fashion', 'travel', 'food', 'monthly', 'other'].map((cat) => (
+                {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'other', 'transportation', 'travel'].map((cat) => (
                   <Pressable
                     key={cat}
                     style={[
@@ -1991,7 +2197,27 @@ export default function App() {
                 ))}
               </ScrollView>
             </View>
-            
+
+            {/* Date */}
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Date</Text>
+              <DateTimePicker
+                value={editTimestamp && !isNaN(new Date(editTimestamp)) ? new Date(editTimestamp) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) {
+                    // Only update the date part, keep the original time
+                    const current = editTimestamp && !isNaN(new Date(editTimestamp)) ? new Date(editTimestamp) : new Date();
+                    current.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                    setEditTimestamp(current.toISOString());
+                  }
+                }}
+                style={{ alignSelf: 'flex-start', marginTop: 4 }}
+              />
+            </View>
+
+            {/* Description */}
             <View style={styles.modalField}>
               <Text style={styles.modalLabel}>Description</Text>
               <TextInput
@@ -2156,26 +2382,31 @@ export default function App() {
                 onScroll={handleGroceryCategoryScroll}
                 scrollEventThrottle={16}
               >
-                {groceryCategories.map((category) => (
-                  <Pressable
-                    key={category.key}
-                    style={[
-                      styles.modalCategoryOption,
-                      editPantryItemCategory === category.key && styles.modalCategoryOptionSelected
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setEditPantryItemCategory(category.key);
-                    }}
-                  >
-                    <Text style={[
-                      styles.modalCategoryText,
-                      editPantryItemCategory === category.key && styles.modalCategoryTextSelected
-                    ]}>
-                      {category.label}
-                    </Text>
-                  </Pressable>
-                ))}
+                {console.log('Rendering category options:', groceryCategories)}
+                {isLoadingGroceryCategories ? (
+                  <Text style={styles.modalLabel}>Loading categories...</Text>
+                ) : (
+                  groceryCategories.map((category) => (
+                    <Pressable
+                      key={category.key}
+                      style={[
+                        styles.modalCategoryOption,
+                        editPantryItemCategory === category.key && styles.modalCategoryOptionSelected
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setEditPantryItemCategory(category.key);
+                      }}
+                    >
+                      <Text style={[
+                        styles.modalCategoryText,
+                        editPantryItemCategory === category.key && styles.modalCategoryTextSelected
+                      ]}>
+                        {category.label}
+                      </Text>
+                    </Pressable>
+                  ))
+                )}
               </ScrollView>
             </View>
 
@@ -2201,6 +2432,7 @@ export default function App() {
     const getCategoryIcon = (category) => {
       const iconMap = {
         'amazon': 'shippingbox.fill',
+        'furniture': 'chair.fill',
         'transportation': 'tram.fill',
         'groceries': 'cart.fill',
         'entertainment': 'gamecontroller.fill',
@@ -2213,25 +2445,23 @@ export default function App() {
       return iconMap[category] || 'chart.bar.fill';
     };
 
-    // Helper function to capitalize grocery item names
-    const capitalizeGroceryName = (name) => {
-      if (!name) return '';
-      return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    // Helper function to get a color for each expense category
+    const getCategoryColor = (category) => {
+      const colorMap = {
+        'amazon': currentTheme.systemOrange,
+        'entertainment': currentTheme.systemPurple,
+        'fashion': currentTheme.systemPink,
+        'food': currentTheme.systemRed,
+        'furniture': currentTheme.systemBrown,
+        'groceries': currentTheme.systemGreen,
+        'monthly': currentTheme.systemTeal,
+        'other': currentTheme.systemGray,
+        'transportation': currentTheme.systemIndigo,
+        'travel': currentTheme.systemCyan,
+        'subscriptions': currentTheme.systemYellow,
+      };
+      return colorMap[category] || currentTheme.systemGray;
     };
-
-    // Grocery categories for selection
-    const groceryCategories = [
-      { key: 'produce', label: 'Produce' },
-      { key: 'meat', label: 'Meat & Seafood' },
-      { key: 'dairy', label: 'Dairy & Cheese' },
-      { key: 'bread', label: 'Bakery & Bread' },
-      { key: 'pantry', label: 'Pantry' },
-      { key: 'frozen', label: 'Frozen Foods' },
-      { key: 'beverages', label: 'Beverages' },
-      { key: 'snacks', label: 'Snacks' },
-      { key: 'condiments', label: 'Condiments & Spices' },
-      { key: 'other', label: 'Other' }
-    ];
     // #endregion
   
   // #endregion
@@ -2247,16 +2477,24 @@ export default function App() {
        }
       
       {/* Top Gradient Overlay */}
-      <LinearGradient
-        colors={[...currentTheme.topGradient].reverse()}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+      <Animated.View
         style={[
           styles.topGradient,
+          {
+            transform: [{ translateY: topGradientTranslateY }]
+          },
           selectedCategory !== 'All' && { marginTop: -120 }
         ]}
         pointerEvents="none"
-      />
+      >
+        <LinearGradient
+          colors={[...currentTheme.topGradient].reverse()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={{ flex: 1 }}
+          pointerEvents="none"
+        />
+      </Animated.View>
       
       {/* Content based on active tab */}
               {activeTab === 'expenses' ? renderExpensesView() : renderGroceryView()}
