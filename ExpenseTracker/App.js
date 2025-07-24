@@ -1324,7 +1324,7 @@ export default function App() {
       <View style={styles.viewSelectorWrapper}>
         {/* Background Container with ScrollView inside */}
         <BlurView
-          intensity={35}
+          intensity={20}
           tint={currentTheme.blurTint}
           style={styles.viewSelectorBackground}
         >
@@ -1345,7 +1345,7 @@ export default function App() {
               }}
             >
                               <BlurView 
-                  intensity={activeTab === 'expenses' ? 50 : 0} 
+                  intensity={activeTab === 'expenses' ? 30 : 0} 
                   tint={currentTheme.blurTint} 
                   style={[
                     styles.viewOption,
@@ -1385,7 +1385,7 @@ export default function App() {
               }}
             >
               <BlurView 
-                intensity={activeTab === 'pantry' ? 50 : 0} 
+                intensity={activeTab === 'pantry' ? 30 : 0} 
                 tint={currentTheme.blurTint} 
                 style={[
                   styles.viewOption,
@@ -1420,7 +1420,7 @@ export default function App() {
       <View>
         {/* Background Container with ScrollView inside */}
         <BlurView
-          intensity={30}
+          intensity={20}
           tint={currentTheme.blurTint}
           style={styles.expenseCategorySelectorBackground}
         >
@@ -1442,7 +1442,7 @@ export default function App() {
               >
                 {/* Category Button */}
                 <BlurView 
-                  intensity={selectedCategory === category ? 50 : 0} 
+                  intensity={selectedCategory === category ? 30 : 0} 
                   tint={currentTheme.blurTint} 
                   style={[
                     styles.expenseCategoryOption,
@@ -1523,10 +1523,8 @@ export default function App() {
         );
       }
 
-      // Use day pager for "All" category, simple list for specific categories
-      return category === 'All' 
-        ? renderDayView(category)
-        : renderExpensesList(category);
+      // Always use simple list view for all categories (day view disabled)
+      return renderExpensesList(category);
     };
 
     const renderDayView = (category) => {
@@ -1610,6 +1608,65 @@ export default function App() {
     const renderExpensesList = (category) => {
       const filteredExpenses = getFilteredExpenses(category);
       
+      // For "All" category, group expenses by day
+      if (category === 'All') {
+        const dayGroups = getFilteredExpensesByDay(category);
+        
+        return (
+          <FlatList
+            data={dayGroups}
+            renderItem={({ item: dayData }) => (
+              <View style={styles.daySectionContainer}>
+                {/* Day Header */}
+                <View style={styles.daySectionHeader}>
+                  <Text style={styles.daySectionTitle}>
+                    {(() => {
+                      const dateObj = new Date(dayData.date);
+                      const day = dateObj.getDate();
+                      const month = dateObj.toLocaleString('en-US', { month: 'long' });
+                      // Helper to get ordinal suffix
+                      const getOrdinal = (n) => {
+                        if (n > 3 && n < 21) return 'th';
+                        switch (n % 10) {
+                          case 1: return 'st';
+                          case 2: return 'nd';
+                          case 3: return 'rd';
+                          default: return 'th';
+                        }
+                      };
+                      return `${day} ${month}`;
+                    })()}
+                  </Text>
+                  <Text style={styles.daySectionSubtitle}>
+                    ${dayData.expenses.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
+                  </Text>
+                </View>
+                
+                {/* Expenses for this day */}
+                {dayData.expenses.map((expense) => (
+                  <ExpenseCardTotal
+                    key={expense.id}
+                    item={expense}
+                    styles={styles}
+                    groceryItems={groceryItems}
+                    onEdit={handleExpensePress}
+                    onDelete={deleteExpense}
+                    getCategoryIcon={getCategoryIcon}
+                    cardColor={getCategoryColor(expense.category)}
+                  />
+                ))}
+              </View>
+            )}
+            keyExtractor={(dayData) => `${category}-${dayData.date}`}
+            style={[styles.categoryExpensesList, { marginTop: -10 }]}
+            contentContainerStyle={styles.categoryExpensesContent}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+          />
+        );
+      }
+      
+      // For other categories, show simple list
       return (
         <FlatList
           data={filteredExpenses}
@@ -2536,10 +2593,10 @@ export default function App() {
   return (
     <View style={styles.container}>
       
-       {/* Fixed Day Header - Only show for "All" category (day-based view) */}
-       {!isLoadingExpenses && activeTab === 'expenses' && selectedCategory === 'All' && getFilteredExpensesByDay().length > 0 && 
+       {/* Fixed Day Header - Disabled since day view is disabled */}
+      {/* {!isLoadingExpenses && activeTab === 'expenses' && selectedCategory === 'All' && getFilteredExpensesByDay().length > 0 && 
          renderFixedDayHeader()
-       }
+       } */}
       
       {/* Top Gradient Overlay */}
       <Animated.View

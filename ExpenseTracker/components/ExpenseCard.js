@@ -115,7 +115,7 @@ const ExpenseCardTotal = ({
         <View style={styles.category}>
           <SymbolView
             name={getCategoryIcon(item.category)}
-            size={24}
+            size={18}
             type="monochrome"
             tintColor="#FFFFFF"
             fallback={null}

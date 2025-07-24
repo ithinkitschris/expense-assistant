@@ -134,6 +134,35 @@ export const createStyles = (theme) => StyleSheet.create({
     letterSpacing: -0.3,
   },
 
+  // Day section styles for grouped expenses
+  daySectionContainer: {
+    marginTop: 10,
+    marginBottom: 40, 
+  },
+  
+  daySectionHeader: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingHorizontal: 30,
+    marginBottom: 20,
+  },
+  
+  daySectionTitle: {
+    fontSize: 40,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.2,
+  },
+  
+  daySectionSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.textTertiary,
+    letterSpacing: -0.2,
+    marginLeft: 0,
+  },
+
   // #endregion
 
   // #region EXPENSE CATEGORY SELECTOR
@@ -305,45 +334,99 @@ export const createStyles = (theme) => StyleSheet.create({
 
   // #region EXPENSE ITEMS
   
-  // Style for ExpenseCardTotal
-  expenseCardTotal: {
-    backgroundColor: theme.itemCardBackground,
-    marginHorizontal: 20,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: theme.glassBorderColor,
-    borderRadius: 27.5,
-    paddingHorizontal: 25,
-    paddingTop: 12.5,
-    paddingBottom: 20,
-    shadowColor: theme.shadowColor,
-    shadowOffset: theme.shadowOffset,
-    shadowOpacity: theme.shadowOpacity,
-    shadowRadius: theme.shadowRadius,
-  },
-  
-  expenseCardTotalTitle: {
-    fontSize: 42,
-    fontWeight: '500',
-    lineHeight: 40,
-    color: theme.text,
-    letterSpacing: -0.2,
-    marginTop: 12,
-    flex: 4,
-  },
-  expenseCardTotalAmount: {
-    fontSize: 42,
-    fontWeight: '400',
-    lineHeight: 48,
-    color: theme.text,
-    textAlign: 'right',
-    textAlignVertical: 'bottom',
-    letterSpacing: -0.6,
-    flex: 1,
-    opacity: 1,
+    // #region EXPENSECARD TOTAL
+    expenseContentContainerTotal: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+
+    expenseCardTotal: {
+      backgroundColor: theme.itemCardBackground,
+      marginHorizontal: 20,
+      marginBottom: 6,
+      borderWidth: 1,
+      borderColor: theme.glassBorderColor,
+      borderRadius: 25,
+      paddingHorizontal: 20,
+      paddingTop: 11.5,
+      paddingBottom: 17.5,
+      shadowColor: theme.shadowColor,
+      shadowOffset: theme.shadowOffset,
+      shadowOpacity: theme.shadowOpacity,
+      shadowRadius: theme.shadowRadius,
+    },
+    
+    expenseCardTotalTitle: {
+      fontSize: 30,
+      fontWeight: '500',
+      lineHeight: 32,
+      color: theme.text,
+      letterSpacing: -0.2,
+      marginTop: 10,
+      flex: 4,
+    },
+
+    expenseCardTotalAmount: {
+      fontSize: 34,
+      fontWeight: '400',
+      lineHeight: 48,
+      color: theme.text,
+      textAlign: 'right',
+      textAlignVertical: 'bottom',
+      letterSpacing: -0.6,
+      opacity: 1,
+      marginBottom: -5,
+      flex: 1,
+    },
+
+    expenseHeaderTotal: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'start',
+      marginBottom: -6,
+    },
+
+    category: {
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      borderWidth: 0,
+      borderColor: theme.borderColorLighter,
+      marginLeft: -3,
+      opacity: 0.75,
+    },
+
+    categoryText: {
+      fontSize: 14,
+      color: theme.text,
+      fontWeight: '500',
+      letterSpacing: -0.2,
+      textTransform: 'capitalize',
+      opacity: 0.8,
+    },
+    
+    menuButton: {
+      padding: 6,
+      alignSelf: 'flex-start',
+      backgroundColor: 'rgba(255,255,255,0)',
+      opacity: 1,
+      borderWidth: 0,
+      borderColor: theme.glassBorderColor,
+    },
+
+    // #endregion
+
+    // #region EXPENSECARD CATEGORY
+
+  expenseContentContainerCategory: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
-  // Separate style for ExpenseCardCategory
   expenseCardCategory: {
     backgroundColor: theme.itemCardBackground,
     marginHorizontal: 20,
@@ -433,60 +516,8 @@ export const createStyles = (theme) => StyleSheet.create({
     flex: 0,
     textAlignVertical: 'bottom',
   },
-  
-  
-  expenseHeaderTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'start',
-    marginBottom: 0,
-  },
 
-  category: {
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    borderWidth: 0,
-    borderColor: theme.borderColorLighter,
-    marginLeft: -3,
-    opacity: 0.75,
-  },
-
-  categoryText: {
-    fontSize: 14,
-    color: theme.text,
-    fontWeight: '500',
-    letterSpacing: -0.3,
-    textTransform: 'capitalize',
-    opacity: 0.8,
-  },
-  
-  menuButton: {
-    padding: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0)',
-    opacity: 1,
-    borderWidth: 0,
-    borderColor: theme.glassBorderColor,
-  },
-
-  expenseContentContainerTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-
-  expenseContentContainerCategory: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-
-  
+  // #endregion
 
   // #endregion
 
@@ -994,7 +1025,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
   groceryList: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 25,
     paddingTop: 160, // Account for floating header
   },
 
