@@ -597,18 +597,43 @@ export default function App() {
   const confirmGroceryList = async () => {
     try {
       setIsLoading(true);
+      console.log('🛒 Starting grocery expense confirmation...');
+      console.log('📝 Description:', addDescription);
+      console.log('💰 Amount:', addAmount);
+      console.log('📦 Items to add:', parsedGroceryItems);
+      
+      // Test API connection first
+      console.log('🔍 Testing API connection...');
+      const isConnected = await expenseAPI.testConnection();
+      if (!isConnected) {
+        throw new Error('Cannot connect to API server. Please check your network connection.');
+      }
+      
       // Create the expense
       const amount = parseInt(addAmount);
+      console.log('🚀 Creating expense...');
       const response = await expenseAPI.addExpenseStructured(amount, 'groceries', addDescription);
+      console.log('✅ Expense created:', response);
+      
       // Save the grocery items to pantry using parsedGroceryItems (array of {name, category})
+      console.log('🛒 Adding items to pantry...');
       for (const item of parsedGroceryItems) {
-        await expenseAPI.addPantryItemDirectly(
-          item.name,
-          1, // Default quantity to 1 for each grocery item
-          'pieces', // Default unit to 'pieces', or adjust as needed
-          item.category || 'other'
-        );
+        console.log('📦 Adding item:', item.name);
+        try {
+          await expenseAPI.addPantryItemDirectly(
+            item.name,
+            1, // Default quantity to 1 for each grocery item
+            'pieces' // Default unit to 'pieces', or adjust as needed
+          );
+          console.log('✅ Item added successfully:', item.name);
+        } catch (itemError) {
+          console.log('❌ Failed to add item:', item.name, itemError);
+          throw itemError; // Re-throw to be caught by outer catch
+        }
       }
+      
+      console.log('🎉 All items added successfully!');
+      
       // Close modal and clear form
       setIsAddModalVisible(false);
       setIsGroceryStep(1);
@@ -627,7 +652,49 @@ export default function App() {
       // Show success alert
       Alert.alert('Success', 'Grocery expense and pantry items added successfully!');
     } catch (error) {
-      Alert.alert('Error', `Failed to add grocery expense: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.log('❌ Error in confirmGroceryList:', error);
+      console.log('❌ Error type:', typeof error);
+      console.log('❌ Error message:', error.message);
+      console.log('❌ Error stack:', error.stack);
+      console.log('❌ Error toString:', error.toString());
+      console.log('❌ Error constructor:', error.constructor.name);
+      
+      // Try to get more details about the error
+      if (error.response) {
+        console.log('❌ Error response status:', error.response.status);
+        console.log('❌ Error response data:', error.response.data);
+        console.log('❌ Error response headers:', error.response.headers);
+      }
+      
+      if (error.request) {
+        console.log('❌ Error request:', error.request);
+      }
+      
+      let errorMessage = 'Unknown error';
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message || 'Unknown error occurred';
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && typeof error === 'object') {
+          // Try to extract meaningful information from the error object
+          if (error.message) {
+            errorMessage = error.message;
+          } else if (error.detail) {
+            errorMessage = error.detail;
+          } else if (error.error) {
+            errorMessage = error.error;
+          } else {
+            errorMessage = JSON.stringify(error);
+          }
+        }
+      } catch (stringifyError) {
+        console.log('❌ Error stringifying error:', stringifyError);
+        errorMessage = 'Failed to process error message';
+      }
+      
+      console.log('📤 Final error message:', errorMessage);
+      Alert.alert('Error', `Failed to add grocery expense: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -753,8 +820,7 @@ export default function App() {
         await expenseAPI.addPantryItemDirectly(
           item.name,
           parseFloat(addPantryItemQuantity),
-          addPantryItemUnit,
-          item.category // Pass category if available
+          addPantryItemUnit
         );
       }
       
@@ -814,8 +880,7 @@ export default function App() {
         await expenseAPI.addPantryItemDirectly(
           item.name,
           parseFloat(addPantryItemQuantity),
-          addPantryItemUnit,
-          item.category // Pass category if available
+          addPantryItemUnit
         );
       }
       
@@ -1398,7 +1463,7 @@ export default function App() {
                       name={getCategoryIcon(category)}
                       size={22}
                       type="outline"
-                      tintColor={currentTheme.systemGray}
+                      tintColor="white"
                       fallback={null}
                     />
                   )}
@@ -1557,7 +1622,6 @@ export default function App() {
               onDelete={deleteExpense}
               getCategoryIcon={getCategoryIcon}
               cardColor={getCategoryColor(expense.category)}
-              categoryColor={getCategoryColor(expense.category)}
             />
           )}
           keyExtractor={(expense) => `${category}-${expense.id}`}
@@ -2482,9 +2546,9 @@ export default function App() {
         style={[
           styles.topGradient,
           {
-            transform: [{ translateY: topGradientTranslateY }]
-          },
-          selectedCategory !== 'All' && { marginTop: -120 }
+            transform: [{ translateY: topGradientTranslateY }],
+            height: selectedCategory !== 'All' ? 150 : 200
+          }
         ]}
         pointerEvents="none"
       >

@@ -16,6 +16,20 @@ const api = axios.create({
 // API service functions
 export const expenseAPI = {
   
+  // Test API connectivity
+  testConnection: async () => {
+    try {
+      console.log('🔍 Testing API connection...');
+      console.log('📡 API URL:', `${API_BASE_URL}/pantry-items`);
+      const response = await api.get('/pantry-items');
+      console.log('✅ API connection successful');
+      return true;
+    } catch (error) {
+      console.log('❌ API connection failed:', error.message);
+      return false;
+    }
+  },
+  
   // Add expense using structured data (form input)
   addExpenseStructured: async (amount, category, description) => {
     try {
@@ -30,8 +44,30 @@ export const expenseAPI = {
       return response.data;
     } catch (error) {
       console.log('❌ API Error:', error);
+      console.log('❌ Error type:', typeof error);
+      console.log('❌ Error message:', error.message);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to add expense');
+      console.log('❌ Error response type:', typeof error.response?.data);
+      console.log('❌ Full error object:', JSON.stringify(error, null, 2));
+      
+      // Handle different error response formats
+      let errorMessage = 'Failed to add expense';
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          errorMessage = JSON.stringify(error.response.data);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.log('📤 Throwing error message:', errorMessage);
+      throw new Error(errorMessage);
     }
   },
 
@@ -130,8 +166,30 @@ export const expenseAPI = {
       return response.data;
     } catch (error) {
       console.log('❌ Add Pantry Item Error:', error);
+      console.log('❌ Error type:', typeof error);
+      console.log('❌ Error message:', error.message);
       console.log('❌ Error response:', error.response?.data);
-      throw new Error(error.response?.data?.detail || 'Failed to add pantry item');
+      console.log('❌ Error response type:', typeof error.response?.data);
+      console.log('❌ Full error object:', JSON.stringify(error, null, 2));
+      
+      // Handle different error response formats
+      let errorMessage = 'Failed to add pantry item';
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          errorMessage = JSON.stringify(error.response.data);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.log('📤 Throwing error message:', errorMessage);
+      throw new Error(errorMessage);
     }
   },
 

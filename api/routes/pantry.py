@@ -74,29 +74,73 @@ async def add_pantry_item(request: dict, db: sqlite3.Connection = Depends(get_db
             raise HTTPException(status_code=400, detail="Invalid quantity value")
         
         # Use unified parsing function for categorization
-        parsed_items = parse_grocery_items_and_categories(name)
-        if parsed_items and len(parsed_items) > 0:
-            grocery_type = parsed_items[0]["category"]
-        else:
-            grocery_type = categorize_grocery_item_rule_based(name)  # Fallback to rule-based
+        try:
+            parsed_items = parse_grocery_items_and_categories(name)
+            if parsed_items and len(parsed_items) > 0:
+                grocery_type = parsed_items[0]["category"]
+            else:
+                grocery_type = categorize_grocery_item_rule_based(name)  # Fallback to rule-based
+        except Exception as parse_error:
+            # If parsing fails, use rule-based categorization as fallback
+            grocery_type = categorize_grocery_item_rule_based(name)
         
         c = db.cursor()
-        c.execute('''
-            INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
-            VALUES (?, ?, ?, datetime('now'), ?, ?)
-        ''', (name, quantity, unit, False, grocery_type))
-        item_id = c.lastrowid
-        # Fetch created_at from DB
-        c.execute('SELECT created_at FROM pantry_items WHERE id = ?', (item_id,))
-        row = c.fetchone()
-        if row and row[0]:
-            created_at = row[0]
-        else:
-            created_at = datetime.now().isoformat()
-        db.commit()
-        item_id = int(item_id) if item_id is not None else None
-        if item_id is None:
-            raise HTTPException(status_code=500, detail="Failed to insert pantry item (no ID returned)")
+        try:
+            # Check if an item with the same name already exists (case-insensitive)
+            c.execute('SELECT id, quantity, unit, created_at, is_consumed, grocery_type FROM pantry_items WHERE LOWER(name) = LOWER(?)', (name,))
+            existing_item = c.fetchone()
+            
+            if existing_item:
+                # Item exists, update quantity and other fields
+                item_id, existing_quantity, existing_unit, created_at, is_consumed, existing_grocery_type = existing_item
+                new_quantity = existing_quantity + quantity
+                
+                # Update the existing item
+                c.execute('''
+                    UPDATE pantry_items 
+                    SET quantity = ?, unit = ?, is_consumed = ?, grocery_type = ?
+                    WHERE id = ?
+                ''', (new_quantity, unit, False, grocery_type, item_id))
+                
+                db.commit()
+                item_id = int(item_id)
+            else:
+                # Item doesn't exist, create new one
+                c.execute('''
+                    INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
+                    VALUES (?, ?, ?, datetime('now'), ?, ?)
+                ''', (name, quantity, unit, False, grocery_type))
+                item_id = c.lastrowid
+                # Fetch created_at from DB
+                c.execute('SELECT created_at FROM pantry_items WHERE id = ?', (item_id,))
+                row = c.fetchone()
+                if row and row[0]:
+                    created_at = row[0]
+                else:
+                    created_at = datetime.now().isoformat()
+                db.commit()
+                item_id = int(item_id) if item_id is not None else None
+                if item_id is None:
+                    raise HTTPException(status_code=500, detail="Failed to insert pantry item (no ID returned)")
+        except sqlite3.Error as db_error:
+            raise HTTPException(status_code=500, detail=f"Database error: {str(db_error)}")
+        # For existing items, we need to fetch the updated data to return correct quantity
+        if existing_item:
+            # Fetch the updated item data
+            c.execute('SELECT id, name, quantity, unit, created_at, is_consumed, grocery_type FROM pantry_items WHERE id = ?', (item_id,))
+            updated_item = c.fetchone()
+            if updated_item:
+                _, _, updated_quantity, updated_unit, updated_created_at, updated_is_consumed, updated_grocery_type = updated_item
+                return PantryItemResponse(
+                    id=item_id,
+                    name=name,
+                    quantity=updated_quantity,
+                    unit=updated_unit,
+                    created_at=updated_created_at,
+                    is_consumed=updated_is_consumed,
+                    grocery_type=updated_grocery_type
+                )
+        
         return PantryItemResponse(
             id=item_id,
             name=name,

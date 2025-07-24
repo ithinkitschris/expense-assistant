@@ -141,8 +141,8 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCategorySelector: {
     position: 'absolute',
     top: 60,
-    left: 28,
-    right: 28,
+    left: 20,
+    right: 20,
     zIndex: 1,
     backgroundColor: theme.glassBackground,
     borderRadius: 35,
@@ -304,39 +304,41 @@ export const createStyles = (theme) => StyleSheet.create({
   // #endregion
 
   // #region EXPENSE ITEMS
+  
+  // Style for ExpenseCardTotal
   expenseCardTotal: {
     backgroundColor: theme.itemCardBackground,
-    marginHorizontal: 15,
-    marginBottom: 8,
+    marginHorizontal: 20,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
-    borderRadius: 35,
+    borderRadius: 27.5,
     paddingHorizontal: 25,
-    paddingTop: 10,
-    paddingBottom: 25,
+    paddingTop: 12.5,
+    paddingBottom: 20,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
     shadowOpacity: theme.shadowOpacity,
     shadowRadius: theme.shadowRadius,
   },
-  // Text styles for ExpenseCardTotal
+  
   expenseCardTotalTitle: {
     fontSize: 42,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 40,
     color: theme.text,
     letterSpacing: -0.2,
-    paddingTop: 2,
+    marginTop: 12,
     flex: 4,
   },
   expenseCardTotalAmount: {
-    fontSize: 38,
-    fontWeight: '300',
+    fontSize: 42,
+    fontWeight: '400',
     lineHeight: 48,
     color: theme.text,
     textAlign: 'right',
-    paddingTop: 2,
-    letterSpacing: -0.8,
+    textAlignVertical: 'bottom',
+    letterSpacing: -0.6,
     flex: 1,
     opacity: 1,
   },
@@ -344,46 +346,100 @@ export const createStyles = (theme) => StyleSheet.create({
   // Separate style for ExpenseCardCategory
   expenseCardCategory: {
     backgroundColor: theme.itemCardBackground,
-    marginHorizontal: 15,
+    marginHorizontal: 20,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
-    borderRadius: 35,
-    paddingHorizontal: 25,
-    paddingTop: 10,
-    paddingBottom: 25,
+    borderRadius: 25,
+    paddingLeft: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12.5,
+    paddingBottom: 12.5,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
     shadowOpacity: theme.shadowOpacity,
     shadowRadius: theme.shadowRadius,
   },
-  // Text styles for ExpenseCardCategory
-  expenseCardCategoryTitle: {
-    fontSize: 42,
-    fontWeight: '500',
-    lineHeight: 40,
-    color: theme.categoryColor || theme.appleBlue,
-    letterSpacing: -0.1,
-    paddingTop: 2,
-    flex: 4,
-  },
-  expenseCardCategoryAmount: {
-    fontSize: 38,
-    fontWeight: '300',
-    lineHeight: 48,
-    color: theme.text,
-    textAlign: 'right',
-    paddingTop: 2,
-    letterSpacing: -0.8,
+  // Left section: icon + title (row, top-aligned)
+  expenseCardCategoryLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     flex: 1,
+  },
+  // Title column container for category and description
+  expenseCardCategoryTitleContainer: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+
+  expenseCardCategoryName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.text,
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+    marginBottom: 10,
     opacity: 1,
   },
   
-  expenseHeader: {
+  expenseCardCategoryTitle: {
+    fontSize: 30,
+    fontWeight: '500',
+    lineHeight: 32,
+    color: theme.text,
+    letterSpacing: -0.1,
+  },
+  
+  // Remove flex from titleFlex, keep only alignment for legacy support
+  expenseCardCategoryTitleFlex: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  },
+
+  date: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: theme.text,
+    letterSpacing: -0.4,
+    textTransform: 'capitalize',
+    marginBottom: 4,
+    marginLeft: 2,
+    opacity: 0.3,
+  },
+
+  expenseCardCategoryAmount: {
+    fontSize: 34,
+    fontWeight: '500',
+    color: theme.text,
+    textAlign: 'right',
+    letterSpacing: -0.5,
+    flex: 0,
+    opacity: 1,
+    fontFamily: 'SF Pro Rounded',
+  },
+
+  expenseCardCategoryRightContainer: {
+    flex: 0.4,
+    alignItems: 'flex-end',
+  },
+
+  expenseCardCategoryDate: {
+    flex: 1,
+    textAlignVertical: 'top',
+  },
+
+  expenseCardCategoryAmountFlex: {
+    flex: 0,
+    textAlignVertical: 'bottom',
+  },
+  
+  
+  expenseHeaderTotal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'start',
-    marginBottom: 10,
+    marginBottom: 0,
   },
 
   category: {
@@ -394,8 +450,8 @@ export const createStyles = (theme) => StyleSheet.create({
     gap: 7,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
-    marginLeft: -2,
-    opacity: 1,
+    marginLeft: -3,
+    opacity: 0.75,
   },
 
   categoryText: {
@@ -404,19 +460,9 @@ export const createStyles = (theme) => StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.3,
     textTransform: 'capitalize',
-    opacity: 1,
+    opacity: 0.8,
   },
   
-  date: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: theme.text,
-    letterSpacing: -0.3,
-    textTransform: 'capitalize',
-    marginTop: 2.3,
-    opacity: 1,
-  },
-
   menuButton: {
     padding: 6,
     borderRadius: 20,
@@ -427,56 +473,21 @@ export const createStyles = (theme) => StyleSheet.create({
     borderColor: theme.glassBorderColor,
   },
 
-  expenseContentContainer: {
+  expenseContentContainerTotal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
+
+  expenseContentContainerCategory: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+
   
-  expenseTitle: {
-    fontSize: 42,
-    fontWeight: '600',
-    lineHeight: 40 ,
-    color: theme.text,
-    letterSpacing: -0.2,
-    paddingTop: 2,
-    flex: 4,
-  },
-  
-  amount: {
-    fontSize: 38,
-    fontWeight: '300',
-    lineHeight: 48,
-    color: theme.text,
-    textAlign: 'right',
-    paddingTop: 2,
-    letterSpacing: -0.8,
-    flex: 1,
-    opacity: 1,
-  },
 
-  groceryItemsContainer: {
-    marginTop: 10,
-    marginBottom: 10,
-    paddingHorizontal: 0,
-  },
-
-  groceryItemsHeader: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: theme.textSecondary,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  groceryItems: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: theme.text,
-    lineHeight: 22,
-    opacity: 0.8,
-  },
   // #endregion
 
   // #region ADD BUTTON
@@ -574,7 +585,7 @@ export const createStyles = (theme) => StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 160,
+    height: 140,
     zIndex: 1,
   },
   

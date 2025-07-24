@@ -82,11 +82,28 @@ async def add_expense_natural_language(expense_input: NaturalLanguageExpense):
 
 
 @router.post("/expenses/", response_model=ExpenseResponse)
-async def create_expense_structured(expense: ExpenseCreate, db: sqlite3.Connection = Depends(get_db)):
+async def create_expense_structured(request: dict, db: sqlite3.Connection = Depends(get_db)):
     """
     Add expense using structured data (form input)
     """
     try:
+        print(f"🔍 Raw request data: {request}")
+        
+        # Parse the request data manually to see what's being sent
+        try:
+            expense = ExpenseCreate(**request)
+        except Exception as validation_error:
+            print(f"❌ Validation error: {validation_error}")
+            raise HTTPException(
+                status_code=422,
+                detail=f"Validation error: {str(validation_error)}"
+            )
+        
+        print(f"🔍 Received expense data: {expense}")
+        print(f"🔍 Amount: {expense.amount} (type: {type(expense.amount)})")
+        print(f"🔍 Category: {expense.category} (type: {type(expense.category)})")
+        print(f"🔍 Description: {expense.description} (type: {type(expense.description)})")
+        
         c = db.cursor()
         
         # Use current time if no timestamp provided
@@ -113,6 +130,7 @@ async def create_expense_structured(expense: ExpenseCreate, db: sqlite3.Connecti
             timestamp=timestamp
         )
     except Exception as e:
+        print(f"❌ Error creating expense: {e}")
         raise HTTPException(
             status_code=400,
             detail=f"Failed to create expense: {str(e)}"
@@ -374,15 +392,38 @@ async def parse_grocery_to_pantry(expense_id: int, db: sqlite3.Connection = Depe
             grocery_type = item["category"]
             item_name = item["item"]
             
-            c.execute('''
-                INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
-                VALUES (?, ?, ?, datetime('now'), ?, ?)
-            ''', (item_name, 1, 'pieces', False, grocery_type))
+            # Check if an item with the same name already exists (case-insensitive)
+            c.execute('SELECT id, quantity FROM pantry_items WHERE LOWER(name) = LOWER(?)', (item_name,))
+            existing_item = c.fetchone()
             
-            added_items.append({
-                "name": item_name,
-                "category": grocery_type
-            })
+            if existing_item:
+                # Item exists, update quantity
+                item_id, existing_quantity = existing_item
+                new_quantity = existing_quantity + 1
+                
+                c.execute('''
+                    UPDATE pantry_items 
+                    SET quantity = ?, is_consumed = ?, grocery_type = ?
+                    WHERE id = ?
+                ''', (new_quantity, False, grocery_type, item_id))
+                
+                added_items.append({
+                    "name": item_name,
+                    "category": grocery_type,
+                    "action": "updated"
+                })
+            else:
+                # Item doesn't exist, create new one
+                c.execute('''
+                    INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
+                    VALUES (?, ?, ?, datetime('now'), ?, ?)
+                ''', (item_name, 1, 'pieces', False, grocery_type))
+                
+                added_items.append({
+                    "name": item_name,
+                    "category": grocery_type,
+                    "action": "created"
+                })
         
         db.commit()
         

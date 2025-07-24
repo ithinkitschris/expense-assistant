@@ -2,15 +2,15 @@
 export const themes = {
   light: {
     // System colors
-    background: '#FFFFFF', // System Gray 6
-    itemCardBackground: '#FFFFFF', // System Background
+    background: 'rgba(255,255,255,0.98)', // System Gray 6
+    itemCardBackground: 'rgba(252,252,252,1)', // System Background
     text: '#000000', // Label (Primary)
     textInvert: '#FFFFFF', // System Background
     textSecondary: '#3C3C43', // Label (Secondary) 
     textTertiary: '#787880', // Label (Tertiary)
     borderColorLighter: '#C6C6C8', // Separator
-    glassBackground: 'rgba(255,255,255,0.8)', // System Background with transparency
-    glassBorderColor: 'rgba(198,198,200,0.5)', // Separator with transparency
+    glassBackground: 'rgba(255,255,255,0)', // System Background with transparency
+    glassBorderColor: '#FFFFFF', // Separator with transparency
     categorySelected: '#E5E5EA', // System Gray 5
     categoryIconColor: '#8E8E93', // System Gray 3
     
@@ -53,14 +53,14 @@ export const themes = {
   dark: {
     // System colors
     background: '#000000', // System Background
-    itemCardBackground: '#111112', // Darker than Secondary System Background
+    itemCardBackground: 'rgba(255,255,255,0.11)', // Darker than Secondary System Background
     text: '#FFFFFF', // Label (Primary)
     textInvert: '#000000', // System Background
     textSecondary: '#EBEBF5', // Label (Secondary)
     textTertiary: '#EBEBF599', // Label (Tertiary) with 60% opacity
     borderColorLighter: '#38383A', // Separator
     glassBackground: 'rgba(255,255,255,0.1)', // white with 20% opacity
-    glassBorderColor: 'rgba(255,255,255,0.04)', // Separator with 20% white opacity
+    glassBorderColor: 'rgba(255,255,255,0.03)', // Separator with 20% white opacity
     categorySelected: 'rgba(255,255,255,0.15)', // 15% white overlay for selection
     categoryIconColor: '#8E8E93', // System Gray 3
     

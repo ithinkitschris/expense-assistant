@@ -97,6 +97,9 @@ def parse_grocery_items_and_categories(description: str) -> List[dict]:
                     return parsed
             except Exception:
                 continue
+        except (requests.exceptions.RequestException, requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+            # LLM service is not available, fall back to rule-based categorization
+            break
         except Exception:
             continue
     # Fallback: split by commas/newlines and categorize each

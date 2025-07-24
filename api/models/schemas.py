@@ -29,7 +29,7 @@ class ExpenseCreate(BaseModel):
     """Schema for creating a new expense"""
     amount: float = Field(..., gt=0, description="Expense amount (must be positive)")
     category: ExpenseCategory = Field(..., description="Expense category")
-    description: str = Field(..., min_length=1, max_length=200, description="Expense description")
+    description: str = Field(..., min_length=1, max_length=500, description="Expense description")
     timestamp: Optional[datetime] = Field(None, description="Expense timestamp (defaults to now)")
     
     class Config:
@@ -48,7 +48,7 @@ class ExpenseUpdate(BaseModel):
     """Schema for updating an existing expense"""
     amount: Optional[float] = Field(None, gt=0, description="New expense amount")
     category: Optional[ExpenseCategory] = Field(None, description="New expense category")
-    description: Optional[str] = Field(None, min_length=1, max_length=200, description="New expense description")
+    description: Optional[str] = Field(None, min_length=1, max_length=500, description="New expense description")
     timestamp: Optional[datetime] = Field(None, description="New expense timestamp")
 
 
