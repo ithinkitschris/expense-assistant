@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, LayoutAnimation } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
+import { getGroceryCategoryColor } from '../themes';
 
 const PantryCard = ({ 
   item, 
@@ -97,36 +98,16 @@ const PantryCard = ({
     return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
-
-
-  // Get color for grocery type
-  const getGroceryTypeColor = (type) => {
-    const colorMap = {
-      'produce': theme.systemMint,      // Green for fresh produce
-      'meat': theme.systemPink,           // Red for meat
-      'dairy': theme.systemGray,          // Blue for dairy
-      'bread': theme.systemBrown,       // Orange for bread/bakery
-      'pantry': theme.systemOrange,        // Gray for pantry staples
-      'frozen': theme.systemCyan,        // Light blue for frozen
-      'beverages': theme.systemIndigo,   // Purple for beverages
-      'snacks': theme.systemPurple,      // Yellow for snacks
-      'condiments': theme.systemPink,    // Pink for condiments
-      'other': theme.systemGray,         // Gray for other
-      'consumed': theme.systemGray       // Gray for consumed items
-    };
-    return colorMap[type] || colorMap['other'];
-  };
-
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
         { 
-          backgroundColor: 'rgba(0,0,0,0.2)', // black with 20% opacity
+          backgroundColor: 'rgba(0,0,0,0.15)', // black with 20% opacity
           borderColor: 'rgba(255,255,255,0.1)' // white at 15% opacity
         },
         pressed && { 
-          backgroundColor: getGroceryTypeColor(groceryType) + '33', // 20% opacity
+          backgroundColor: getGroceryCategoryColor(groceryType, theme) + '33', // 20% opacity
           transform: [{ scale: 0.98 }]
         }
       ]}
@@ -155,7 +136,7 @@ const PantryCard = ({
         style={[
           styles.quantityContainer,
           {
-            backgroundColor: getGroceryTypeColor(groceryType) + 'CC', // category color at 50% opacity
+            backgroundColor: getGroceryCategoryColor(groceryType, theme) + 'CC', // category color at 50% opacity
           }
         ]}
       >
@@ -214,19 +195,15 @@ const PantryCard = ({
             </Pressable>
           </>
         ) : (
-          // Collapsed state - just quantity
-          <Pressable
-            style={styles.collapsedQuantity}
-            onPress={handlePress}
-            activeOpacity={0.7}
-          >
+          // Collapsed state with just quantity
+          <View style={styles.collapsedQuantity}>
             <Text style={[
               styles.quantityText, 
-              { color: theme.text }
+              { color: theme.text, fontSize: 16, fontWeight: '600' }
             ]}> 
               {Math.round(item.quantity)} 
             </Text>
-          </Pressable>
+          </View>
         )}
       </View>
     </Pressable>

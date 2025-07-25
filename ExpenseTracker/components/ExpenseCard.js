@@ -57,6 +57,13 @@ function shiftHue(hex, degree, alpha = 1) {
   return hslToHex(newH, s, l, alpha);
 }
 
+// Helper: Increase brightness by percentage
+function increaseBrightness(hex, percentage) {
+  const { h, s, l } = hexToHSL(hex);
+  const newL = Math.min(100, l + percentage);
+  return hslToHex(h, s, newL);
+}
+
 // ExpenseCardTotal Component - Completely independent
 const ExpenseCardTotal = ({
   item,
@@ -98,17 +105,36 @@ const ExpenseCardTotal = ({
     }
   };
 
+  // Render 
   return (
     <Pressable
-      style={[styles.expenseCardTotal, { padding: 0, overflow: 'hidden' }]}
+      style={[
+        styles.expenseCardTotal, 
+        { 
+          padding: 0, 
+          overflow: 'hidden',
+          borderColor: increaseBrightness(cardColor, 5)
+        }
+      ]}
       onPress={() => onPress && onPress(item)}
       onLongPress={() => onEdit && onEdit(item)}
     >
       <LinearGradient
-        colors={cardColor ? [cardColor, shiftHue(cardColor, 20)] : [styles.expenseCardTotal.backgroundColor, styles.expenseCardTotal.backgroundColor]}
+        colors={[
+          cardColor + 'CC', // 80% opacity
+          shiftHue(cardColor, 15, 0.95) // 80% opacity for the second hue
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.2, y: 2 }}
-        style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: styles.expenseCardTotal.borderRadius || 27.5 }]}
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }
+        ]}
       />
       {/* Header with category and menu button */}
       <View style={styles.expenseHeaderTotal}>
@@ -211,7 +237,7 @@ const ExpenseCardCategory = ({
             style={{ alignSelf: 'flex-start' }}
           /> */}
           <View style={styles.expenseCardCategoryTitleContainer}>
-            <Text style={[styles.expenseCardCategoryName, { color: cardColor || styles.expenseCardCategoryName.color }]}>{item.category}</Text>
+            <Text style={[styles.expenseCardCategoryName]}>{item.category}</Text>
             <Text style={[styles.expenseCardCategoryTitle, styles.expenseCardCategoryTitleFlex]}>{item.description}</Text>
           </View>
         </View>

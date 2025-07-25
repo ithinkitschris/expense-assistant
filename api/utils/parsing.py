@@ -3,31 +3,7 @@ import requests
 import json
 import re
 import time
-
-def categorize_grocery_item_rule_based(item_name: str) -> str:
-    """Categorize grocery item based on keywords in its name"""
-    item_name = item_name.lower()
-    
-    # Define keywords for each category
-    categories = {
-        'produce': ['apple', 'banana', 'orange', 'lettuce', 'tomato', 'potato', 'onion', 'garlic', 'pepper', 'cucumber', 'avocado', 'berries'],
-        'meat': ['chicken', 'beef', 'pork', 'sausage', 'bacon', 'fish', 'salmon', 'shrimp', 'eggs'],
-        'dairy': ['milk', 'cheese', 'yogurt', 'butter', 'cream'],
-        'bread': ['bread', 'bagel', 'croissant', 'muffin', 'tortilla'],
-        'pantry': ['rice', 'pasta', 'flour', 'sugar', 'oil', 'vinegar', 'canned', 'soup', 'beans', 'cereal', 'oats'],
-        'frozen': ['frozen', 'ice cream', 'pizza'],
-        'beverages': ['water', 'juice', 'soda', 'tea', 'coffee', 'wine', 'beer'],
-        'snacks': ['chips', 'crackers', 'cookies', 'nuts', 'popcorn', 'pretzels', 'wafer'],
-        'condiments': ['ketchup', 'mustard', 'mayo', 'sauce', 'dressing', 'syrup', 'jam']
-    }
-    
-    # Check for keywords
-    for category, keywords in categories.items():
-        if any(keyword in item_name for keyword in keywords):
-            return category
-            
-    return 'other'
-
+from .grocery_categories import categorize_grocery_item_rule_based, GROCERY_TYPES
 
 def parse_grocery_items_and_categories(description: str) -> List[dict]:
     """
@@ -40,8 +16,36 @@ def parse_grocery_items_and_categories(description: str) -> List[dict]:
     if not description:
         return []
     
+    # Create a comprehensive category guide for the AI
+    category_guide = "\n".join([
+        f"- {cat}: {data['display_name']} - {', '.join(data['keywords'][:10])}{'...' if len(data['keywords']) > 10 else ''}"
+        for cat, data in GROCERY_TYPES.items() if cat != 'other'
+    ])
+    
     prompt = f"""
-    You are an expert grocery parser. Given a string containing one or more grocery items (possibly separated by commas, newlines, or 'and'), extract each individual grocery item and assign it to one of these categories: produce, meat, dairy, bread, pantry, frozen, beverages, snacks, condiments, other.
+    You are an expert grocery parser. Given a string containing one or more grocery items (possibly separated by commas, newlines, or 'and'), extract each individual grocery item and assign it to the most appropriate category.
+
+    Available categories and their typical items:
+    {category_guide}
+
+    Categorization rules:
+    - "produce": Fresh fruits, vegetables, herbs
+    - "meat": All meat, poultry, fish, seafood, eggs
+    - "dairy": Milk, cheese, yogurt, butter (but NOT nut butters like peanut butter)
+    - "bread": Bread, bagels, croissants, muffins, tortillas, pita (but NOT sweet baked goods like cookies, brownies)
+    - "staples": Rice, pasta, grains, legumes, potatoes
+    - "pantry": Flour, sugar, oils, vinegars, spices, canned goods, baking ingredients
+    - "frozen": Items that are frozen (ice cream, frozen vegetables, frozen meals)
+    - "beverages": Drinks, juices, sodas, tea, coffee, alcohol
+    - "snacks": Chips, crackers, nuts, cookies, candy, protein bars, sweet baked goods
+    - "condiments": Sauces, dressings, spreads (including peanut butter, nut butters), jams, syrups, honey
+
+    Special cases:
+    - Peanut butter, almond butter, Nutella → condiments
+    - Ice cream, gelato → frozen (not dairy)
+    - Cookies, brownies, cakes → snacks (not bread)
+    - Honey, maple syrup → condiments (not pantry)
+    - Fish sauce, soy sauce → condiments (not pantry)
 
     Input: "{description}"
 
@@ -49,12 +53,16 @@ def parse_grocery_items_and_categories(description: str) -> List[dict]:
     [
       {{"item": "lemon baton wafer", "category": "snacks"}},
       {{"item": "organic milk", "category": "dairy"}},
+      {{"item": "peanut butter", "category": "condiments"}},
       {{"item": "eggs", "category": "meat"}}
     ]
-    - For single items, just return a one-item list.
-    - Keep brand names if they're part of the item name (e.g., "chobani yogurt").
-    - For complex items, keep the full descriptive name (e.g., "lemon baton wafer").
-    - If no specific items are found, return an empty list.
+    
+    Guidelines:
+    - For single items, just return a one-item list
+    - Keep brand names if they're part of the item name (e.g., "chobani yogurt")
+    - For complex items, keep the full descriptive name (e.g., "lemon baton wafer")
+    - If no specific items are found, return an empty list
+    - Be consistent with the categorization rules above
     """
     
     for attempt in range(2):
@@ -92,7 +100,13 @@ def parse_grocery_items_and_categories(description: str) -> List[dict]:
                     item = entry.get('item') or entry.get('name')
                     category = entry.get('category')
                     if item and category:
-                        parsed.append({"item": item.strip(), "category": category.strip()})
+                        # Validate category is one of our known categories
+                        if category in GROCERY_TYPES:
+                            parsed.append({"item": item.strip(), "category": category.strip()})
+                        else:
+                            # If AI returned unknown category, use rule-based fallback
+                            fallback_category = categorize_grocery_item_rule_based(item.strip())
+                            parsed.append({"item": item.strip(), "category": fallback_category})
                 if parsed:
                     return parsed
             except Exception:
@@ -102,6 +116,7 @@ def parse_grocery_items_and_categories(description: str) -> List[dict]:
             break
         except Exception:
             continue
+    
     # Fallback: split by commas/newlines and categorize each
     fallback_items = re.split(r'[\n,]+', description)
     parsed = []

@@ -158,7 +158,7 @@ export const createStyles = (theme) => StyleSheet.create({
   daySectionSubtitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: theme.textTertiary,
+    color: theme.textSecondary,
     letterSpacing: -0.2,
     marginLeft: 0,
   },
@@ -231,9 +231,9 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCategoryOptionText: {
     fontSize: 15,
     fontWeight: '500',
-    color: theme.textSecondary,
     textTransform: 'capitalize',
     letterSpacing: -0.1,
+    color: theme.text,
   },
   
   expenseCategoryOptionTextSelected: {
@@ -242,10 +242,11 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   expenseCategoryOptionAmount: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: theme.appleBlue,
     letterSpacing: -0.5,
+    marginBottom: -1,
   },
   // #endregion
 
@@ -256,7 +257,6 @@ export const createStyles = (theme) => StyleSheet.create({
     left: 20,
     right: 245,
     zIndex: 5,
-
     borderRadius: 35,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
@@ -264,14 +264,24 @@ export const createStyles = (theme) => StyleSheet.create({
     shadowRadius: theme.shadowRadius,
     elevation: 3,
   },
+
+  viewSelectorWrapperCompact: {
+    borderRadius: 50, // Smaller compact radius to match background
+    right: 370, // Move further right when compact (smaller width)
+    left: 20,   // Move further left to center the single option
+  },
   
   viewSelectorBackground: {
     flex: 1,
     backgroundColor: theme.glassBackground,
-    borderRadius: 35,
+    borderRadius: 35, // Match wrapper border radius
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
     overflow: 'hidden',
+  },
+
+  viewSelectorBackgroundCompact: {
+    borderRadius: 50, // Match compact wrapper border radius
   },
   
   viewSelectorScrollView: {
@@ -289,7 +299,7 @@ export const createStyles = (theme) => StyleSheet.create({
     marginRight: -5,
     borderRadius: 50,
     minWidth: 60,
-    overflow: 'hidden',
+    
   },
   
   viewOption: {
@@ -301,9 +311,23 @@ export const createStyles = (theme) => StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
+
+  viewOptionCompact: {
+    paddingLeft: 0,
+    paddingRight: 21,
+    paddingTop: 1,
+    paddingBottom: -50,
+    minWidth: 0,
+    maxHeight: 35,
+  },
   
   viewOptionSelected: {
     backgroundColor: theme.categorySelected,
+    opacity: 0.8,
+  },
+
+  viewOptionSelectedCompact: {
+    backgroundColor: 'transparent',
   },
   
   viewOptionText: {
@@ -344,13 +368,13 @@ export const createStyles = (theme) => StyleSheet.create({
     expenseCardTotal: {
       backgroundColor: theme.itemCardBackground,
       marginHorizontal: 20,
-      marginBottom: 6,
+      marginBottom: 8,
       borderWidth: 1,
       borderColor: theme.glassBorderColor,
       borderRadius: 25,
       paddingHorizontal: 20,
       paddingTop: 11.5,
-      paddingBottom: 17.5,
+      paddingBottom: 20,
       shadowColor: theme.shadowColor,
       shadowOffset: theme.shadowOffset,
       shadowOpacity: theme.shadowOpacity,
@@ -411,7 +435,7 @@ export const createStyles = (theme) => StyleSheet.create({
     menuButton: {
       padding: 6,
       alignSelf: 'flex-start',
-      backgroundColor: 'rgba(255,255,255,0)',
+      backgroundColor: 'rgba(246,255,255,0)',
       opacity: 1,
       borderWidth: 0,
       borderColor: theme.glassBorderColor,
@@ -459,7 +483,7 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCardCategoryName: {
     fontSize: 14,
     fontWeight: '500',
-    color: theme.text,
+    color: theme.textSecondary,
     letterSpacing: -0.2,
     textTransform: 'capitalize',
     marginBottom: 10,
@@ -483,12 +507,12 @@ export const createStyles = (theme) => StyleSheet.create({
   date: {
     fontSize: 14,
     fontWeight: '400',
-    color: theme.text,
+    color: theme.textTertiary,
     letterSpacing: -0.4,
     textTransform: 'capitalize',
     marginBottom: 4,
     marginLeft: 2,
-    opacity: 0.3,
+    opacity: 1,
   },
 
   expenseCardCategoryAmount: {
@@ -566,6 +590,16 @@ export const createStyles = (theme) => StyleSheet.create({
   addButtonDisabled: {
     opacity: 0.6,
   },
+
+  addButtonContainerCompact: {
+    bottom: 17,
+    right: 10,
+  },
+
+  addButtonCompact: {
+    width: 62,
+    height: 62,
+  },
   // #endregion
 
   // #region LOADING & EMPTY STATES
@@ -625,7 +659,7 @@ export const createStyles = (theme) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 80,
+    height: 140,
     zIndex: 0,
   },
   // #endregion
@@ -1034,13 +1068,15 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   pantrySectionContainer: {
-    marginBottom: 15,
+    marginBottom: 50,
     marginHorizontal: -5,
   },
 
   pantrySectionBackground: {
     borderRadius: 35,
     borderWidth: 1,
+    backgroundColor: theme.itemCardBackground,
+    borderColor: theme.glassBorderColor,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
     shadowOpacity: theme.shadowOpacity,
@@ -1049,12 +1085,20 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   pantrySection: {
+    paddingBottom: 20,
+    paddingVertical: 25,
     paddingHorizontal: 15,
-    paddingVertical: 20,
-    paddingBottom: 40,
   },
 
-  pantrySectionHeader: {
+  // pantrySectionHeader: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   marginBottom: 20,
+  //   marginLeft: 5,
+  //   gap: 8,
+  // },
+
+  pantrySectionHeaderOuter: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
@@ -1062,11 +1106,12 @@ export const createStyles = (theme) => StyleSheet.create({
     gap: 8,
   },
   pantrySectionTitle: {
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: '600',
     color: theme.text,
     letterSpacing: -0.4,
   },
+
   fallbackIcon: {
     fontSize: 32,
     fontWeight: '600',
@@ -1083,11 +1128,138 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   pantryCardContainer: {
-    marginBottom: 0,
+    marginBottom: 3,
   },
 
   consumedItemName: {
     opacity: 0.2,
   },
   // #endregion
-}); 
+
+  // #region EXPENSE TIME SELECTOR
+  expenseTimeSelector: {
+    position: 'absolute',
+    bottom: 27,
+    left: 136,
+    right: 136,
+    zIndex: 4,
+    borderRadius: 35,
+    shadowColor: theme.shadowColor,
+    shadowOffset: theme.shadowOffset,
+    shadowOpacity: theme.shadowOpacity,
+    shadowRadius: theme.shadowRadius,
+    elevation: 3,
+  },
+
+  expenseTimeSelectorBackground: {
+    backgroundColor: theme.glassBackground,
+    borderRadius: 35,
+    borderWidth: 1,
+    borderColor: theme.glassBorderColor,
+    overflow: 'hidden',
+  },
+
+  expenseTimeSelectorContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: -5,
+  },
+
+  expenseTimeSelectorOptionContainer: {
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+
+  expenseTimeSelectorOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    gap: 0,
+  },
+
+  expenseTimeSelectorOptionSelected: {
+    backgroundColor: theme.categorySelected,
+  },
+
+  expenseTimeSelectorOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.text,
+    letterSpacing: -0.1,
+  },
+
+  expenseTimeSelectorOptionTextSelected: {
+    color: theme.appleBlue,
+    fontWeight: '600',
+  },
+  // #endregion
+
+  // #region MONTHLY SUMMARY CARD
+  monthlySummaryContainer: {
+    flex: 1,
+    paddingTop: 80,
+    paddingHorizontal: 20,
+  },
+
+  monthlySummaryCard: {
+    padding: 25,
+    marginTop: 20,
+  },
+
+  monthlySummaryHeader: {
+    marginBottom: 20,
+    alignItems: 'flex-start',
+  },
+
+  monthlySummaryTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+
+  monthlySummarySubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.textSecondary,
+    letterSpacing: -0.2,
+  },
+
+  monthlySummaryContent: {
+    gap: 16,
+  },
+
+  monthlySummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+
+  monthlySummaryLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.textSecondary,
+    letterSpacing: -0.2,
+  },
+
+  monthlySummaryAmount: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.appleBlue,
+    letterSpacing: -0.4,
+  },
+
+  monthlySummaryValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.3,
+  },
+  // #endregion
+});

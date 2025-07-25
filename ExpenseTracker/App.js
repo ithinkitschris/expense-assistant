@@ -4,7 +4,7 @@ import { Text, View, FlatList, Pressable, TextInput, Alert, ScrollView, Animated
 import { SymbolView } from 'expo-symbols';
 import { expenseAPI } from './services/api';
 import { createStyles } from './styles';
-import { themes } from './themes';
+import { themes, getGroceryCategoryColor, getExpenseCategoryColor } from './themes';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -29,7 +29,15 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
-    const [groceryItems, setGroceryItems] = useState({});
+        const [groceryItems, setGroceryItems] = useState({});
+    
+    // #region Animated Values for Add Button
+    const addButtonScale = useRef(new Animated.Value(1)).current;
+    // #endregion
+    
+    // #region Animated Values for Expense Time Selector
+    const expenseTimeSelectorScale = useRef(new Animated.Value(0)).current;
+    // #endregion
     
     // Tab state
     const [activeTab, setActiveTab] = useState('expenses'); // 'expenses' or 'pantry'
@@ -103,6 +111,9 @@ export default function App() {
     const [groceryCategories, setGroceryCategories] = useState([]);
     const [isLoadingGroceryCategories, setIsLoadingGroceryCategories] = useState(true);
 
+    // Add state for day/monthly view toggle
+    const [viewMode, setViewMode] = useState('day'); // 'day' or 'monthly'
+
     // #endregion
 
     // #region useEffect
@@ -120,12 +131,18 @@ export default function App() {
         }
       }, [currentCategoryIndex, categories]);
 
-      // Hide UI when category is not 'All'
+      // Hide UI when category is not 'All' or when in monthly view
       useEffect(() => {
         if (selectedCategory !== 'All') {
           setHideUI(false);
+        } else if (viewMode === 'monthly') {
+          setHideUI(true);
+        } else if (viewMode === 'day' && selectedCategory === 'All') {
+          // When switching to day view in 'All' category, set hideUI to false
+          // to show the category and view selectors
+          setHideUI(false);
         }
-      }, [selectedCategory]);
+      }, [selectedCategory, viewMode]);
 
       // Handle UI animations based on hideUI state
       useEffect(() => {
@@ -164,11 +181,27 @@ export default function App() {
               useNativeDriver: true,
             }),
             Animated.timing(topGradientTranslateY, {
-              toValue: -100,
+              toValue: -150,
               duration: 200,
               useNativeDriver: true,
-            })
-          ]).start();
+            }),
+            // Add button scale animation
+            Animated.spring(addButtonScale, {
+              toValue: 0.75, // Scale down to 75%
+              useNativeDriver: true,
+              tension: 200,
+              friction: 7,
+            }),
+            // Expense time selector scale animation
+            Animated.spring(expenseTimeSelectorScale, {
+              toValue: 1, // Scale up to 100%
+              useNativeDriver: true,
+              tension: 200,
+              friction: 7,
+            }),
+ 
+  
+            ]).start();
         } else if (!hideUI && !isHeaderVisible.current) {
           // Show header, expense category selector, and bottom gradient
           isHeaderVisible.current = true;
@@ -207,10 +240,74 @@ export default function App() {
               toValue: 0,
               duration: 200,
               useNativeDriver: true,
-            })
+            }),
+            // Add button scale animation
+            Animated.spring(addButtonScale, {
+              toValue: 1, // Scale back to 100%
+              useNativeDriver: true,
+              tension: 200,
+              friction: 6,
+            }),
+            // Expense time selector scale animation
+            Animated.spring(expenseTimeSelectorScale, {
+              toValue: 0.9, // Scale down to 0%
+              useNativeDriver: true,
+              tension: 200,
+              friction: 6,
+            }),
+ 
+  
+            ]).start();
+        }
+      }, [hideUI, viewMode]);
+
+      // Animate view selector based on hideUI state
+      useEffect(() => {
+        if (hideUI) {
+          // Compact state - animate to smaller sizes with spring
+          Animated.parallel([
+            Animated.spring(viewSelectorIconSize, {
+              toValue: 0.8, // 70% of original size
+              useNativeDriver: false,
+              speed: 16,
+              bounciness: 6,
+            }),
+            Animated.timing(viewSelectorTextOpacity, {
+              toValue: 0,
+              duration: 0, // Fade out text faster
+              useNativeDriver: true,
+            }),
+            Animated.spring(viewSelectorPadding, {
+              toValue: 3,
+              useNativeDriver: false,
+              speed: 16,
+              bounciness: 6,
+            }),
+          ]).start();
+        } else if (!hideUI) {
+          // Normal state - animate to larger sizes with spring
+          Animated.parallel([
+            Animated.spring(viewSelectorIconSize, {
+              toValue: 1, // 100% of original size
+              useNativeDriver: false,
+              speed: 10,
+              bounciness: 15,
+            }),
+            Animated.spring(viewSelectorTextOpacity, {
+              toValue: 1,
+              useNativeDriver: true,
+              speed: 1,
+              bounciness: 15,
+            }),
+            Animated.spring(viewSelectorPadding, {
+              toValue: 5,
+              useNativeDriver: false,
+              speed: 16,
+              bounciness: 6,
+            }),
           ]).start();
         }
-      }, [hideUI]);
+      }, [hideUI, viewMode]);
 
       // Update index when category changes (from category selector taps)
       useEffect(() => {
@@ -250,6 +347,12 @@ export default function App() {
       const lastScrollX = useRef(0);
       const isHeaderVisible = useRef(true);
 
+      // View selector animation values
+      const viewSelectorIconSize = useRef(new Animated.Value(1)).current; // 1 = 100% scale (normal), 0.8 = 80% scale (compact)
+      const viewSelectorTextOpacity = useRef(new Animated.Value(1)).current; // 1 normal, 0 compact
+      const viewSelectorWidth = useRef(new Animated.Value(0)).current; // For width changes
+      const viewSelectorPadding = useRef(new Animated.Value(5)).current; // 5px normal, 3px compact
+
       // Get current theme
       const currentTheme = themes[isDarkMode ? 'dark' : 'light'];
       const styles = createStyles(currentTheme);
@@ -275,6 +378,79 @@ export default function App() {
       }, []);
 
     // #endregion
+
+  // #endregion
+
+  // #region HELPER FUNCTIONS
+
+  // Helper function to calculate weighted average color from top 3 expense categories
+  const calculateWeightedCategoryColor = () => {
+    if (expenses.length === 0) {
+      return currentTheme.appleBlue; // Default color if no expenses
+    }
+
+    // Calculate total amount for weighting
+    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    
+    // Group expenses by category and calculate category totals
+    const categoryTotals = expenses.reduce((acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+      return acc;
+    }, {});
+
+    // Get top 3 categories by amount
+    const top3Categories = Object.entries(categoryTotals)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3);
+
+    if (top3Categories.length === 0) {
+      return currentTheme.appleBlue; // Fallback
+    }
+
+    // Convert hex colors to RGB for weighted averaging
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+
+    // Convert RGB to hex
+    const rgbToHex = (r, g, b) => {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    };
+
+    // Calculate weighted average RGB values from top 3 categories only
+    let weightedR = 0;
+    let weightedG = 0;
+    let weightedB = 0;
+    let totalWeight = 0;
+
+    top3Categories.forEach(([category, amount]) => {
+      const categoryColor = getExpenseCategoryColor(category, currentTheme);
+      const rgb = hexToRgb(categoryColor);
+      
+      if (rgb) {
+        const weight = amount / totalAmount;
+        weightedR += rgb.r * weight;
+        weightedG += rgb.g * weight;
+        weightedB += rgb.b * weight;
+        totalWeight += weight;
+      }
+    });
+
+    // Normalize and convert back to hex
+    if (totalWeight > 0) {
+      const finalR = Math.round(weightedR / totalWeight);
+      const finalG = Math.round(weightedG / totalWeight);
+      const finalB = Math.round(weightedB / totalWeight);
+      return rgbToHex(finalR, finalG, finalB);
+    }
+
+    return currentTheme.appleBlue; // Fallback
+  };
 
   // #endregion
 
@@ -1234,13 +1410,14 @@ export default function App() {
           'meat': 2,
           'dairy': 3,
           'bread': 4,
-          'pantry': 5,
-          'frozen': 6,
-          'beverages': 7,
-          'snacks': 8,
-          'condiments': 9,
-          'other': 10,
-          'consumed': 11
+          'staples': 5,
+          'pantry': 6,
+          'frozen': 7,
+          'beverages': 8,
+          'snacks': 9,
+          'condiments': 10,
+          'other': 11,
+          'consumed': 12
         };
         return sortOrders[type] || 10;
       };
@@ -1320,101 +1497,100 @@ export default function App() {
     // #endregion
 
     // #region RENDER VIEW SELECTOR
-    const renderViewSelector = () => (
-      <View style={styles.viewSelectorWrapper}>
-        {/* Background Container with ScrollView inside */}
-        <BlurView
-          intensity={20}
-          tint={currentTheme.blurTint}
-          style={styles.viewSelectorBackground}
+    
+    // Helper function to render a single view option
+    const renderViewOption = (optionKey, icon, label) => (
+      <Pressable
+        key={optionKey}
+        style={styles.viewOptionContainer}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setActiveTab(optionKey);
+        }}
+      >
+        <BlurView 
+          intensity={activeTab === optionKey && !hideUI ? 30 : 0} 
+          tint={currentTheme.blurTint} 
+          style={[
+            styles.viewOption,
+            activeTab === optionKey && (hideUI ? styles.viewOptionSelectedCompact : styles.viewOptionSelected),
+            hideUI && styles.viewOptionCompact
+          ]}
         >
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.viewSelectorScrollView}
-            contentContainerStyle={styles.viewSelectorContainer}
-            onScroll={handleCategoryScroll}
-            scrollEventThrottle={16}
+          <Animated.View style={{ transform: [{ scale: viewSelectorIconSize }] }}>
+            <SymbolView
+              name={icon}
+              size={34} // Keep at max size, use scale for animation
+              type="monochrome"
+              tintColor={activeTab === optionKey ? currentTheme.appleBlue : currentTheme.text}
+              fallback={null}
+            />
+          </Animated.View>
+          <Animated.View 
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center',
+              opacity: viewSelectorTextOpacity
+            }}
           >
-            {/* Expenses Option */}
-            <Pressable
-              style={styles.viewOptionContainer}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab('expenses');
-              }}
-            >
-                              <BlurView 
-                  intensity={activeTab === 'expenses' ? 30 : 0} 
-                  tint={currentTheme.blurTint} 
-                  style={[
-                    styles.viewOption,
-                    activeTab === 'expenses' && styles.viewOptionSelected
-                  ]}
-                >
-                  <SymbolView
-                    name="creditcard.fill"
-                    size={34}
-                    type="monochrome"
-                    tintColor={activeTab === 'expenses' ? currentTheme.appleBlue : currentTheme.text}
-                    fallback={null}
-                  />
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={[
-                      styles.viewOptionText,
-                      activeTab === 'expenses' && styles.viewOptionTextSelected
-                    ]}>
-                      Expenses
-                    </Text>
-                    {/* <Text style={[
-                      styles.viewOptionAmount,
-                      activeTab === 'expenses' && styles.viewOptionAmountSelected
-                    ]}>
-                      {' '}${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')}
-                    </Text> */}
-                  </View>
-                </BlurView>
-            </Pressable>
-
-            {/* Pantry Option */}
-            <Pressable
-              style={styles.viewOptionContainer}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab('pantry');
-              }}
-            >
-              <BlurView 
-                intensity={activeTab === 'pantry' ? 30 : 0} 
-                tint={currentTheme.blurTint} 
-                style={[
-                  styles.viewOption,
-                  activeTab === 'pantry' && styles.viewOptionSelected
-                ]}
-              >
-                <SymbolView
-                  name="basket.fill"
-                  size={34}
-                  type="monochrome"
-                  tintColor={activeTab === 'pantry' ? currentTheme.appleBlue : currentTheme.text}
-                  fallback={null}
-                />
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={[
-                    styles.viewOptionText,
-                    activeTab === 'pantry' && styles.viewOptionTextSelected
-                  ]}>
-                    Pantry
-                  </Text>
-                </View>
-              </BlurView>
-            </Pressable>
-          </ScrollView>
+            <Animated.Text style={[
+              styles.viewOptionText,
+              activeTab === optionKey && styles.viewOptionTextSelected
+            ]}>
+              {label}
+            </Animated.Text>
+          </Animated.View>
         </BlurView>
-      </View>
+      </Pressable>
     );
-    // #endregion
 
+    const renderViewSelector = () => {
+      // When UI is hidden, only show active tab, otherwise show both
+      const viewOptions = hideUI 
+        ? [
+            activeTab === 'expenses' && renderViewOption('expenses', 'creditcard.fill', 'Expenses'),
+            activeTab === 'pantry' && renderViewOption('pantry', 'basket.fill', 'Pantry'),
+          ].filter(Boolean)
+        : [
+            renderViewOption('expenses', 'creditcard.fill', 'Expenses'),
+            renderViewOption('pantry', 'basket.fill', 'Pantry'),
+          ];
+
+      return (
+        <Animated.View style={[
+          styles.viewSelectorWrapper,
+          hideUI && styles.viewSelectorWrapperCompact
+        ]}>
+          {/* Background Container with ScrollView inside */}
+          <BlurView
+            intensity={20}
+            tint={currentTheme.blurTint}
+            style={[
+              styles.viewSelectorBackground,
+              hideUI && styles.viewSelectorBackgroundCompact
+            ]}
+          >
+            <Animated.ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.viewSelectorScrollView}
+              contentContainerStyle={[
+                styles.viewSelectorContainer,
+                hideUI && styles.viewSelectorContainerCompact
+              ]}
+              onScroll={handleCategoryScroll}
+              scrollEventThrottle={16}
+              scrollEnabled={!hideUI} // Disable scrolling when compact
+            >
+              {viewOptions}
+            </Animated.ScrollView>
+          </BlurView>
+        </Animated.View>
+      );
+    };
+
+    // #endregion
+    
     // #region RENDER CATEGORY SELECTOR
     const renderExpenseCategorySelector = () => (
       <View>
@@ -1451,38 +1627,45 @@ export default function App() {
                 >
                   {/* Show icon when unselected, name when selected */}
                   {selectedCategory === category ? (
-                    <Text style={[
-                      styles.expenseCategoryOptionText,
-                      styles.expenseCategoryOptionTextSelected,
-                      { color: getCategoryColor(category) }
-                    ]}>
-                      {category}
-                    </Text>
+                    <>
+                      <Text style={[
+                        styles.expenseCategoryOptionAmount,
+                        styles.expenseCategoryOptionAmountSelected,
+                        { color: getExpenseCategoryColor(category, currentTheme) }
+                      ]}>
+                        ${category === 'All' ? 
+                          (Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')) :
+                          (Number.isInteger(categoryTotals[category] || 0) ? 
+                            (categoryTotals[category] || 0) : 
+                            (categoryTotals[category] || 0).toFixed(2).replace(/\.00$/, ''))
+                        }
+                      </Text>
+                      <Text style={[
+                        styles.expenseCategoryOptionText,
+                        styles.expenseCategoryOptionTextSelected,
+                        { color: currentTheme.text }
+                      ]}>
+                        {category}
+                      </Text>
+                    </>
                   ) : (
-                    <SymbolView
-                      name={getCategoryIcon(category)}
-                      size={22}
-                      type="outline"
-                      tintColor="white"
-                      fallback={null}
-                    />
+                    <>
+                      <SymbolView
+                        name={getCategoryIcon(category)}
+                        size={22}
+                        type="outline"
+                        tintColor={getExpenseCategoryColor(category, currentTheme)}
+                        fallback={null}
+                      />
+                      <Text style={[
+                        styles.expenseCategoryOptionText,
+                      ]}>
+                        {category}
+                      </Text>
+                    </>
                   )}
 
-                  {/* Category Amount - Only show when selected */}
-                  {selectedCategory === category && (
-                    <Text style={[
-                      styles.expenseCategoryOptionAmount,
-                      styles.expenseCategoryOptionAmountSelected,
-                      { color: getCategoryColor(category) }
-                    ]}>
-                      ${category === 'All' ? 
-                        (Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')) :
-                        (Number.isInteger(categoryTotals[category] || 0) ? 
-                          (categoryTotals[category] || 0) : 
-                          (categoryTotals[category] || 0).toFixed(2).replace(/\.00$/, ''))
-                      }
-                    </Text>
-                  )}
+
                 </BlurView>
               </Pressable>
             ))}
@@ -1490,6 +1673,74 @@ export default function App() {
         </BlurView>
       </View>
     );
+    // #endregion
+
+    // #region RENDER EXPENSE TIME SELECTOR
+         const renderExpenseTimeSelector = () => {
+       // Only show when on expenses tab, 'All' category is selected, and UI is hidden
+       if (activeTab !== 'expenses' || selectedCategory !== 'All' || !hideUI) {
+         return null;
+       }
+
+      const renderModeOption = (mode, icon, label) => (
+        <Pressable
+          key={mode}
+          style={styles.expenseTimeSelectorOptionContainer}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setViewMode(mode);
+          }}
+        >
+          <BlurView 
+            intensity={viewMode === mode ? 30 : 0} 
+            tint={currentTheme.blurTint} 
+            style={[
+              styles.expenseTimeSelectorOption,
+              viewMode === mode && styles.expenseTimeSelectorOptionSelected
+            ]}
+          >
+            {/* <SymbolView
+              name={icon}
+              size={18}
+              type="monochrome"
+              tintColor={viewMode === mode ? currentTheme.appleBlue : currentTheme.textSecondary}
+              fallback={null}
+            /> */}
+            <Text style={[
+              styles.expenseTimeSelectorOptionText,
+              viewMode === mode && styles.expenseTimeSelectorOptionTextSelected
+            ]}>
+              {label}
+            </Text>
+          </BlurView>
+        </Pressable>
+      );
+
+      return (
+        <Animated.View 
+          style={[
+            styles.expenseTimeSelector,
+            {
+              transform: [
+                { translateY: bottomGradientTranslateY },
+                { scale: expenseTimeSelectorScale }
+              ]
+            }
+          ]}
+        >
+          <BlurView
+            intensity={20}
+            tint={currentTheme.blurTint}
+            style={styles.expenseTimeSelectorBackground}
+          >
+            <View style={styles.expenseTimeSelectorContainer}>
+              {renderModeOption('day', 'calendar', 'Days')}
+              {renderModeOption('monthly', 'chart.bar.fill', 'Months')}
+            </View>
+          </BlurView>
+        </Animated.View>
+      );
+    };
     // #endregion
 
     // #region RENDER CONTENT VIEWS
@@ -1592,7 +1843,7 @@ export default function App() {
                 onEdit={handleExpensePress}
                 onDelete={deleteExpense}
                 getCategoryIcon={getCategoryIcon}
-                cardColor={getCategoryColor(expense.category)}
+                cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
               />
             )}
             keyExtractor={(expense) => expense.id}
@@ -1605,11 +1856,161 @@ export default function App() {
       );
     };
 
+    const renderMonthlySummaryCard = () => {
+      // DATA CALCULATIONS
+      
+      // Calculate total amount spent across all expenses
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      
+      // Count total number of expense transactions
+      const totalExpenses = expenses.length;
+      
+      // Group expenses by day to calculate average spending per day
+      // This only counts days that actually have expenses (not all calendar days)
+      const dayGroups = getFilteredExpensesByDay('All');
+      const averagePerDay = dayGroups.length > 0 ? totalAmount / dayGroups.length : 0;
+      
+      // Calculate dynamic background color based on weighted category colors
+      const dynamicBackgroundColor = calculateWeightedCategoryColor();
+      
+      // Debug: Log the calculated color and top 3 categories
+      console.log('🎨 Dynamic background color (top 3):', dynamicBackgroundColor);
+      const categoryBreakdown = expenses.reduce((acc, expense) => {
+        acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+        return acc;
+      }, {});
+      const top3Categories = Object.entries(categoryBreakdown)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3);
+      console.log('📊 Top 3 categories contributing to color:', top3Categories);
+      
+      // RENDER COMPONENT
+      return (
+
+        // Main container with padding and positioning
+        <View style={styles.monthlySummaryContainer}>
+          
+          {/* Card container with solid background color based on top 3 categories */}
+          <View style={[
+            styles.cardBase, 
+            styles.monthlySummaryCard,
+            { 
+              backgroundColor: dynamicBackgroundColor, // Solid color with 20% opacity
+              borderColor: dynamicBackgroundColor, // Border with 40% opacity
+              borderWidth: 1
+            }
+          ]}>
+            
+            
+            {/* HEADER SECTION */}
+            <View style={styles.monthlySummaryHeader}>
+              {/* Main title of the card */}
+              <Text style={styles.monthlySummaryTitle}>
+                {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+              </Text>
+              
+              {/* Total spent display */}
+              <Text style={styles.monthlySummarySubtitle}>
+                ${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')} spent
+              </Text>
+            </View>
+            
+
+            {/* CONTENT SECTION */}
+            <View style={styles.monthlySummaryContent}>
+              
+              {/* ROW 1: TOTAL SPENT */}
+              <View style={styles.monthlySummaryRow}>
+
+                {/* Label for the metric */}
+                <Text style={styles.monthlySummaryLabel}>Total Spent</Text>
+                
+
+                {/* Amount display with smart formatting:
+                    - Shows as integer if whole number (e.g., "$150")
+                    - Shows as decimal if needed (e.g., "$150.50")
+                    - Removes trailing .00 for cleaner display */}
+                <Text style={styles.monthlySummaryAmount}>
+                  ${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')}
+                </Text>
+              </View>
+              
+              {/* Category Color Legend - Show top 3 contributing categories */}
+              {(() => {
+                const categoryTotals = expenses.reduce((acc, expense) => {
+                  acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+                  return acc;
+                }, {});
+                
+                const sortedCategories = Object.entries(categoryTotals)
+                  .sort(([,a], [,b]) => b - a)
+                  .slice(0, 3);
+                
+                if (sortedCategories.length > 0) {
+                  return (
+                    <View style={styles.monthlySummaryRow}>
+                      <Text style={styles.monthlySummaryLabel}>Color Blend</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        {sortedCategories.map(([category, amount], index) => (
+                          <View key={category} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <View style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                              backgroundColor: getExpenseCategoryColor(category, currentTheme),
+                              opacity: 0.8
+                            }} />
+                            <Text style={[styles.monthlySummaryValue, { fontSize: 12 }]}>
+                              {category}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                }
+                return null;
+              })()}
+              
+
+              {/* ROW 2: TOTAL TRANSACTIONS */}
+              <View style={styles.monthlySummaryRow}>
+                {/* Label for the metric */}
+                <Text style={styles.monthlySummaryLabel}>Total Transactions</Text>
+                
+                {/* Simple count of all expense records */}
+                <Text style={styles.monthlySummaryValue}>{totalExpenses}</Text>
+              </View>
+              
+
+              {/* ROW 3: AVERAGE PER DAY */}
+              <View style={styles.monthlySummaryRow}>
+
+                {/* Label for the metric */}
+                <Text style={styles.monthlySummaryLabel}>Average per Day</Text>
+                
+                {/* Average calculation with same smart formatting as total amount */}
+                <Text style={styles.monthlySummaryValue}>
+                  ${Number.isInteger(averagePerDay) ? averagePerDay : averagePerDay.toFixed(2).replace(/\.00$/, '')}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    };
+
     const renderExpensesList = (category) => {
       const filteredExpenses = getFilteredExpenses(category);
       
-      // For "All" category, group expenses by day
+      // For "All" category, check view mode
       if (category === 'All') {
+        // If monthly view mode is selected, show monthly summary
+        if (viewMode === 'monthly') {
+          return renderMonthlySummaryCard();
+        }
+        
+        // Otherwise show day view (default behavior)
         const dayGroups = getFilteredExpensesByDay(category);
         
         return (
@@ -1652,7 +2053,7 @@ export default function App() {
                     onEdit={handleExpensePress}
                     onDelete={deleteExpense}
                     getCategoryIcon={getCategoryIcon}
-                    cardColor={getCategoryColor(expense.category)}
+                    cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
                   />
                 ))}
               </View>
@@ -1662,6 +2063,7 @@ export default function App() {
             contentContainerStyle={styles.categoryExpensesContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
+            onScroll={handleHeaderScroll}
           />
         );
       }
@@ -1678,7 +2080,7 @@ export default function App() {
               onEdit={handleExpensePress}
               onDelete={deleteExpense}
               getCategoryIcon={getCategoryIcon}
-              cardColor={getCategoryColor(expense.category)}
+              cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
             />
           )}
           keyExtractor={(expense) => `${category}-${expense.id}`}
@@ -1833,6 +2235,7 @@ export default function App() {
           'meat': 'fork.knife',             // Fork and knife for meat
           'dairy': 'waterbottle.fill',      // Water bottle for dairy
           'bread': 'birthday.cake.fill',    // Cake for bread/bakery
+          'staples': 'circle.grid.2x2.fill', // Grid for staples (rice, pasta, etc.)
           'pantry': 'shippingbox.fill',     // Box for pantry staples
           'frozen': 'snowflake',            // Snowflake for frozen
           'beverages': 'cup.and.saucer.fill', // Cup for beverages
@@ -1844,25 +2247,6 @@ export default function App() {
         return iconMap[type] || iconMap['other'];
       };
 
-      // Get color for grocery type
-      const getGroceryTypeColor = (type) => {
-        const colorMap = {
-          'all': currentTheme.appleBlue,
-          'produce': currentTheme.systemMint,      // Green for fresh produce
-          'meat': currentTheme.systemPink,           // Red for meat
-          'dairy': currentTheme.systemGray,          // Blue for dairy
-          'bread': currentTheme.systemBrown,       // Orange for bread/bakery
-          'pantry': currentTheme.systemOrange,        // Gray for pantry staples
-          'frozen': currentTheme.systemCyan,        // Light blue for frozen
-          'beverages': currentTheme.systemIndigo,   // Purple for beverages
-          'snacks': currentTheme.systemPurple,      // Yellow for snacks
-          'condiments': currentTheme.systemPink,    // Pink for condiments
-          'other': currentTheme.systemGray,         // Gray for other
-          'consumed': currentTheme.systemGray       // Gray for consumed items
-        };
-        return colorMap[type] || colorMap['other'];
-      };
-      
       // Split items into two columns for vertical flow layout
       const leftColumn = [];
       const rightColumn = [];
@@ -1932,34 +2316,38 @@ export default function App() {
 
       return (
         <View style={styles.pantrySectionContainer}>
+
+          {/* Section Header - Positioned at top */}
+          <View style={styles.pantrySectionHeaderOuter}>
+            <SymbolView
+              name={getGroceryTypeIcon(section.groceryType)}
+              size={25}
+              type="monochrome"
+              tintColor={getGroceryCategoryColor(section.groceryType, currentTheme)}
+              fallback={<Text style={[styles.fallbackIcon, { color: getGroceryCategoryColor(section.groceryType, currentTheme) }]}>•</Text>}
+            />
+            <Text style={[
+              styles.pantrySectionTitle,
+              { color: currentTheme.text } // Use theme text color for pantry section header
+            ]}>
+              {getGroceryTypeDisplayName(section.groceryType)}
+            </Text>
+          </View>
+          
+          {/* Section Content */}
           <LinearGradient
             colors={[
-              getGroceryTypeColor(section.groceryType), // 80% opacity
-              shiftHue(getGroceryTypeColor(section.groceryType), 20) // 18 degree hue shift, 85% opacity
+              getGroceryCategoryColor(section.groceryType, currentTheme) + 'E6', // 90% opacity
+              shiftHue(getGroceryCategoryColor(section.groceryType, currentTheme), 20) + 'F2' // 20 degree hue shift, 95% opacity
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
               styles.pantrySectionBackground,
-              { borderColor: getGroceryTypeColor(section.groceryType) }
+              { borderColor: getGroceryCategoryColor(section.groceryType, currentTheme) }
             ]}
           >
             <View style={styles.pantrySection}>
-              <View style={styles.pantrySectionHeader}>
-                <SymbolView
-                  name={getGroceryTypeIcon(section.groceryType)}
-                  size={24}
-                  type="monochrome"
-                  tintColor={currentTheme.text}
-                  fallback={<Text style={[styles.fallbackIcon, { color: currentTheme.text }]}>•</Text>}
-                />
-                <Text style={[
-                  styles.pantrySectionTitle,
-                  { color: currentTheme.text } // Use theme text color for pantry section header
-                ]}>
-                  {getGroceryTypeDisplayName(section.groceryType)}
-                </Text>
-              </View>
               <View style={styles.pantryColumnsContainer}>
                 {/* Left Column */}
                 <View style={styles.pantryColumn}>
@@ -2006,6 +2394,7 @@ export default function App() {
             </View>
           </LinearGradient>
         </View>
+
       );
     };
     // #endregion
@@ -2566,24 +2955,7 @@ export default function App() {
       return iconMap[category] || 'chart.bar.fill';
     };
 
-    // Helper function to get a color for each expense category
-    const getCategoryColor = (category) => {
-      const colorMap = {
-        'all': currentTheme.appleBlue,
-        'amazon': currentTheme.systemBrown,
-        'entertainment': currentTheme.systemPurple,
-        'fashion': currentTheme.systemPink,
-        'food': currentTheme.systemRed,
-        'furniture': currentTheme.systemOrange,
-        'groceries': currentTheme.systemGreen,
-        'monthly': currentTheme.systemGray,
-        'other': currentTheme.systemGray,
-        'transportation': currentTheme.systemIndigo,
-        'travel': currentTheme.systemCyan,
-        'subscriptions': currentTheme.systemYellow,
-      };
-      return colorMap[category] || currentTheme.appleBlue;
-    };
+
     // #endregion
   
   // #endregion
@@ -2622,9 +2994,18 @@ export default function App() {
               {activeTab === 'expenses' ? renderExpensesView() : renderGroceryView()}
 
       {/* Global Add Button */}
-      <View style={styles.addButtonContainer}>
+      <Animated.View style={[
+        styles.addButtonContainer,
+        hideUI && styles.addButtonContainerCompact,
+        {
+          transform: [{ scale: addButtonScale }]
+        }
+      ]}>
         <Pressable
-          style={styles.addButton}
+          style={[
+            styles.addButton,
+            hideUI && styles.addButtonCompact
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             if (activeTab === 'pantry') {
@@ -2644,7 +3025,7 @@ export default function App() {
             />
           </BlurView>
         </Pressable>
-      </View>
+      </Animated.View>
 
       {/* Bottom Gradient Overlay */}
       <Animated.View
@@ -2663,6 +3044,9 @@ export default function App() {
           style={{ flex: 1 }}
         />
       </Animated.View>
+
+      {/* Expense Time Selector */}
+      {renderExpenseTimeSelector()}
 
       {/* Global View Selector */}
       <Animated.View 
