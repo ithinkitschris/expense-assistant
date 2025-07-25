@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as Haptics from 'expo-haptics';
+import { PICKER_OPTIONS, VALIDATION_RULES } from '../config';
 
 const QuantityPicker = ({ value, unit, onValueChange, onUnitChange, theme }) => {
   const [isCustomMode, setIsCustomMode] = useState(false);
@@ -10,36 +11,9 @@ const QuantityPicker = ({ value, unit, onValueChange, onUnitChange, theme }) => 
   // Parse the current value
   const currentValue = parseFloat(value) || 1;
 
-  // Generate array for quantity picker (0.1 to 100)
-  const quantityOptions = [];
-  for (let i = 0.1; i <= 10; i += 0.1) {
-    quantityOptions.push(parseFloat(i.toFixed(1)));
-  }
-  for (let i = 11; i <= 100; i += 1) {
-    quantityOptions.push(i);
-  }
-
-  // Common units for pantry items
-  const unitOptions = [
-    'pieces',
-    'lbs',
-    'oz',
-    'kg',
-    'g',
-    'liters',
-    'ml',
-    'gallons',
-    'quarts',
-    'pints',
-    'cups',
-    'tablespoons',
-    'teaspoons',
-    'bottles',
-    'cans',
-    'bags',
-    'boxes',
-    'packages'
-  ];
+  // Use config values
+  const quantityOptions = PICKER_OPTIONS.quantityOptions;
+  const unitOptions = PICKER_OPTIONS.unitOptions;
 
   const handleQuantityChange = (newQuantity) => {
     onValueChange(newQuantity.toString());
@@ -57,8 +31,8 @@ const QuantityPicker = ({ value, unit, onValueChange, onUnitChange, theme }) => 
 
   const handleConfirmCustom = () => {
     const customValue = parseFloat(customInput) || 1;
-    if (customValue <= 0 || customValue > 1000) {
-      Alert.alert('Invalid Quantity', 'Please enter a value between 0.1 and 1000');
+    if (customValue <= VALIDATION_RULES.quantity.min || customValue > VALIDATION_RULES.quantity.max) {
+      Alert.alert('Invalid Quantity', VALIDATION_RULES.quantity.errorMessage);
       return;
     }
     onValueChange(customValue.toString());

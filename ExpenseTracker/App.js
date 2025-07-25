@@ -5,6 +5,24 @@ import { SymbolView } from 'expo-symbols';
 import { expenseAPI } from './services/api';
 import { createStyles } from './styles';
 import { themes, getGroceryCategoryColor, getExpenseCategoryColor } from './themes';
+import { 
+  DEV_FLAGS, 
+  APP_CONSTANTS, 
+  PICKER_OPTIONS, 
+  VALIDATION_RULES,
+  UI_CONSTANTS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES 
+} from './config';
+import { shiftHue, increaseBrightness } from './utils/colorUtils';
+import { toSentenceCase, formatCurrency } from './utils/textUtils';
+import { 
+  calculateTotalAmount, 
+  calculateCategoryTotals, 
+  groupExpensesByDay,
+  getExpenseCountForDay,
+  formatExpenseAmount 
+} from './utils/expenseUtils';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -16,12 +34,19 @@ import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import { ActionSheetIOS } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { 
+  AddExpenseModal, 
+  GroceryConfirmModal, 
+  EditExpenseModal, 
+  AddPantryModal, 
+  EditPantryModal 
+} from './components/modals';
 
 export default function App() {
   // #region STATE & SETUP
   
     // Development Flags
-    const ENABLE_SCROLL_ANIMATIONS = true;
+    const ENABLE_SCROLL_ANIMATIONS = DEV_FLAGS.ENABLE_SCROLL_ANIMATIONS;
 
     // #region useState
     const [expenses, setExpenses] = useState([]);
@@ -32,21 +57,21 @@ export default function App() {
         const [groceryItems, setGroceryItems] = useState({});
     
     // #region Animated Values for Add Button
-    const addButtonScale = useRef(new Animated.Value(1)).current;
+    const addButtonScale = useRef(new Animated.Value(UI_CONSTANTS.animations.addButtonScale.normal)).current;
     // #endregion
     
     // #region Animated Values for Expense Time Selector
-    const expenseTimeSelectorScale = useRef(new Animated.Value(0)).current;
+    const expenseTimeSelectorScale = useRef(new Animated.Value(UI_CONSTANTS.animations.expenseTimeSelectorScale.hidden)).current;
     // #endregion
     
     // Tab state
-    const [activeTab, setActiveTab] = useState('expenses'); // 'expenses' or 'pantry'
+    const [activeTab, setActiveTab] = useState(APP_CONSTANTS.DEFAULT_TAB);
     const [allPantryItems, setAllPantryItems] = useState([]);
     const [isLoadingPantryItems, setIsLoadingPantryItems] = useState(false);
     
     // Add expense modal state
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-    const [addAmount, setAddAmount] = useState('0');
+    const [addAmount, setAddAmount] = useState(APP_CONSTANTS.DEFAULT_AMOUNT);
     const [addCategory, setAddCategory] = useState('');
     const [addDescription, setAddDescription] = useState('');
     
@@ -65,8 +90,8 @@ export default function App() {
     // Add pantry item modal state
     const [isAddPantryModalVisible, setIsAddPantryModalVisible] = useState(false);
     const [addPantryItemName, setAddPantryItemName] = useState('');
-    const [addPantryItemQuantity, setAddPantryItemQuantity] = useState('1');
-    const [addPantryItemUnit, setAddPantryItemUnit] = useState('pieces');
+    const [addPantryItemQuantity, setAddPantryItemQuantity] = useState(APP_CONSTANTS.DEFAULT_QUANTITY);
+    const [addPantryItemUnit, setAddPantryItemUnit] = useState(APP_CONSTANTS.DEFAULT_UNIT);
   
     // Multi-item pantry entry state
     const [isPantryStep, setIsPantryStep] = useState(1); // 1: input, 2: confirmation
@@ -97,9 +122,9 @@ export default function App() {
     const [isEditPantryModalVisible, setIsEditPantryModalVisible] = useState(false);
     const [editingPantryItem, setEditingPantryItem] = useState(null);
     const [editPantryItemName, setEditPantryItemName] = useState('');
-    const [editPantryItemQuantity, setEditPantryItemQuantity] = useState('1');
-    const [editPantryItemUnit, setEditPantryItemUnit] = useState('pieces');
-    const [editPantryItemCategory, setEditPantryItemCategory] = useState('other');
+    const [editPantryItemQuantity, setEditPantryItemQuantity] = useState(APP_CONSTANTS.DEFAULT_QUANTITY);
+    const [editPantryItemUnit, setEditPantryItemUnit] = useState(APP_CONSTANTS.DEFAULT_UNIT);
+    const [editPantryItemCategory, setEditPantryItemCategory] = useState(APP_CONSTANTS.DEFAULT_CATEGORY);
     
     // MinusQuantityPlus expansion state
     const [expandedQuantityId, setExpandedQuantityId] = useState(null);
@@ -112,7 +137,7 @@ export default function App() {
     const [isLoadingGroceryCategories, setIsLoadingGroceryCategories] = useState(true);
 
     // Add state for day/monthly view toggle
-    const [viewMode, setViewMode] = useState('day'); // 'day' or 'monthly'
+    const [viewMode, setViewMode] = useState(APP_CONSTANTS.DEFAULT_VIEW_MODE);
 
     // #endregion
 
@@ -362,9 +387,7 @@ export default function App() {
         const fetchGroceryCategories = async () => {
           setIsLoadingGroceryCategories(true);
           try {
-            const response = await fetch('http://192.168.1.172:8000/api/v1/grocery-categories');
-            if (!response.ok) throw new Error('Failed to fetch grocery categories');
-            const data = await response.json();
+            const data = await expenseAPI.getGroceryCategories();
             console.log('Fetched groceryCategories:', data); // Debug log
             setGroceryCategories(data);
           } catch (error) {
@@ -390,13 +413,10 @@ export default function App() {
     }
 
     // Calculate total amount for weighting
-    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalAmount = calculateTotalAmount(expenses);
     
     // Group expenses by category and calculate category totals
-    const categoryTotals = expenses.reduce((acc, expense) => {
-      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-      return acc;
-    }, {});
+    const categoryTotals = calculateCategoryTotals(expenses);
 
     // Get top 3 categories by amount
     const top3Categories = Object.entries(categoryTotals)
@@ -407,20 +427,7 @@ export default function App() {
       return currentTheme.appleBlue; // Fallback
     }
 
-    // Convert hex colors to RGB for weighted averaging
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    };
-
-    // Convert RGB to hex
-    const rgbToHex = (r, g, b) => {
-      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-    };
+    // Color utilities are now imported from utils/colorUtils.js
 
     // Calculate weighted average RGB values from top 3 categories only
     let weightedR = 0;
@@ -457,48 +464,36 @@ export default function App() {
   // #region DATA PROCESSING
 
     // Calculate totals by category
-    const categoryTotals = expenses.reduce((acc, expense) => {
-      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-      return acc;
-    }, {});
+    const categoryTotals = calculateCategoryTotals(expenses);
 
     // Get unique categories
     const categories = ['All', ...Object.keys(categoryTotals).sort()];
 
     // Calculate total expenses
-    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalAmount = calculateTotalAmount(expenses);
 
-    // Group expenses by day
-    const groupExpensesByDay = (expenses) => {
-      const grouped = {};
+    // Group expenses by day with display properties
+    const groupExpensesByDayWithDisplay = (expenses) => {
+      const grouped = groupExpensesByDay(expenses);
       
-      expenses.forEach(expense => {
-        // Use the timestamp field from the API response
-        const date = new Date(expense.timestamp);
-        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        
-        if (!grouped[dateKey]) {
-          grouped[dateKey] = {
-            date: dateKey,
-            displayDate: date.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            shortDate: date.toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric' 
-            }),
-            expenses: []
-          };
-        }
-        
-        grouped[dateKey].expenses.push(expense);
-      });
-      
-      // Convert to array and sort by date (most recent first)
-      return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date));
+      // Transform the grouped data to include display properties
+      return Object.entries(grouped).map(([dateKey, expenseArray]) => {
+        const date = new Date(dateKey);
+        return {
+          date: dateKey,
+          displayDate: date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+          shortDate: date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          expenses: expenseArray
+        };
+      }).sort((a, b) => new Date(b.date) - new Date(a.date));
     };
 
     // Get current display amount based on selection
@@ -520,7 +515,7 @@ export default function App() {
     // Single day grouping function that handles both cases  
     const getFilteredExpensesByDay = (category = selectedCategory) => {
       const filteredExpenses = getFilteredExpenses(category);
-      return groupExpensesByDay(filteredExpenses);
+      return groupExpensesByDayWithDisplay(filteredExpenses);
     };
     // #endregion
 
@@ -547,7 +542,7 @@ export default function App() {
       return days;
     };
 
-    const getExpenseCountForDay = (date) => {
+    const getLocalExpenseCountForDay = (date) => {
       // Use local date string to avoid timezone issues
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1345,7 +1340,7 @@ export default function App() {
             <FlatList
               ref={categoryScrollRef}
               data={categories}
-              renderItem={renderCategoryPage}
+              renderItem={renderExpenseCategories}
               keyExtractor={(category) => category}
               horizontal
               pagingEnabled={true}
@@ -1406,17 +1401,7 @@ export default function App() {
       // Get sort order for grocery types
       const getGroceryTypeSortOrder = (type) => {
         const sortOrders = {
-          'produce': 1,
-          'meat': 2,
-          'dairy': 3,
-          'bread': 4,
-          'staples': 5,
-          'pantry': 6,
-          'frozen': 7,
-          'beverages': 8,
-          'snacks': 9,
-          'condiments': 10,
-          'other': 11,
+          ...PICKER_OPTIONS.groceryTypeSortOrder,
           'consumed': 12
         };
         return sortOrders[type] || 10;
@@ -1746,7 +1731,7 @@ export default function App() {
     // #region RENDER CONTENT VIEWS
 
     // Render a full-screen page for each category
-    const renderCategoryPage = ({ item: category }) => {
+    const renderExpenseCategories = ({ item: category }) => {
       const { height } = Dimensions.get('window');
       
       return (
@@ -1775,7 +1760,7 @@ export default function App() {
       }
 
       // Always use simple list view for all categories (day view disabled)
-      return renderExpensesList(category);
+      return renderExpenseTotal(category);
     };
 
     const renderDayView = (category) => {
@@ -2000,7 +1985,7 @@ export default function App() {
       );
     };
 
-    const renderExpensesList = (category) => {
+    const renderExpenseTotal = (category) => {
       const filteredExpenses = getFilteredExpenses(category);
       
       // For "All" category, check view mode
@@ -2186,7 +2171,7 @@ export default function App() {
                 
                 const isSelected = dayStr === selectedDay;
                 const isToday = dayStr === todayStr;
-                const expenseCount = getExpenseCountForDay(day);
+                const expenseCount = getLocalExpenseCountForDay(day);
                 
                 return (
                   <Pressable
@@ -2259,60 +2244,7 @@ export default function App() {
         }
       });
       
-      // Helper: Convert hex to HSL
-      function hexToHSL(hex) {
-        hex = hex.replace('#', '');
-        if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
-        const r = parseInt(hex.substring(0,2), 16) / 255;
-        const g = parseInt(hex.substring(2,4), 16) / 255;
-        const b = parseInt(hex.substring(4,6), 16) / 255;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
-        if (max === min) {
-          h = s = 0;
-        } else {
-          const d = max - min;
-          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-          switch(max){
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-          }
-          h = h * 60;
-        }
-        return { h, s: s * 100, l: l * 100 };
-      }
-
-      // Helper: Convert HSL to hex (with alpha)
-      function hslToHex(h, s, l, alpha = 1) {
-        s /= 100;
-        l /= 100;
-        let c = (1 - Math.abs(2 * l - 1)) * s,
-            x = c * (1 - Math.abs((h / 60) % 2 - 1)),
-            m = l - c/2,
-            r = 0, g = 0, b = 0;
-        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
-        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
-        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
-        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
-        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-        r = Math.round((r + m) * 255);
-        g = Math.round((g + m) * 255);
-        b = Math.round((b + m) * 255);
-        let hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-        if (alpha < 1) {
-          hex += Math.round(alpha * 255).toString(16).padStart(2, '0');
-        }
-        return hex;
-      }
-
-      // Helper: Shift hue
-      function shiftHue(hex, degree, alpha = 1) {
-        const { h, s, l } = hexToHSL(hex);
-        const newH = (h + degree) % 360;
-        return hslToHex(newH, s, l, alpha);
-      }
+      // Color utilities are now imported from utils/colorUtils.js
 
       return (
         <View style={styles.pantrySectionContainer}>
@@ -2400,541 +2332,7 @@ export default function App() {
     // #endregion
 
     // #region RENDER MODALS
-    const renderAddModal = () => {
-      if (addCategory === 'groceries' && isGroceryStep === 2) {
-        return renderGroceryConfirmModal();
-      }
-      
-      return (
-        <Modal
-          visible={isAddModalVisible}
-          animationType="slide"
-          presentationStyle="formSheet"
-          onRequestClose={() => {
-            setIsAddModalVisible(false);
-            setIsGroceryStep(1);
-            setParsedGroceryItems([]);
-            setExistingPantryItems([]);
-          }}
-        >
-          <KeyboardAvoidingView 
-            style={styles.modalContainer}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          >
-            {/* Swipe indicator */}
-            <View style={styles.modalPill} />
-            
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>New Expense</Text>
-              <Pressable onPress={addCategory === 'groceries' ? handleGroceryNext : addExpense} disabled={isLoading || isParsingGroceries}>
-                <Text style={[styles.modalAddButton, (isLoading || isParsingGroceries) && styles.modalAddButtonDisabled]}>
-                  {isLoading ? 'Adding...' : 
-                  isParsingGroceries ? 'Parsing...' : 
-                  addCategory === 'groceries' ? '→' : 'Add'}
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Content */}
-            <ScrollView 
-              style={styles.modalContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Amount */}
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Amount ($)</Text>
-                <WheelAmountPicker
-                  value={addAmount}
-                  onValueChange={setAddAmount}
-                  theme={currentTheme}
-                />
-              </View>
-
-              {/* Category */}
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Category</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'other', 'transportation', 'travel'].map((cat) => (
-                    <Pressable
-                      key={cat}
-                      style={[
-                        styles.modalCategoryOption,
-                        addCategory === cat && styles.modalCategoryOptionSelected
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setAddCategory(cat);
-                      }}
-                    >
-                      <Text style={[
-                        styles.modalCategoryText,
-                        addCategory === cat && styles.modalCategoryTextSelected
-                      ]}>
-                        {cat}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-              
-              {/* Description */}
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Description</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={addDescription}
-                  onChangeText={setAddDescription}
-                  placeholder={addCategory === 'groceries' ? 'Enter your grocery list here.' : 'What now?'}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
-      );
-    };
-
-    const renderGroceryConfirmModal = () => (
-      <Modal
-        visible={isAddModalVisible}
-        animationType="slide"
-        presentationStyle="formSheet"
-        onRequestClose={() => {
-          setIsAddModalVisible(false);
-          setIsGroceryStep(1);
-          setParsedGroceryItems([]);
-          setExistingPantryItems([]);
-          // Clear editing state
-          setEditingGroceryItemIndex(-1);
-          setEditingGroceryItemText('');
-          setIsAddingNewItem(false);
-          setNewItemText('');
-        }}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Swipe indicator */}
-          <View style={styles.modalPill} />
-          
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <Pressable onPress={() => {
-              setIsGroceryStep(1);
-              setExistingPantryItems([]);
-              // Clear editing state
-              setEditingGroceryItemIndex(-1);
-              setEditingGroceryItemText('');
-              setIsAddingNewItem(false);
-              setNewItemText('');
-            }}>
-              <Text style={styles.modalCancelButton}>← Back</Text>
-            </Pressable>
-            <Text style={styles.modalTitle}>Edit Items</Text>
-            <Pressable onPress={confirmGroceryList} disabled={isLoading}>
-              <Text style={[styles.modalAddButton, isLoading && styles.modalAddButtonDisabled]}>
-                {isLoading ? 'Adding...' : 'Confirm'}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Content */}
-          <ScrollView 
-            style={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Grocery Items ({parsedGroceryItems.length})</Text>
-              <Text style={styles.modalSubLabel}>
-                Review and edit the items we found, or add new ones:
-              </Text>
-              
-              <View style={styles.groceryConfirmList}>
-                {parsedGroceryItems.map((item, index) => (
-                  <View key={index} style={styles.groceryConfirmItem}>
-                    {editingGroceryItemIndex === index ? (
-                      <View style={styles.groceryItemEditContainer}>
-                        <TextInput
-                          style={styles.groceryItemEditInput}
-                          value={editingGroceryItemText}
-                          onChangeText={setEditingGroceryItemText}
-                          placeholder="Enter item name"
-                          autoFocus
-                          onSubmitEditing={saveGroceryItemEdit}
-                        />
-                        <View style={styles.groceryItemEditButtons}>
-                          <Pressable onPress={saveGroceryItemEdit} style={styles.groceryItemEditButton}>
-                            <Text style={styles.groceryItemEditButtonText}>✓</Text>
-                          </Pressable>
-                          <Pressable onPress={cancelGroceryItemEdit} style={styles.groceryItemEditButton}>
-                            <Text style={styles.groceryItemEditButtonText}>✕</Text>
-                          </Pressable>
-                        </View>
-                      </View>
-                    ) : (
-                      <View style={styles.groceryItemDisplayContainer}>
-                        <Text style={styles.groceryConfirmItemText}>• {item.name}</Text>
-                        <View style={styles.groceryItemActions}>
-                          <Pressable onPress={() => startEditingGroceryItem(index, item)} style={styles.groceryItemActionButton}>
-                            <Text style={styles.groceryItemActionButtonText}>✏️</Text>
-                          </Pressable>
-                          <Pressable onPress={() => deleteGroceryItem(index)} style={styles.groceryItemActionButton}>
-                            <Text style={styles.groceryItemActionButtonText}>🗑️</Text>
-                          </Pressable>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                ))}
-                
-                {isAddingNewItem && (
-                  <View style={styles.groceryConfirmItem}>
-                    <View style={styles.groceryItemEditContainer}>
-                      <TextInput
-                        style={styles.groceryItemEditInput}
-                        value={newItemText}
-                        onChangeText={setNewItemText}
-                        placeholder="Enter new item name"
-                        autoFocus
-                        onSubmitEditing={saveNewItem}
-                      />
-                      <View style={styles.groceryItemEditButtons}>
-                        <Pressable onPress={saveNewItem} style={styles.groceryItemEditButton}>
-                          <Text style={styles.groceryItemEditButtonText}>✓</Text>
-                        </Pressable>
-                        <Pressable onPress={cancelAddingNewItem} style={styles.groceryItemEditButton}>
-                          <Text style={styles.groceryItemEditButtonText}>✕</Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  </View>
-                )}
-                
-                <View style={styles.addItemContainer}>
-                  <Pressable onPress={startAddingNewItem} style={styles.addItemButton}>
-                    <Text style={styles.addItemButtonText}>+ Add Item</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-
-            {existingPantryItems.length > 0 && (
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Existing Items ({existingPantryItems.length})</Text>
-                <Text style={styles.modalSubLabel}>
-                  Items you already have in your grocery list:
-                </Text>
-                
-                <View style={styles.groceryConfirmList}>
-                  {existingPantryItems.map((item, index) => (
-                    <View key={index} style={styles.groceryConfirmItem}>
-                      <Text style={styles.groceryConfirmItemTextExisting}>• {item}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-
-    const renderEditModal = () => (
-      <Modal
-        visible={isEditModalVisible}
-        animationType="slide"
-        presentationStyle="formSheet"
-        onRequestClose={() => setIsEditModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Swipe indicator */}
-          <View style={styles.modalPill} />
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Expense</Text>
-            <Pressable onPress={updateExpense} disabled={isLoading}>
-              <Text style={[styles.modalSaveButton, isLoading && styles.modalSaveButtonDisabled]}>
-                {isLoading ? 'Saving...' : 'Save'}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Content */}
-          <ScrollView 
-            style={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Amount */}
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Amount</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={editAmount}
-                onChangeText={setEditAmount}
-                placeholder="0.00"
-                keyboardType="numeric"
-              />
-            </View>
-
-            {/* Category */}
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Category</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'other', 'transportation', 'travel'].map((cat) => (
-                  <Pressable
-                    key={cat}
-                    style={[
-                      styles.modalCategoryOption,
-                      editCategory === cat && styles.modalCategoryOptionSelected
-                    ]}
-                    onPress={() => setEditCategory(cat)}
-                  >
-                    <Text style={[
-                      styles.modalCategoryText,
-                      editCategory === cat && styles.modalCategoryTextSelected
-                    ]}>
-                      {cat}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Date */}
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Date</Text>
-              <DateTimePicker
-                value={editTimestamp && !isNaN(new Date(editTimestamp)) ? new Date(editTimestamp) : new Date()}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  if (selectedDate) {
-                    // Only update the date part, keep the original time
-                    const current = editTimestamp && !isNaN(new Date(editTimestamp)) ? new Date(editTimestamp) : new Date();
-                    current.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-                    setEditTimestamp(current.toISOString());
-                  }
-                }}
-                style={{ alignSelf: 'flex-start', marginTop: 4 }}
-              />
-            </View>
-
-            {/* Description */}
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Description</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={editDescription}
-                onChangeText={setEditDescription}
-                placeholder="Enter description"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-
-    const renderAddPantryModal = () => (
-      <Modal
-        visible={isAddPantryModalVisible}
-        animationType="slide"
-        presentationStyle="formSheet"
-        onRequestClose={() => {
-          setIsAddPantryModalVisible(false);
-          setIsPantryStep(1);
-          setParsedPantryItems([]);
-          setAddPantryItemName('');
-          setAddPantryItemQuantity('1');
-          setAddPantryItemUnit('pieces');
-        }}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Swipe indicator */}
-          <View style={styles.modalPill} />
-          
-          <View style={styles.modalHeader}>
-            <Pressable onPress={() => {
-              if (isPantryStep === 2) {
-                setIsPantryStep(1);
-                setParsedPantryItems([]);
-              } else {
-                setIsAddPantryModalVisible(false);
-                setAddPantryItemName('');
-                setAddPantryItemQuantity('1');
-                setAddPantryItemUnit('pieces');
-              }
-            }}>
-              <Text style={styles.modalCancelButton}>{isPantryStep === 2 ? '← Back' : 'Cancel'}</Text>
-            </Pressable>
-            <Text style={styles.modalTitle}>{isPantryStep === 1 ? 'Add Pantry Items' : 'Confirm Items'}</Text>
-            <Pressable onPress={isPantryStep === 1 ? handlePantryNext : confirmPantryList} disabled={isLoading || isParsingPantryItems}>
-              <Text style={[styles.modalAddButton, (isLoading || isParsingPantryItems) && styles.modalAddButtonDisabled]}>
-                {isLoading || isParsingPantryItems ? 'Parsing...' : isPantryStep === 1 ? 'Next' : 'Add'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <ScrollView 
-            style={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {isPantryStep === 1 ? (
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Pantry Items</Text>
-                <Text style={styles.modalSubLabel}>
-                  Enter one or more items, separated by commas, newlines, or "and":
-                </Text>
-                <TextInput
-                  style={[styles.modalInput, { height: 100, textAlignVertical: 'top' }]}
-                  value={addPantryItemName}
-                  onChangeText={setAddPantryItemName}
-                  placeholder="e.g., lemon baton wafer, organic milk, eggs&#10;or&#10;apples and bananas&#10;or&#10;bread, butter, cheese"
-                  multiline
-                  numberOfLines={4}
-                />
-              </View>
-            ) : (
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>Parsed Items ({parsedPantryItems.length})</Text>
-                <Text style={styles.modalSubLabel}>
-                  Review the items we found:
-                </Text>
-                
-                <View style={styles.groceryConfirmList}>
-                  {parsedPantryItems.map((item, index) => (
-                    <View key={index} style={styles.groceryConfirmItem}>
-                      <View style={styles.groceryItemDisplayContainer}>
-                        <Text style={styles.groceryConfirmItemText}>• {item.name}</Text>
-                        <Text style={[styles.groceryConfirmItemText, { fontSize: 12, opacity: 0.7 }]}>
-                          {item.category}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/*
-            <View style={styles.modalField}>
-              <QuantityPicker
-                value={addPantryItemQuantity}
-                unit={addPantryItemUnit}
-                onValueChange={setAddPantryItemQuantity}
-                onUnitChange={setAddPantryItemUnit}
-                theme={currentTheme}
-              />
-            </View>
-            */}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-
-    // Add edit pantry modal
-    const renderEditPantryModal = () => (
-      <Modal
-        visible={isEditPantryModalVisible}
-        animationType="slide"
-        presentationStyle="formSheet"
-        onRequestClose={() => setIsEditPantryModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.modalPill} />
-          <View style={styles.modalHeader}>
-            <Pressable onPress={() => setIsEditPantryModalVisible(false)}>
-              <Text style={styles.modalCancelButton}>Cancel</Text>
-            </Pressable>
-            <Text style={styles.modalTitle}>Edit Pantry Item</Text>
-            <Pressable onPress={updatePantryItem} disabled={isLoading}>
-              <Text style={[styles.modalSaveButton, isLoading && styles.modalSaveButtonDisabled]}>
-                {isLoading ? 'Saving...' : 'Save'}
-              </Text>
-            </Pressable>
-          </View>
-          <ScrollView 
-            style={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Item Name</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={editPantryItemName}
-                onChangeText={setEditPantryItemName}
-                placeholder="e.g., Apples, Milk, Bread"
-              />
-            </View>
-
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Category</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleGroceryCategoryScroll}
-                scrollEventThrottle={16}
-              >
-                {console.log('Rendering category options:', groceryCategories)}
-                {isLoadingGroceryCategories ? (
-                  <Text style={styles.modalLabel}>Loading categories...</Text>
-                ) : (
-                  groceryCategories.map((category) => (
-                    <Pressable
-                      key={category.key}
-                      style={[
-                        styles.modalCategoryOption,
-                        editPantryItemCategory === category.key && styles.modalCategoryOptionSelected
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setEditPantryItemCategory(category.key);
-                      }}
-                    >
-                      <Text style={[
-                        styles.modalCategoryText,
-                        editPantryItemCategory === category.key && styles.modalCategoryTextSelected
-                      ]}>
-                        {category.label}
-                      </Text>
-                    </Pressable>
-                  ))
-                )}
-              </ScrollView>
-            </View>
-
-            {/*
-            <View style={styles.modalField}>
-              <QuantityPicker
-                value={editPantryItemQuantity}
-                unit={editPantryItemUnit}
-                onValueChange={setEditPantryItemQuantity}
-                onUnitChange={setEditPantryItemUnit}
-                theme={currentTheme}
-              />
-            </View>
-            */}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
+    // Modal render functions have been extracted to separate components
     // #endregion
 
     // #region HELPER FUNCTIONS
@@ -3060,16 +2458,124 @@ export default function App() {
       </Animated.View>
 
       {/* Add Modal */}
-      {renderAddModal()}
+      <AddExpenseModal
+        isVisible={isAddModalVisible}
+        onClose={() => {
+          setIsAddModalVisible(false);
+          setIsGroceryStep(1);
+          setParsedGroceryItems([]);
+          setExistingPantryItems([]);
+        }}
+        onAdd={addExpense}
+        onGroceryNext={handleGroceryNext}
+        isLoading={isLoading}
+        isParsingGroceries={isParsingGroceries}
+        addAmount={addAmount}
+        setAddAmount={setAddAmount}
+        addCategory={addCategory}
+        setAddCategory={setAddCategory}
+        addDescription={addDescription}
+        setAddDescription={setAddDescription}
+        isGroceryStep={isGroceryStep}
+        styles={styles}
+        currentTheme={currentTheme}
+      />
+
+      {/* Grocery Confirm Modal */}
+      <GroceryConfirmModal
+        isVisible={isAddModalVisible && addCategory === 'groceries' && isGroceryStep === 2}
+        onClose={() => {
+          setIsAddModalVisible(false);
+          setIsGroceryStep(1);
+          setParsedGroceryItems([]);
+          setExistingPantryItems([]);
+          setEditingGroceryItemIndex(-1);
+          setEditingGroceryItemText('');
+          setIsAddingNewItem(false);
+          setNewItemText('');
+        }}
+        onConfirm={confirmGroceryList}
+        onBack={() => {
+          setIsGroceryStep(1);
+          setExistingPantryItems([]);
+          setEditingGroceryItemIndex(-1);
+          setEditingGroceryItemText('');
+          setIsAddingNewItem(false);
+          setNewItemText('');
+        }}
+        isLoading={isLoading}
+        parsedGroceryItems={parsedGroceryItems}
+        existingPantryItems={existingPantryItems}
+        editingGroceryItemIndex={editingGroceryItemIndex}
+        editingGroceryItemText={editingGroceryItemText}
+        setEditingGroceryItemText={setEditingGroceryItemText}
+        isAddingNewItem={isAddingNewItem}
+        newItemText={newItemText}
+        setNewItemText={setNewItemText}
+        onStartEditingGroceryItem={startEditingGroceryItem}
+        onSaveGroceryItemEdit={saveGroceryItemEdit}
+        onCancelGroceryItemEdit={cancelGroceryItemEdit}
+        onDeleteGroceryItem={deleteGroceryItem}
+        onStartAddingNewItem={startAddingNewItem}
+        onSaveNewItem={saveNewItem}
+        onCancelAddingNewItem={cancelAddingNewItem}
+        styles={styles}
+      />
 
       {/* Edit Modal */}
-      {renderEditModal()}
+      <EditExpenseModal
+        isVisible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        onSave={updateExpense}
+        isLoading={isLoading}
+        editAmount={editAmount}
+        setEditAmount={setEditAmount}
+        editCategory={editCategory}
+        setEditCategory={setEditCategory}
+        editDescription={editDescription}
+        setEditDescription={setEditDescription}
+        editTimestamp={editTimestamp}
+        setEditTimestamp={setEditTimestamp}
+        styles={styles}
+      />
 
-      {/* Add Grocery Item Modal */}
-      {renderAddPantryModal()}
+      {/* Add Pantry Modal */}
+      <AddPantryModal
+        isVisible={isAddPantryModalVisible}
+        onClose={() => {
+          setIsAddPantryModalVisible(false);
+          setIsPantryStep(1);
+          setParsedPantryItems([]);
+          setAddPantryItemName('');
+          setAddPantryItemQuantity('1');
+          setAddPantryItemUnit('pieces');
+        }}
+        onNext={handlePantryNext}
+        onConfirm={confirmPantryList}
+        isLoading={isLoading}
+        isParsingPantryItems={isParsingPantryItems}
+        isPantryStep={isPantryStep}
+        addPantryItemName={addPantryItemName}
+        setAddPantryItemName={setAddPantryItemName}
+        parsedPantryItems={parsedPantryItems}
+        styles={styles}
+      />
 
-      {/* Edit Pantry Item Modal */}
-      {renderEditPantryModal()}
+      {/* Edit Pantry Modal */}
+      <EditPantryModal
+        isVisible={isEditPantryModalVisible}
+        onClose={() => setIsEditPantryModalVisible(false)}
+        onSave={updatePantryItem}
+        isLoading={isLoading}
+        isLoadingGroceryCategories={isLoadingGroceryCategories}
+        editPantryItemName={editPantryItemName}
+        setEditPantryItemName={setEditPantryItemName}
+        editPantryItemCategory={editPantryItemCategory}
+        setEditPantryItemCategory={setEditPantryItemCategory}
+        groceryCategories={groceryCategories}
+        handleGroceryCategoryScroll={handleGroceryCategoryScroll}
+        styles={styles}
+      />
 
       <StatusBar style={currentTheme.statusBarStyle} />
     </View>

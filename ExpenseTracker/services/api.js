@@ -1,16 +1,10 @@
 import axios from 'axios';
-
-// Your FastAPI server URL - replace with your computer's IP address
-// Run this command to find your IP: ifconfig | grep "inet " | grep -v 127.0.0.1
-const API_BASE_URL = 'http://192.168.1.172:8000/api/v1';  // Replace XXX with your actual IP
+import { API_BASE_URL, API_CONFIG, APP_CONSTANTS } from '../config';
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,  // Increased to 30 seconds for AI processing
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  ...API_CONFIG,
 });
 
 // API service functions
@@ -87,7 +81,7 @@ export const expenseAPI = {
   },
 
   // Get list of expenses
-  getExpenses: async (limit = 50) => {
+  getExpenses: async (limit = APP_CONSTANTS.MAX_EXPENSES_LIMIT) => {
     try {
       const response = await api.get(`/expenses/?limit=${limit}`);
       return response.data;
@@ -256,6 +250,20 @@ export const expenseAPI = {
       console.log('❌ Parse to Pantry Error:', error);
       console.log('❌ Error response:', error.response?.data);
       throw new Error(error.response?.data?.detail || 'Failed to parse grocery to pantry');
+    }
+  },
+
+  // Get grocery categories
+  getGroceryCategories: async () => {
+    try {
+      console.log('🛒 Getting grocery categories');
+      const response = await api.get('/grocery-categories');
+      console.log('✅ Grocery Categories Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.log('❌ Get Grocery Categories Error:', error);
+      console.log('❌ Error response:', error.response?.data);
+      throw new Error(error.response?.data?.detail || 'Failed to get grocery categories');
     }
   }
 };

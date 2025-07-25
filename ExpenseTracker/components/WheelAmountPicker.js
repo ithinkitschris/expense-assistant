@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as Haptics from 'expo-haptics';
+import { PICKER_OPTIONS, VALIDATION_RULES } from '../config';
 
 const WheelAmountPicker = ({ value, onValueChange, theme }) => {
   const [isCustomMode, setIsCustomMode] = useState(false);
@@ -10,8 +11,8 @@ const WheelAmountPicker = ({ value, onValueChange, theme }) => {
   // Parse the current value into dollars only
   const currentValue = parseInt(value) || 0;
 
-  // Generate array for dollar picker (0 to 9999)
-  const dollarOptions = Array.from({ length: 10000 }, (_, i) => i);
+  // Use config values
+  const dollarOptions = PICKER_OPTIONS.dollarOptions;
 
   const handleDollarChange = (newDollars) => {
     onValueChange(newDollars.toString());
@@ -25,8 +26,8 @@ const WheelAmountPicker = ({ value, onValueChange, theme }) => {
 
   const handleConfirmCustom = () => {
     const customValue = parseInt(customInput) || 0;
-    if (customValue < 0 || customValue > 99999) {
-      Alert.alert('Invalid Amount', 'Please enter a value between $0 and $99,999');
+    if (customValue < VALIDATION_RULES.amount.min || customValue > VALIDATION_RULES.amount.max) {
+      Alert.alert('Invalid Amount', VALIDATION_RULES.amount.errorMessage);
       return;
     }
     onValueChange(customValue.toString());

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, LayoutAnimation } from 'react-native
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 import { getGroceryCategoryColor } from '../themes';
+import { toSentenceCase } from '../utils/textUtils';
 
 const PantryCard = ({ 
   item, 
@@ -95,7 +96,7 @@ const PantryCard = ({
   // Helper function to capitalize grocery item names
   const capitalizeGroceryName = (name) => {
     if (!name) return '';
-    return name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    return toSentenceCase(name);
   };
 
   return (
