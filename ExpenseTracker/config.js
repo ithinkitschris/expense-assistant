@@ -11,7 +11,10 @@
 // API CONFIGURATION
 // ============================================================================
 
-export const API_BASE_URL = 'http://172.20.10.2:8000/api/v1';
+export const API_BASE_URL = 'http://192.168.1.172:8000/api/v1';
+
+// 192.168.1.172
+// 172.20.10.2
 
 // Examples:
 // If your IP is 192.168.1.100: export const API_BASE_URL = 'http://192.168.1.100:8000/api/v1';
@@ -204,6 +207,24 @@ export const EXPENSE_CATEGORIES = [
   'furniture',
   'other'
 ];
+
+// ============================================================================
+// CATEGORY ICONS
+// ============================================================================
+
+export const CATEGORY_ICONS = {
+  amazon: 'shippingbox.fill',
+  transportation: 'tram.fill',
+  groceries: 'cart.fill',
+  entertainment: 'gamecontroller.fill',
+  fashion: 'tshirt.fill',
+  travel: 'airplane',
+  food: 'fork.knife',
+  monthly: 'calendar',
+  furniture: 'bed.double.fill',
+  other: 'questionmark.circle.fill',
+  default: 'chart.bar.fill'
+};
 
 // ============================================================================
 // GROCERY CATEGORIES

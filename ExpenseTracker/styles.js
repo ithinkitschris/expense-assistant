@@ -356,7 +356,7 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   // #endregion
 
-  // #region EXPENSE ITEMS
+  // #region EXPENSECARDS
   
     // #region EXPENSECARD TOTAL
     expenseContentContainerTotal: {
@@ -454,13 +454,13 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCardCategory: {
     backgroundColor: theme.itemCardBackground,
     marginHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 9,
     borderWidth: 1,
     borderColor: theme.glassBorderColor,
     borderRadius: 25,
     paddingLeft: 20,
     paddingHorizontal: 20,
-    paddingTop: 12.5,
+    paddingTop: 10,
     paddingBottom: 12.5,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
@@ -543,6 +543,112 @@ export const createStyles = (theme) => StyleSheet.create({
 
   // #endregion
 
+    // #region EXPENSE CARD MONTHLY
+    expenseCardMonthlyContainer: {
+      flex: 1,
+      paddingTop: 100,
+      paddingHorizontal: 20,
+    },
+
+    expenseCardMonthlyHeader: {
+      marginBottom: 20,
+      alignItems: 'flex-start',
+    },
+
+    expenseCardMonthlyTitle: {
+      fontSize: 52,
+      fontWeight: '600',
+      color: theme.text,
+      letterSpacing: -0.2,
+      marginBottom: 4,
+    },
+
+    expenseCardMonthlyCard: {
+      height: 550,
+      paddingTop: 15,
+      paddingHorizontal: 25,
+      paddingBottom: 0,
+    },
+
+    expenseCardMonthlyTotalContainer: {
+      position: 'absolute',
+      bottom: 15,
+      right: 25,
+      alignItems: 'flex-end',
+    },
+
+    expenseCardMonthlyTotalAmount: {
+      fontSize: 82,
+      fontWeight: '300',
+      color: theme.text,
+      letterSpacing: -1.5,
+    },
+
+    expenseCardMonthlyTotalSubtitle: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: theme.text,
+      letterSpacing: -0.2,
+      alignSelf: 'flex-end',
+      marginBottom: -7.5,
+    },
+
+    expenseCardMonthlyTrendContainer: {
+      position: 'absolute',
+      top: 20,
+      right: 22.5,
+      alignItems: 'flex-end',
+    },
+
+    expenseCardMonthlyTrendIcon: {
+      marginBottom: 2,
+    },
+
+    expenseCardMonthlyTrendText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.text,
+      letterSpacing: -0.3,
+    },
+
+    expenseCardMonthlyTrendLabel: {
+      fontSize: 12,
+      fontWeight: '400',
+      color: theme.textSecondary,
+      letterSpacing: -0.1,
+    },
+
+    expenseCardMonthlyCategoriesContainer: {
+      position: 'absolute',
+      bottom: 15,
+      left: 25,
+    },
+
+    expenseCardMonthlyCategoriesLabel: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.text,
+      letterSpacing: -0.2,
+      marginBottom: 12,
+    },
+
+    expenseCardMonthlyCategoryItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+
+    expenseCardMonthlyCategoryText: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: theme.text,
+      textTransform: 'capitalize',
+      letterSpacing: -0.2,
+    },
+
+    
+  // #endregion
+
   // #endregion
 
   // #region ADD BUTTON
@@ -554,7 +660,7 @@ export const createStyles = (theme) => StyleSheet.create({
     elevation: 5,
     margin: 2,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.2)',
     borderRadius: 50,
     shadowColor: theme.shadowColor,
     shadowOffset: theme.shadowOffset,
@@ -568,7 +674,7 @@ export const createStyles = (theme) => StyleSheet.create({
     height: 62,
     borderRadius: 50,
     overflow: 'hidden',
-    backgroundColor: theme.glassBackground,
+    backgroundColor: theme.glassBorderColor,
   },
   
   blurContainer: {
@@ -1198,68 +1304,5 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   // #endregion
 
-  // #region MONTHLY SUMMARY CARD
-  monthlySummaryContainer: {
-    flex: 1,
-    paddingTop: 80,
-    paddingHorizontal: 20,
-  },
-
-  monthlySummaryCard: {
-    padding: 25,
-    marginTop: 20,
-  },
-
-  monthlySummaryHeader: {
-    marginBottom: 20,
-    alignItems: 'flex-start',
-  },
-
-  monthlySummaryTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: theme.text,
-    letterSpacing: -0.3,
-    marginBottom: 4,
-  },
-
-  monthlySummarySubtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.textSecondary,
-    letterSpacing: -0.2,
-  },
-
-  monthlySummaryContent: {
-    gap: 16,
-  },
-
-  monthlySummaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-
-  monthlySummaryLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.textSecondary,
-    letterSpacing: -0.2,
-  },
-
-  monthlySummaryAmount: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.appleBlue,
-    letterSpacing: -0.4,
-  },
-
-  monthlySummaryValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.text,
-    letterSpacing: -0.3,
-  },
-  // #endregion
+  
 });

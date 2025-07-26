@@ -12,9 +12,10 @@ import {
   VALIDATION_RULES,
   UI_CONSTANTS,
   ERROR_MESSAGES,
-  SUCCESS_MESSAGES 
+  SUCCESS_MESSAGES,
+  CATEGORY_ICONS
 } from './config';
-import { shiftHue, increaseBrightness } from './utils/colorUtils';
+import { shiftHue, increaseBrightness, hexToRGB, rgbToHex } from './utils/colorUtils';
 import { toSentenceCase, formatCurrency } from './utils/textUtils';
 import { 
   calculateTotalAmount, 
@@ -29,7 +30,7 @@ import * as Haptics from 'expo-haptics';
 import WheelAmountPicker from './components/WheelAmountPicker';
 import QuantityPicker from './components/QuantityPicker';
 import PantryCard from './components/PantryCard';
-import { ExpenseCardTotal, ExpenseCardCategory } from './components/ExpenseCard';
+import { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly } from './components/ExpenseCard';
 import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import { ActionSheetIOS } from 'react-native';
@@ -41,6 +42,7 @@ import {
   AddPantryModal, 
   EditPantryModal 
 } from './components/modals';
+import { ExpensesView, GroceryView } from './components/views';
 
 export default function App() {
   // #region STATE & SETUP
@@ -141,7 +143,7 @@ export default function App() {
 
     // #endregion
 
-    // #region useEffect
+    // #region useEffect / ANIMATIONS
     
       // System theme detection
       const systemColorScheme = useColorScheme();
@@ -221,8 +223,8 @@ export default function App() {
             Animated.spring(expenseTimeSelectorScale, {
               toValue: 1, // Scale up to 100%
               useNativeDriver: true,
-              tension: 200,
-              friction: 7,
+              tension: 300,
+              friction: 9,
             }),
  
   
@@ -388,7 +390,6 @@ export default function App() {
           setIsLoadingGroceryCategories(true);
           try {
             const data = await expenseAPI.getGroceryCategories();
-            console.log('Fetched groceryCategories:', data); // Debug log
             setGroceryCategories(data);
           } catch (error) {
             console.error('Error fetching grocery categories:', error);
@@ -437,7 +438,7 @@ export default function App() {
 
     top3Categories.forEach(([category, amount]) => {
       const categoryColor = getExpenseCategoryColor(category, currentTheme);
-      const rgb = hexToRgb(categoryColor);
+      const rgb = hexToRGB(categoryColor);
       
       if (rgb) {
         const weight = amount / totalAmount;
@@ -1082,7 +1083,6 @@ export default function App() {
   const handleHeaderScroll = (event) => {
     // Skip animations if disabled for development
     if (!ENABLE_SCROLL_ANIMATIONS) {
-      console.log('Scroll animations disabled for development');
       return;
     }
     
@@ -1159,16 +1159,7 @@ export default function App() {
     // Use Math.round for consistent behavior in both directions
     const currentIndex = Math.round(scrollPosition / pageWidth);
     
-    console.log('Scroll event:', {
-      contentOffset: scrollPosition,
-      layoutMeasurement: pageWidth,
-      calculatedIndex: currentIndex,
-      currentCategoryIndex,
-      categories: categories.length
-    });
-    
     if (currentIndex !== currentCategoryIndex && currentIndex >= 0 && currentIndex < categories.length) {
-      console.log('Updating category index from', currentCategoryIndex, 'to', currentIndex);
       
       // Trigger haptic feedback when category changes
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1307,179 +1298,6 @@ export default function App() {
   // #endregion
 
   // #region RENDER FUNCTIONS
-
-    // #region RENDER MAIN APP 
-    const renderExpensesView = () => {
-      const { height } = Dimensions.get('window');
-      const dayGroups = getFilteredExpensesByDay();
-      
-      return (
-        <>
-          {/* Category Selector */}
-          <Animated.View 
-            style={[
-              styles.expenseCategorySelector,
-              {
-                transform: [{ translateY: expenseCategorySelectorTranslateY }]
-              }
-            ]}
-          >
-            {renderExpenseCategorySelector()}
-          </Animated.View>
-          
-          {/* Calendar View */}
-          {/* {renderCalendar()} */}
-
-          {/* Horizontal Category Pages */}
-          {isLoadingExpenses ? (
-            <LoadingState
-              message="Loading expenses..."
-              styles={styles}
-            />
-          ) : (
-            <FlatList
-              ref={categoryScrollRef}
-              data={categories}
-              renderItem={renderExpenseCategories}
-              keyExtractor={(category) => category}
-              horizontal
-              pagingEnabled={true}
-              showsHorizontalScrollIndicator={false}
-              onScroll={handleCategoryHorizontalScroll}
-              onScrollBeginDrag={handleCategoryHorizontalScroll}
-              onMomentumScrollEnd={handleCategoryHorizontalScroll}
-              scrollEventThrottle={16}
-              decelerationRate="fast"
-              bounces={false}
-              getItemLayout={(data, index) => ({
-                length: screenWidth,
-                offset: screenWidth * index,
-                index,
-              })}
-              initialScrollIndex={categories.length > 0 ? currentCategoryIndex : 0}
-              style={{ flex: 1 }}
-            />
-          )}
-        </>
-      );
-    };
-
-    const renderGroceryView = () => {
-      if (isLoadingPantryItems) {
-        return (
-          <LoadingState
-            message="Loading pantry items..."
-            styles={styles}
-          />
-        );
-      }
-
-      // Split items into active and consumed
-      const activeItems = allPantryItems.filter(item => item.quantity > 0 || !item.is_consumed);
-      const consumedItems = allPantryItems.filter(item => item.quantity === 0 && item.is_consumed);
-
-      // Group active items by name and get latest occurrence
-      const groupedActiveItems = activeItems.reduce((acc, item) => {
-        if (!acc[item.name] || new Date(item.created_at) > new Date(acc[item.name].created_at)) {
-          acc[item.name] = item;
-        }
-        return acc;
-      }, {});
-
-      const uniqueActiveItems = Object.values(groupedActiveItems);
-
-      // Group consumed items by name and get latest occurrence
-      const groupedConsumedItems = consumedItems.reduce((acc, item) => {
-        if (!acc[item.name] || new Date(item.created_at) > new Date(acc[item.name].created_at)) {
-          acc[item.name] = item;
-        }
-        return acc;
-      }, {});
-
-      const uniqueConsumedItems = Object.values(groupedConsumedItems);
-
-      // Get sort order for grocery types
-      const getGroceryTypeSortOrder = (type) => {
-        const sortOrders = {
-          ...PICKER_OPTIONS.groceryTypeSortOrder,
-          'consumed': 12
-        };
-        return sortOrders[type] || 10;
-      };
-
-      // Group active items by grocery type
-      const activeItemsByType = uniqueActiveItems.reduce((acc, item) => {
-        const type = item.grocery_type || 'other';
-        if (!acc[type]) {
-          acc[type] = [];
-        }
-        acc[type].push(item);
-        return acc;
-      }, {});
-
-      // Sort items within each type by name
-      Object.keys(activeItemsByType).forEach(type => {
-        activeItemsByType[type].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-      });
-
-      // Create sections for active items by type and sort by type order
-      const activeSections = Object.keys(activeItemsByType)
-        .filter(type => activeItemsByType[type].length > 0)
-        .map(type => ({
-          type: 'active',
-          groceryType: type,
-          items: activeItemsByType[type]
-        }))
-        .sort((a, b) => getGroceryTypeSortOrder(a.groceryType) - getGroceryTypeSortOrder(b.groceryType));
-
-      // Create consumed section if there are consumed items
-      const consumedSection = uniqueConsumedItems.length > 0 ? [{
-        type: 'consumed',
-        groceryType: 'consumed',
-        items: uniqueConsumedItems.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
-      }] : [];
-
-      const allSections = [...activeSections, ...consumedSection];
-
-      return (
-        <>
-          {/* Floating Grocery Header */}
-          <Animated.View 
-            style={[
-              styles.groceryHeader,
-              {
-                transform: [{ translateY: groceryHeaderTranslateY }]
-              }
-            ]}
-          >
-            <Text style={styles.groceryHeaderTitle}>Pantry</Text>
-            <Text style={styles.groceryHeaderSubtitle}>
-              {uniqueActiveItems.length} active, {uniqueConsumedItems.length} consumed
-            </Text>
-          </Animated.View>
-          
-          <FlatList
-            data={allSections}
-            renderItem={renderPantrySection}
-            keyExtractor={(section) => `${section.type}-${section.groceryType}`}
-            style={styles.groceryList}
-            contentContainerStyle={styles.groceryListContent}
-            showsVerticalScrollIndicator={false}
-            onScroll={handleHeaderScroll}
-            scrollEventThrottle={16}
-            ListEmptyComponent={
-              <EmptyState
-                title="No grocery items yet"
-                subtitle="Tap the + button to add items to your pantry!"
-                icon="basket"
-                styles={styles}
-              />
-            }
-          />
-        </>
-      );
-    };
-    // #endregion
 
     // #region RENDER VIEW SELECTOR
     
@@ -1728,18 +1546,7 @@ export default function App() {
     };
     // #endregion
 
-    // #region RENDER CONTENT VIEWS
-
-    // Render a full-screen page for each category
-    const renderExpenseCategories = ({ item: category }) => {
-      const { height } = Dimensions.get('window');
-      
-      return (
-        <View style={{ width: screenWidth, height }}>
-          {renderCategoryView(category)}
-        </View>
-      );
-    };
+    // #region RENDER FULLSCREEN CONTENT PAGES
 
     // Main function that determines the appropriate view layout for a category
     const renderCategoryView = (category, containerStyle = {}) => {
@@ -1763,228 +1570,32 @@ export default function App() {
       return renderExpenseTotal(category);
     };
 
-    const renderDayView = (category) => {
+    // Render Expenses Categories View
+    const renderExpenseCategories = ({ item: category }) => {
       const { height } = Dimensions.get('window');
-      const dayGroups = getFilteredExpensesByDay(category);
-      
-      const handleDayPagerScroll = (event) => {
-        // Handle header scroll animations only for 'All' category
-        if (category === 'All') {
-          handleHeaderScroll(event);
-        }
-        
-        // Update day header in real-time during scroll
-        const index = Math.round(event.nativeEvent.contentOffset.y / height);
-        if (dayGroups[index] && dayGroups[index].date !== selectedDay) {
-          // Trigger haptic feedback when day changes
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          
-          setSelectedDay(dayGroups[index].date);
-        }
-      };
       
       return (
-        <FlatList
-          data={dayGroups}
-          renderItem={renderDayCard}
-          keyExtractor={(item) => `${category}-${item.date}`}
-          style={[
-            styles.daysList,
-            hideUI && { marginTop: -5 }
-          ]}
-          pagingEnabled={true}
-          showsVerticalScrollIndicator={false}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          onScroll={handleDayPagerScroll}
-          scrollEventThrottle={16}
-          bounces={false}
-          getItemLayout={(data, index) => ({
-            length: height,
-            offset: height * index,
-            index,
-          })}
-          onMomentumScrollEnd={(event) => {
-            const index = Math.round(event.nativeEvent.contentOffset.y / height);
-            updateCalendarFromFlatList(index);
-          }}
+        <View style={{ width: screenWidth, height }}>
+          {renderCategoryView(category)}
+        </View>
+      );
+    };
+
+    // Render Expenses Monthly Card
+    const renderMonthlySummaryCard = () => {
+      return (
+        <ExpenseCardMonthly
+          expenses={expenses}
+          styles={styles}
+          currentTheme={currentTheme}
+          getExpenseCategoryColor={getExpenseCategoryColor}
+          calculateWeightedCategoryColor={calculateWeightedCategoryColor}
+          getCategoryIcon={getCategoryIcon}
         />
       );
     };
 
-    const renderDayCard = ({ item: dayData }) => {
-      const { height } = Dimensions.get('window');
-      
-      return (
-        <View style={[styles.dayContainer, { height }]}> 
-          {/* Expenses List */}
-          <FlatList
-            data={dayData.expenses}
-            renderItem={({ item: expense }) => (
-              <ExpenseCardTotal
-                item={expense}
-                styles={styles}
-                groceryItems={groceryItems}
-                onEdit={handleExpensePress}
-                onDelete={deleteExpense}
-                getCategoryIcon={getCategoryIcon}
-                cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
-              />
-            )}
-            keyExtractor={(expense) => expense.id}
-            style={styles.dayExpensesList}
-            contentContainerStyle={styles.dayExpensesContent}
-            showsVerticalScrollIndicator={false}
-            bounces={true}
-          />
-        </View>
-      );
-    };
-
-    const renderMonthlySummaryCard = () => {
-      // DATA CALCULATIONS
-      
-      // Calculate total amount spent across all expenses
-      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      
-      // Count total number of expense transactions
-      const totalExpenses = expenses.length;
-      
-      // Group expenses by day to calculate average spending per day
-      // This only counts days that actually have expenses (not all calendar days)
-      const dayGroups = getFilteredExpensesByDay('All');
-      const averagePerDay = dayGroups.length > 0 ? totalAmount / dayGroups.length : 0;
-      
-      // Calculate dynamic background color based on weighted category colors
-      const dynamicBackgroundColor = calculateWeightedCategoryColor();
-      
-      // Debug: Log the calculated color and top 3 categories
-      console.log('🎨 Dynamic background color (top 3):', dynamicBackgroundColor);
-      const categoryBreakdown = expenses.reduce((acc, expense) => {
-        acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-        return acc;
-      }, {});
-      const top3Categories = Object.entries(categoryBreakdown)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 3);
-      console.log('📊 Top 3 categories contributing to color:', top3Categories);
-      
-      // RENDER COMPONENT
-      return (
-
-        // Main container with padding and positioning
-        <View style={styles.monthlySummaryContainer}>
-          
-          {/* Card container with solid background color based on top 3 categories */}
-          <View style={[
-            styles.cardBase, 
-            styles.monthlySummaryCard,
-            { 
-              backgroundColor: dynamicBackgroundColor, // Solid color with 20% opacity
-              borderColor: dynamicBackgroundColor, // Border with 40% opacity
-              borderWidth: 1
-            }
-          ]}>
-            
-            
-            {/* HEADER SECTION */}
-            <View style={styles.monthlySummaryHeader}>
-              {/* Main title of the card */}
-              <Text style={styles.monthlySummaryTitle}>
-                {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}
-              </Text>
-              
-              {/* Total spent display */}
-              <Text style={styles.monthlySummarySubtitle}>
-                ${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')} spent
-              </Text>
-            </View>
-            
-
-            {/* CONTENT SECTION */}
-            <View style={styles.monthlySummaryContent}>
-              
-              {/* ROW 1: TOTAL SPENT */}
-              <View style={styles.monthlySummaryRow}>
-
-                {/* Label for the metric */}
-                <Text style={styles.monthlySummaryLabel}>Total Spent</Text>
-                
-
-                {/* Amount display with smart formatting:
-                    - Shows as integer if whole number (e.g., "$150")
-                    - Shows as decimal if needed (e.g., "$150.50")
-                    - Removes trailing .00 for cleaner display */}
-                <Text style={styles.monthlySummaryAmount}>
-                  ${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')}
-                </Text>
-              </View>
-              
-              {/* Category Color Legend - Show top 3 contributing categories */}
-              {(() => {
-                const categoryTotals = expenses.reduce((acc, expense) => {
-                  acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-                  return acc;
-                }, {});
-                
-                const sortedCategories = Object.entries(categoryTotals)
-                  .sort(([,a], [,b]) => b - a)
-                  .slice(0, 3);
-                
-                if (sortedCategories.length > 0) {
-                  return (
-                    <View style={styles.monthlySummaryRow}>
-                      <Text style={styles.monthlySummaryLabel}>Color Blend</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        {sortedCategories.map(([category, amount], index) => (
-                          <View key={category} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <View style={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: 6,
-                              backgroundColor: getExpenseCategoryColor(category, currentTheme),
-                              opacity: 0.8
-                            }} />
-                            <Text style={[styles.monthlySummaryValue, { fontSize: 12 }]}>
-                              {category}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  );
-                }
-                return null;
-              })()}
-              
-
-              {/* ROW 2: TOTAL TRANSACTIONS */}
-              <View style={styles.monthlySummaryRow}>
-                {/* Label for the metric */}
-                <Text style={styles.monthlySummaryLabel}>Total Transactions</Text>
-                
-                {/* Simple count of all expense records */}
-                <Text style={styles.monthlySummaryValue}>{totalExpenses}</Text>
-              </View>
-              
-
-              {/* ROW 3: AVERAGE PER DAY */}
-              <View style={styles.monthlySummaryRow}>
-
-                {/* Label for the metric */}
-                <Text style={styles.monthlySummaryLabel}>Average per Day</Text>
-                
-                {/* Average calculation with same smart formatting as total amount */}
-                <Text style={styles.monthlySummaryValue}>
-                  ${Number.isInteger(averagePerDay) ? averagePerDay : averagePerDay.toFixed(2).replace(/\.00$/, '')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      );
-    };
-
+    // Render Expenses Total View
     const renderExpenseTotal = (category) => {
       const filteredExpenses = getFilteredExpenses(category);
       
@@ -2077,129 +1688,7 @@ export default function App() {
       );
     };
 
-    const renderFixedDayHeader = () => {
-      const dayGroups = getFilteredExpensesByDay();
-      const currentDayIndex = dayGroups.findIndex(group => group.date === selectedDay);
-      const currentDayData = dayGroups[currentDayIndex];
-      
-      if (!currentDayData) return null;
-      
-      // Fix timezone issue by appending time to ensure local date interpretation
-      const dateObj = new Date(currentDayData.date + 'T12:00:00');
-      const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      const monthName = months[dateObj.getMonth()];
-      const dayNum = dateObj.getDate();
-      const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-      
-      // Add ordinal suffix (st, nd, rd, th)
-      const ordinal = (() => {
-        if (dayNum > 3 && dayNum < 21) return 'th';
-        switch (dayNum % 10) {
-          case 1: return 'st';
-          case 2: return 'nd';
-          case 3: return 'rd';
-          default: return 'th';
-        }
-      })();
-      
-      const total = currentDayData.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      
-      return (
-        <Animated.View 
-          style={[
-            styles.dayHeader,
-            {
-              transform: [{ translateY: fixedDayHeaderTranslateY }]
-            }
-          ]}
-        >
-          <View style={styles.dayHeaderContent}>
-                    <Animated.Text style={[
-            styles.dayTitle,
-            {
-              fontSize: dayTitleFontSize
-            }
-          ]}>
-            {`${weekday}, ${monthName} ${dayNum}${ordinal}`}
-          </Animated.Text>
-            <Text style={styles.daySubtitle}>
-              Total spend: ${Number.isInteger(total) ? total : total.toFixed(2).replace(/\.00$/, '')}
-            </Text>
-          </View>
-        </Animated.View>
-      );
-    };
-
-    const renderCalendar = () => {
-      const weekDays = getWeekDays(currentWeek);
-      // Use local date for today to avoid timezone issues
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
-      return (
-        <View style={styles.calendarContainer}>
-          <ScrollView
-            ref={calendarScrollRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.calendarScrollView}
-            contentContainerStyle={styles.calendarContent}
-            pagingEnabled={false}
-            decelerationRate="fast"
-            onMomentumScrollEnd={(event) => {
-              // Handle week navigation when scrolling
-              const scrollX = event.nativeEvent.contentOffset.x;
-              const containerWidth = event.nativeEvent.layoutMeasurement.width;
-              const weekOffset = Math.round(scrollX / containerWidth);
-              
-              if (weekOffset !== 0) {
-                const newWeek = new Date(currentWeek);
-                newWeek.setDate(newWeek.getDate() + (weekOffset * 7));
-                setCurrentWeek(newWeek);
-              }
-            }}
-          >
-              {weekDays.map((day, index) => {
-                // Use local date string to avoid timezone issues
-                const year = day.getFullYear();
-                const month = String(day.getMonth() + 1).padStart(2, '0');
-                const dayNum = String(day.getDate()).padStart(2, '0');
-                const dayStr = `${year}-${month}-${dayNum}`;
-                
-                const isSelected = dayStr === selectedDay;
-                const isToday = dayStr === todayStr;
-                const expenseCount = getLocalExpenseCountForDay(day);
-                
-                return (
-                  <Pressable
-                    key={dayStr}
-                    style={[
-                      styles.calendarDay,
-                      isToday && styles.calendarToday,
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      navigateToDay(day);
-                    }}
-                  >
-                    <Text style={styles.calendarDayText}>
-                      {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </Text>
-                    <Text style={styles.calendarDayNumber}>
-                      {day.getDate()}
-                    </Text>
-                    {isSelected && <View style={styles.calendarDot} />}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-        </View>
-      );
-    };
-
+    // Render Pantry Cards
     const renderPantrySection = ({ item: section }) => {
       if (section.items.length === 0) return null;
       
@@ -2331,27 +1820,9 @@ export default function App() {
     };
     // #endregion
 
-    // #region RENDER MODALS
-    // Modal render functions have been extracted to separate components
-    // #endregion
-
     // #region HELPER FUNCTIONS
     // Helper function to get SF Symbol for category
-    const getCategoryIcon = (category) => {
-      const iconMap = {
-        'amazon': 'shippingbox.fill',
-        'furniture': 'chair.fill',
-        'transportation': 'tram.fill',
-        'groceries': 'cart.fill',
-        'entertainment': 'gamecontroller.fill',
-        'fashion': 'tshirt.fill',
-        'travel': 'airplane',
-        'food': 'fork.knife',
-        'monthly': 'calendar',
-        'subscriptions': 'dollarsign.circle.fill',
-      };
-      return iconMap[category] || 'chart.bar.fill';
-    };
+    const getCategoryIcon = (category) => CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
 
 
     // #endregion
@@ -2389,7 +1860,29 @@ export default function App() {
       </Animated.View>
       
       {/* Content based on active tab */}
-              {activeTab === 'expenses' ? renderExpensesView() : renderGroceryView()}
+      {activeTab === 'expenses' ? (
+        <ExpensesView
+          isLoadingExpenses={isLoadingExpenses}
+          categories={categories}
+          currentCategoryIndex={currentCategoryIndex}
+          categoryScrollRef={categoryScrollRef}
+          handleCategoryHorizontalScroll={handleCategoryHorizontalScroll}
+          screenWidth={screenWidth}
+          expenseCategorySelectorTranslateY={expenseCategorySelectorTranslateY}
+          renderExpenseCategorySelector={renderExpenseCategorySelector}
+          renderExpenseCategories={renderExpenseCategories}
+          styles={styles}
+        />
+      ) : (
+        <GroceryView
+          isLoadingPantryItems={isLoadingPantryItems}
+          allPantryItems={allPantryItems}
+          groceryHeaderTranslateY={groceryHeaderTranslateY}
+          renderPantrySection={renderPantrySection}
+          handleHeaderScroll={handleHeaderScroll}
+          styles={styles}
+        />
+      )}
 
       {/* Global Add Button */}
       <Animated.View style={[

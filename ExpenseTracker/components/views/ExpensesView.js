@@ -13,7 +13,7 @@ const ExpensesView = ({
   screenWidth,
   expenseCategorySelectorTranslateY,
   renderExpenseCategorySelector,
-  renderCategoryPage,
+  renderExpenseCategories,
   styles
 }) => {
   return (
@@ -40,7 +40,7 @@ const ExpensesView = ({
         <FlatList
           ref={categoryScrollRef}
           data={categories}
-          renderItem={renderCategoryPage}
+          renderItem={renderExpenseCategories}
           keyExtractor={(category) => category}
           horizontal
           pagingEnabled={true}

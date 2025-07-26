@@ -60,7 +60,7 @@ export const themes = {
     textTertiary: '#EBEBF560', // Label (Tertiary) with 60% opacity
     borderColorLighter: '#38383A', // Separator
     glassBackground: 'rgba(255,255,255,0.1)', // white with 20% opacity
-    glassBorderColor: 'rgba(255,255,255,0.03)', // Separator with 20% white opacity
+    glassBorderColor: 'rgba(255,255,255,0.08)', // Separator with 20% white opacity
     categorySelected: 'rgba(255,255,255,0.2)', // 15% white overlay for selection
     categoryIconColor: '#8E8E93', // System Gray 3
     

@@ -256,9 +256,7 @@ export const expenseAPI = {
   // Get grocery categories
   getGroceryCategories: async () => {
     try {
-      console.log('🛒 Getting grocery categories');
       const response = await api.get('/grocery-categories');
-      console.log('✅ Grocery Categories Response:', response.data);
       return response.data;
     } catch (error) {
       console.log('❌ Get Grocery Categories Error:', error);

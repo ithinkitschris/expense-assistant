@@ -72,7 +72,6 @@ const EditPantryModal = ({
               onScroll={handleGroceryCategoryScroll}
               scrollEventThrottle={16}
             >
-              {console.log('Rendering category options:', groceryCategories)}
               {isLoadingGroceryCategories ? (
                 <Text style={styles.modalLabel}>Loading categories...</Text>
               ) : (
