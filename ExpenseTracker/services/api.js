@@ -228,12 +228,18 @@ export const expenseAPI = {
     try {
       console.log('🔍 Parsing grocery items from description:', description);
       console.log('📡 API URL:', `${API_BASE_URL}/parse-grocery-items`);
+      console.log('📡 Full URL:', `${API_BASE_URL}/parse-grocery-items`);
+      console.log('📤 Request payload:', { description });
+      
       const response = await api.post('/parse-grocery-items', { description });
       console.log('✅ Parse Response:', response.data);
       return response.data;
     } catch (error) {
       console.log('❌ Parse Error:', error);
+      console.log('❌ Error message:', error.message);
       console.log('❌ Error response:', error.response?.data);
+      console.log('❌ Error status:', error.response?.status);
+      console.log('❌ Error statusText:', error.response?.statusText);
       throw new Error(error.response?.data?.detail || 'Failed to parse grocery items');
     }
   },

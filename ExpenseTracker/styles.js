@@ -546,106 +546,308 @@ export const createStyles = (theme) => StyleSheet.create({
     // #region EXPENSE CARD MONTHLY
     expenseCardMonthlyContainer: {
       flex: 1,
-      paddingTop: 100,
-      paddingHorizontal: 20,
+      paddingHorizontal: 15,
+      paddingTop: 70,
     },
 
     expenseCardMonthlyHeader: {
       marginBottom: 20,
       alignItems: 'flex-start',
+      paddingTop: 20,
     },
 
     expenseCardMonthlyTitle: {
-      fontSize: 52,
+      fontSize: 60,
       fontWeight: '600',
       color: theme.text,
       letterSpacing: -0.2,
-      marginBottom: 4,
+      marginLeft: 7.5,
+      marginBottom: 5,
     },
 
-    expenseCardMonthlyCard: {
-      height: 550,
-      paddingTop: 15,
-      paddingHorizontal: 25,
-      paddingBottom: 0,
+    expenseCardMonthlyInsightsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 10, // Smaller gap between rows
     },
 
-    expenseCardMonthlyTotalContainer: {
+    expenseCardMonthlyInsightGradient: {
       position: 'absolute',
-      bottom: 15,
-      right: 25,
-      alignItems: 'flex-end',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
     },
 
-    expenseCardMonthlyTotalAmount: {
-      fontSize: 82,
-      fontWeight: '300',
-      color: theme.text,
-      letterSpacing: -1.5,
+    // Shared square base style
+    expenseCardMonthlyInsightSquare: {
+      flex: 1,
+      borderRadius: 25,
+      padding: 0,
+      marginHorizontal: 5,
+      overflow: 'hidden',
+      position: 'relative',
+      aspectRatio: 1,
     },
 
-    expenseCardMonthlyTotalSubtitle: {
-      fontSize: 15,
+    // Individual square styles for independent styling
+
+    // #region AI SUMMARY SQUARE
+
+    expenseCardMonthlyInsightSquareDouble: {
+      flex: 2,
+      borderRadius: 25,
+      padding: 0,
+      marginHorizontal: 5,
+      overflow: 'hidden',
+      position: 'relative',
+      aspectRatio: 2,
+    },
+
+    expenseCardMonthlyMonthSummaryLabel: {
+      position: 'absolute',
+      top: 12.5,
+      left: 12.5,
+      fontSize: 20,
+      fontWeight: '500',
+      color: 'white',
+      opacity: 0.9,
+      zIndex: 1,
+    },
+
+    expenseCardMonthlySummaryText: {
+      paddingHorizontal: 5,
+      position: 'absolute',
+      top: '32%',
+      left: 15,
+      right: 15,
+      fontSize: 17,
       fontWeight: '500',
       color: theme.text,
+      textAlign: 'left',
+      zIndex: 1,
+    },
+    // #endregion
+
+    // #region TOTAL SPEND SQUARE
+    expenseCardMonthlyTotalSpendLabel: {
+      position: 'absolute',
+      top: 15,
+      left: 20,
+      fontSize: 17,
+      fontWeight: '500',
+      color: 'white',
+      zIndex: 1,
+    },
+
+    expenseCardMonthlyTotalSpendValue: {
+      position: 'absolute',
+      top: 30,
+      left: 15,
+      fontSize: 60,
+      fontWeight: '400',
+      color: 'white',
+      letterSpacing: -0.8,
+      zIndex: 1,
+    },
+
+    // Weekly spending rectangles container
+    expenseCardMonthlyWeeklyContainer: {
+      position: 'absolute',
+      bottom: 30, // Move up from bottom edge
+      left: 20,
+      right: 20,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      zIndex: 1,
+      height: 100, // Give more space for taller rectangles
+    },
+
+    expenseCardMonthlyWeeklyRectangle: {
+      flex: 1,
+      marginHorizontal: 0,
+      borderRadius: 0, // Very thin lines
+      backgroundColor: 'rgba(255, 255, 255, 1)',
+      minWidth: 1, // Extremely thin width for daily lines
+    },
+
+    expenseCardMonthlyWeeklyLabel: {
+      fontSize: 7, // Even smaller font for daily numbers
+      fontWeight: '500',
+      color: 'rgba(255, 255, 255, 0.8)',
+      textAlign: 'center',
+      zIndex: 1,
       letterSpacing: -0.2,
-      alignSelf: 'flex-end',
-      marginBottom: -7.5,
+      // Remove position constraints to allow horizontal rendering
+      left: 0,
+      right: -10,
+      width: 20, // Give it more width to render horizontally
+    },
+
+    // #endregion
+
+    // #region TRANSACTIONS SQUARE
+    expenseCardMonthlyTransactionsLabel: {
+      position: 'absolute',
+      bottom: 15,
+      left: 5,
+      right: 0,
+      fontSize: 17,
+      fontWeight: '500',
+      color: 'white',
+      opacity: 0.9,
+      letterSpacing: -0.1,
+      zIndex: 1,
+      textAlign: 'center',
+      alignSelf: 'center',
+    },
+
+    expenseCardMonthlyTransactionsValue: {
+      position: 'absolute',
+      top: 35,
+      bottom: 0,
+      left: 0,
+      right: 2.5,
+      fontSize: 110,
+      fontWeight: '500',
+      color: 'white',
+      letterSpacing: -1.5,
+      zIndex: 1,
+      textAlign: 'center',
+      textAlignVertical: 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // #endregion
+
+    // #region AVERAGE PER DAY SQUARE
+    expenseCardMonthlyAveragePerDayLabel: {
+      position: 'absolute',
+      top: 15,
+      left: 15,
+      fontSize: 17,
+      fontWeight: '500',
+      color: 'white',
+      opacity: 0.9,
+      letterSpacing: -0.1,
+      zIndex: 1,
+    },
+
+    expenseCardMonthlyAveragePerDayValue: {
+      position: 'absolute',
+      bottom: 15,
+      right: 15,
+      fontSize: 54,
+      fontWeight: '400',
+      color: 'white',
+      letterSpacing: -0.8,
+      zIndex: 1,
+    },
+    // #endregion
+
+    // #region TREND SQUARE
+    expenseCardMonthlyTrendLabel: {
+      position: 'absolute',
+      top: 15,
+      left: 5,
+      right: 0,
+      fontSize: 17,
+      fontWeight: '500',
+      color: 'white',
+      opacity: 0.9,
+      letterSpacing: -0.1,
+      zIndex: 1,
+      textAlign: 'center',
+      alignSelf: 'center',
+    },
+
+    expenseCardMonthlyTrendValue: {
+      position: 'absolute',
+      left: 0,
+      right: 5,
+      bottom: 10,
+      fontSize: 24,
+      fontWeight: '400',
+      color: 'white',
+      letterSpacing: -0,
+      zIndex: 1,
+      textAlign: 'center',
     },
 
     expenseCardMonthlyTrendContainer: {
       position: 'absolute',
-      top: 20,
-      right: 22.5,
-      alignItems: 'flex-end',
-    },
-
-    expenseCardMonthlyTrendIcon: {
-      marginBottom: 2,
-    },
-
-    expenseCardMonthlyTrendText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
-      letterSpacing: -0.3,
-    },
-
-    expenseCardMonthlyTrendLabel: {
-      fontSize: 12,
-      fontWeight: '400',
-      color: theme.textSecondary,
-      letterSpacing: -0.1,
-    },
-
-    expenseCardMonthlyCategoriesContainer: {
-      position: 'absolute',
-      bottom: 15,
-      left: 25,
-    },
-
-    expenseCardMonthlyCategoriesLabel: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
-      letterSpacing: -0.2,
-      marginBottom: 12,
-    },
-
-    expenseCardMonthlyCategoryItem: {
+      left: 5,
+      right: 0,
+      bottom: 5,
+      top: 0,
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 5,
+      justifyContent: 'center',
+      zIndex: 1,
     },
+    // #endregion
 
-    expenseCardMonthlyCategoryText: {
-      fontSize: 15,
+    // #region TOP CATEGORY SQUARE
+    expenseCardMonthlyTopCategoryLabel: {
+      position: 'absolute',
+      top: 15,
+      left: 15,
+      fontSize: 14,
       fontWeight: '500',
-      color: theme.text,
-      textTransform: 'capitalize',
-      letterSpacing: -0.2,
+      color: 'white',
+      opacity: 0.9,
+      letterSpacing: -0.1,
+      zIndex: 1,
     },
 
+    expenseCardMonthlyTopCategoryValue: {
+      position: 'absolute',
+      bottom: 15,
+      right: 15,
+      fontSize: 54,
+      fontWeight: '400',
+      color: 'white',
+      letterSpacing: -0.8,
+      zIndex: 1,
+    },
+
+    expenseCardMonthlyTopCategoryContainer: {
+      position: 'absolute',
+      bottom: 15,
+      right: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      zIndex: 1,
+    },
+    // #endregion
+
+    // #region ACTIVE DAYS SQUARE
+    expenseCardMonthlyActiveDaysLabel: {
+      position: 'absolute',
+      top: 15,
+      left: 15,
+      fontSize: 14,
+      fontWeight: '500',
+      color: 'white',
+      opacity: 0.9,
+      letterSpacing: -0.1,
+      zIndex: 1,
+    },
+
+    expenseCardMonthlyActiveDaysValue: {
+      position: 'absolute',
+      bottom: 15,
+      right: 15,
+      fontSize: 54,
+      fontWeight: '400',
+      color: 'white',
+      letterSpacing: -0.8,
+      zIndex: 1,
+    },
+    // #endregion
+    
     
   // #endregion
 
@@ -945,7 +1147,7 @@ export const createStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.appleBlue,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 27.5,
   },
 
   addItemButtonText: {
@@ -1073,7 +1275,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
   calendarBackground: {
     backgroundColor: theme.glassBackground,
-    borderRadius: 20,
+    borderRadius: 27.5,
     borderWidth: 1,
     borderColor: theme.borderColorLighter,
     shadowColor: theme.shadowColor,
@@ -1086,7 +1288,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
   calendarScrollView: {
     overflow: 'hidden',
-    borderRadius: 20,
+    borderRadius: 27.5,
   },
 
   calendarContent: {
@@ -1211,6 +1413,7 @@ export const createStyles = (theme) => StyleSheet.create({
     marginLeft: 5,
     gap: 8,
   },
+
   pantrySectionTitle: {
     fontSize: 38,
     fontWeight: '600',

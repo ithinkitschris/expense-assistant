@@ -676,32 +676,54 @@ export default function App() {
 
     try {
       setIsParsingGroceries(true);
+      console.log('🛒 Starting grocery parsing for:', addDescription);
+      console.log('🔍 Current state - isGroceryStep:', isGroceryStep, 'isParsingGroceries:', true);
+      
+      // Test API connection first
+      console.log('🔍 Testing API connection...');
+      const isConnected = await expenseAPI.testConnection();
+      if (!isConnected) {
+        throw new Error('Cannot connect to API server. Please check your network connection.');
+      }
+      console.log('✅ API connection successful');
+      
       // Parse grocery items using the API service
       const data = await expenseAPI.parseGroceryItemsFromDescription(addDescription);
+      console.log('✅ Parsed grocery data:', data);
+      
       // Always use {name, category} structure
       const items = (data.items || []).map(item => ({
         name: (item.item || '').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
         category: item.category || 'other'
       }));
+      
+      console.log('📦 Processed items:', items);
       setParsedGroceryItems(items);
+      
       // Load existing grocery items for context
       await loadExistingGroceryItems();
       setIsGroceryStep(2);
+      console.log('✅ Successfully moved to grocery step 2');
+      console.log('🔍 Modal states - isAddModalVisible:', isAddModalVisible, 'addCategory:', addCategory, 'isGroceryStep:', 2);
     } catch (error) {
+      console.error('❌ Grocery parsing error:', error);
       Alert.alert('Error', `Failed to parse grocery items: ${error.message}`);
     } finally {
       setIsParsingGroceries(false);
+      console.log('🔄 Reset parsing state');
     }
   };
 
   const loadExistingGroceryItems = async () => {
     try {
+      console.log('📦 Loading existing pantry items...');
       const response = await expenseAPI.getAllPantryItems();
       // Get unique item names and sort them
       const uniqueItems = [...new Set(response.map(item => item.name))];
       setExistingPantryItems(uniqueItems.sort());
+      console.log('✅ Loaded', uniqueItems.length, 'existing pantry items');
     } catch (error) {
-      console.log('Failed to load existing pantry items:', error);
+      console.log('❌ Failed to load existing pantry items:', error);
       setExistingPantryItems([]);
     }
   };
@@ -765,6 +787,8 @@ export default function App() {
     setIsAddingNewItem(false);
     setNewItemText('');
   };
+
+
 
   const confirmGroceryList = async () => {
     try {
@@ -1918,6 +1942,8 @@ export default function App() {
         </Pressable>
       </Animated.View>
 
+
+
       {/* Bottom Gradient Overlay */}
       <Animated.View
         style={[
@@ -1952,7 +1978,7 @@ export default function App() {
 
       {/* Add Modal */}
       <AddExpenseModal
-        isVisible={isAddModalVisible}
+        isVisible={isAddModalVisible && !(addCategory === 'groceries' && isGroceryStep === 2)}
         onClose={() => {
           setIsAddModalVisible(false);
           setIsGroceryStep(1);
