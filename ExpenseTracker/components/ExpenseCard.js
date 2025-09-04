@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { shiftHue, increaseBrightness } from '../utils/colorUtils';
+import { getLocalDateString } from '../utils/expenseUtils';
 
 // Color utilities are now imported from utils/colorUtils.js
 
@@ -198,6 +199,44 @@ const ExpenseCardCategory = ({
   );
 };
 
+const ExpenseCardCategoryMonthGroup = ({
+  monthData,
+  styles,
+  onEdit,
+  onDelete,
+  getCategoryIcon,
+  getExpenseCategoryColor,
+  currentTheme,
+  ...rest
+}) => {
+  const { month, displayMonth, expenses, totalAmount } = monthData;
+  
+  return (
+    <View style={styles.monthGroupContainer}>
+      {/* Month Header */}
+      <View style={styles.monthGroupHeader}>
+        <Text style={styles.monthGroupTitle}>{displayMonth}</Text>
+        <Text style={styles.monthGroupTotal}>Total: 
+          ${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(2).replace(/\.00$/, '')}
+        </Text>
+      </View>
+      
+      {/* Expenses for this month */}
+      {expenses.map((expense) => (
+        <ExpenseCardCategory
+          key={expense.id}
+          item={expense}
+          styles={styles}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          getCategoryIcon={getCategoryIcon}
+          cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
+        />
+      ))}
+    </View>
+  );
+};
+
 const ExpenseCardMonthly = ({
   expenses,
   styles,
@@ -217,7 +256,7 @@ const ExpenseCardMonthly = ({
   // Group expenses by day to calculate average spending per day
   // This only counts days that actually have expenses (not all calendar days)
   const dayGroups = expenses.reduce((groups, expense) => {
-    const date = new Date(expense.timestamp).toISOString().split('T')[0];
+    const date = getLocalDateString(expense.timestamp);
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -510,18 +549,7 @@ const ExpenseCardMonthly = ({
   
   // RENDER COMPONENT
   return (
-    <ScrollView 
-      style={styles.expenseCardMonthlyContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      
-      {/* MONTH HEADER */}
-      <View style={styles.expenseCardMonthlyHeader}>
-        <Text style={styles.expenseCardMonthlyTitle}>
-          {new Date().toLocaleString('en-US', { month: 'long' })} 
-        </Text>
-      </View>
-      
+    <View style={styles.expenseCardMonthlyContainer}>
       {/* Row 1: Month Summary spans two columns */}
       <View style={styles.expenseCardMonthlyInsightsRow}>
         <MainSquare />
@@ -541,11 +569,8 @@ const ExpenseCardMonthly = ({
         <TopCategorySquare />
         <ActiveDaysSquare />
       </View>
-      
-      {/* Bottom Spacer */}
-      <View style={{ height: 150 }} />
-    </ScrollView>
+    </View>
   );
 };
 
-export { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly }; 
+export { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly, ExpenseCardCategoryMonthGroup }; 

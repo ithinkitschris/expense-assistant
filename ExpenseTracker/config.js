@@ -11,10 +11,11 @@
 // API CONFIGURATION
 // ============================================================================
 
-export const API_BASE_URL = 'http://192.168.1.172:8000/api/v1';
+export const API_BASE_URL = 'http://10.1.71.125:8000/api/v1';
 
 // 192.168.1.172
 // 172.20.10.2
+// 204.147.202.57 (old IP)
 
 // Examples:
 // If your IP is 192.168.1.100: export const API_BASE_URL = 'http://192.168.1.100:8000/api/v1';

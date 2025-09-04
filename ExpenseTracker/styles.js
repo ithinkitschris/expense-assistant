@@ -541,28 +541,52 @@ export const createStyles = (theme) => StyleSheet.create({
     textAlignVertical: 'bottom',
   },
 
+  // #region MONTH GROUP STYLES
+  monthGroupContainer: {
+    marginBottom: 50,
+  },
+  
+  monthGroupHeader: {
+    flexDirection: 'col',
+    justifyContent: 'space-between',
+    alignItems: 'start',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  
+  monthGroupTitle: {
+    fontSize: 40,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.2,
+    marginBottom: 3,
+  },
+  
+  monthGroupTotal: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.textSecondary,
+    letterSpacing: -0.2,
+  },
+  // #endregion
+
   // #endregion
 
     // #region EXPENSE CARD MONTHLY
     expenseCardMonthlyContainer: {
       flex: 1,
-      paddingHorizontal: 15,
-      paddingTop: 70,
-    },
-
-    expenseCardMonthlyHeader: {
-      marginBottom: 20,
-      alignItems: 'flex-start',
-      paddingTop: 20,
+      paddingHorizontal: 0,
+      paddingTop: 0,
     },
 
     expenseCardMonthlyTitle: {
-      fontSize: 60,
+      fontSize: 80,
       fontWeight: '600',
       color: theme.text,
       letterSpacing: -0.2,
       marginLeft: 7.5,
-      marginBottom: 5,
+      marginBottom: 50,
     },
 
     expenseCardMonthlyInsightsRow: {
@@ -849,6 +873,37 @@ export const createStyles = (theme) => StyleSheet.create({
     // #endregion
     
     
+  // #endregion
+
+  // #region MONTHLY SUMMARY VIEW
+  monthlySummaryContainer: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingTop: 70,
+  },
+
+  monthlySummaryContent: {
+    paddingBottom: 20,
+  },
+
+  monthlyCardContainer: {
+    marginBottom: 80,
+  },
+
+  monthlyCardHeader: {
+    marginBottom: 20,
+    alignItems: 'flex-start',
+    paddingTop: 20,
+  },
+
+  monthlyCardTitle: {
+    fontSize: 60,
+    fontWeight: '600',
+    color: theme.text,
+    letterSpacing: -0.2,
+    marginLeft: 7.5,
+    marginBottom: 5,
+  },
   // #endregion
 
   // #endregion

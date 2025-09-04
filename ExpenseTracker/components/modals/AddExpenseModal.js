@@ -35,11 +35,8 @@ const AddExpenseModal = ({
   };
 
   const handleNext = () => {
-    if (addCategory === 'groceries') {
-      onGroceryNext();
-    } else {
-      onAdd();
-    }
+    // Grocery parsing disabled - all categories now use the regular expense flow
+    onAdd();
   };
 
   return (

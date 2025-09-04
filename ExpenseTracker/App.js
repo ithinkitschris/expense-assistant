@@ -21,8 +21,9 @@ import {
   calculateTotalAmount, 
   calculateCategoryTotals, 
   groupExpensesByDay,
+  groupExpensesByMonth,
   getExpenseCountForDay,
-  formatExpenseAmount 
+  formatExpenseAmount
 } from './utils/expenseUtils';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,7 +31,7 @@ import * as Haptics from 'expo-haptics';
 import WheelAmountPicker from './components/WheelAmountPicker';
 import QuantityPicker from './components/QuantityPicker';
 import PantryCard from './components/PantryCard';
-import { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly } from './components/ExpenseCard';
+import { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly, ExpenseCardCategoryMonthGroup } from './components/ExpenseCard';
 import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import { ActionSheetIOS } from 'react-native';
@@ -42,7 +43,7 @@ import {
   AddPantryModal, 
   EditPantryModal 
 } from './components/modals';
-import { ExpensesView, GroceryView } from './components/views';
+import { ExpensesView, GroceryView, MonthlySummaryView } from './components/views';
 
 export default function App() {
   // #region STATE & SETUP
@@ -108,7 +109,13 @@ export default function App() {
     const [editDescription, setEditDescription] = useState('');
     
     // Calendar state
-    const [selectedDay, setSelectedDay] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+    const [selectedDay, setSelectedDay] = useState(() => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    });
     const [currentWeek, setCurrentWeek] = useState(new Date());
     const flatListRef = useRef(null);
     const calendarScrollRef = useRef(null);
@@ -479,7 +486,8 @@ export default function App() {
       
       // Transform the grouped data to include display properties
       return Object.entries(grouped).map(([dateKey, expenseArray]) => {
-        const date = new Date(dateKey);
+        const date = parseDateString(dateKey);
+        
         return {
           date: dateKey,
           displayDate: date.toLocaleDateString('en-US', { 
@@ -494,7 +502,64 @@ export default function App() {
           }),
           expenses: expenseArray
         };
-      }).sort((a, b) => new Date(b.date) - new Date(a.date));
+      }).sort((a, b) => {
+        // Sort using the parsed dates to avoid timezone issues
+        const dateA = parseDateString(a.date);
+        const dateB = parseDateString(b.date);
+        return dateB - dateA;
+      });
+    };
+
+    // Group expenses by month with display properties
+    const groupExpensesByMonthWithDisplay = (expenses) => {
+      const grouped = groupExpensesByMonth(expenses);
+      
+      // Transform the grouped data to include display properties
+      return Object.entries(grouped).map(([monthKey, expenseArray]) => {
+        const [year, month] = monthKey.split('-').map(Number);
+        const date = new Date(year, month - 1, 1); // month is 0-indexed
+        
+        return {
+          month: monthKey,
+          displayMonth: date.toLocaleDateString('en-US', { 
+            month: 'long'
+          }),
+          shortMonth: date.toLocaleDateString('en-US', { 
+            month: 'short'
+          }),
+          expenses: expenseArray
+        };
+      }).sort((a, b) => {
+        // Sort using the month keys (newest first)
+        return b.month.localeCompare(a.month);
+      });
+    };
+
+    // Group expenses by month with totals for category view
+    const groupExpensesByMonthWithTotals = (expenses) => {
+      const grouped = groupExpensesByMonth(expenses);
+      
+      // Transform the grouped data to include display properties and totals
+      return Object.entries(grouped).map(([monthKey, expenseArray]) => {
+        const [year, month] = monthKey.split('-').map(Number);
+        const date = new Date(year, month - 1, 1); // month is 0-indexed
+        const totalAmount = expenseArray.reduce((sum, expense) => sum + expense.amount, 0);
+        
+        return {
+          month: monthKey,
+          displayMonth: date.toLocaleDateString('en-US', { 
+            month: 'long'
+          }),
+          shortMonth: date.toLocaleDateString('en-US', { 
+            month: 'short'
+          }),
+          expenses: expenseArray,
+          totalAmount: totalAmount
+        };
+      }).sort((a, b) => {
+        // Sort using the month keys (newest first)
+        return b.month.localeCompare(a.month);
+      });
     };
 
     // Get current display amount based on selection
@@ -521,6 +586,12 @@ export default function App() {
     // #endregion
 
   // #region CALENDAR LOGIC
+
+    // Helper function to parse date string and create local date
+    const parseDateString = (dateString) => {
+      const [year, month, day] = dateString.split('-').map(Number);
+      return new Date(year, month - 1, day, 12, 0, 0); // month is 0-indexed, set to noon to avoid timezone issues
+    };
 
     // #region Calendar helper functions
     const getWeekDays = (startDate) => {
@@ -578,7 +649,7 @@ export default function App() {
         setSelectedDay(newSelectedDay);
         
         // Update current week if the selected day is outside current week
-        const selectedDate = new Date(newSelectedDay + 'T12:00:00'); // Set to noon to avoid timezone issues
+        const selectedDate = parseDateString(newSelectedDay);
         const weekDays = getWeekDays(currentWeek);
         const isInCurrentWeek = weekDays.some(day => {
           const year = day.getFullYear();
@@ -619,7 +690,8 @@ export default function App() {
         // Set the most recent day as selected initially
         const mostRecentDay = dayGroups[0].date;
         setSelectedDay(mostRecentDay);
-        setCurrentWeek(new Date(mostRecentDay));
+        const date = parseDateString(mostRecentDay);
+        setCurrentWeek(date);
       }
     }
   }, [expenses]);
@@ -914,15 +986,15 @@ export default function App() {
       setIsLoading(true);
       const response = await expenseAPI.addExpenseStructured(amount, addCategory, addDescription);
       
-      // If this is a grocery expense, parse the items to pantry
-      if (addCategory === 'groceries' && response.id) {
-        try {
-          await expenseAPI.parseGroceryToPantry(response.id);
-        } catch (parseError) {
-          console.log('Failed to parse grocery items to pantry:', parseError);
-          // Don't show error to user, just log it
-        }
-      }
+      // Grocery parsing disabled - no longer automatically parse grocery items to pantry
+      // if (addCategory === 'groceries' && response.id) {
+      //   try {
+      //     await expenseAPI.parseGroceryToPantry(response.id);
+      //   } catch (parseError) {
+      //     console.log('Failed to parse grocery items to pantry:', parseError);
+      //     // Don't show error to user, just log it
+      //   }
+      // }
       
       // Close modal and clear form
       setIsAddModalVisible(false);
@@ -1607,9 +1679,11 @@ export default function App() {
 
     // Render Expenses Monthly Card
     const renderMonthlySummaryCard = () => {
+      const monthGroups = groupExpensesByMonthWithDisplay(expenses);
+      
       return (
-        <ExpenseCardMonthly
-          expenses={expenses}
+        <MonthlySummaryView
+          monthGroups={monthGroups}
           styles={styles}
           currentTheme={currentTheme}
           getExpenseCategoryColor={getExpenseCategoryColor}
@@ -1642,9 +1716,9 @@ export default function App() {
                 <View style={styles.daySectionHeader}>
                   <Text style={styles.daySectionTitle}>
                     {(() => {
-                      const dateObj = new Date(dayData.date);
-                      const day = dateObj.getDate();
-                      const month = dateObj.toLocaleString('en-US', { month: 'long' });
+                      const dateObj = parseDateString(dayData.date);
+                      const dayNum = dateObj.getDate();
+                      const monthName = dateObj.toLocaleString('en-US', { month: 'long' });
                       // Helper to get ordinal suffix
                       const getOrdinal = (n) => {
                         if (n > 3 && n < 21) return 'th';
@@ -1655,7 +1729,7 @@ export default function App() {
                           default: return 'th';
                         }
                       };
-                      return `${day} ${month}`;
+                      return `${dayNum} ${monthName}`;
                     })()}
                   </Text>
                   <Text style={styles.daySectionSubtitle}>
@@ -1688,22 +1762,24 @@ export default function App() {
         );
       }
       
-      // For other categories, show simple list
+      // For other categories, show month-grouped list
+      const monthGroups = groupExpensesByMonthWithTotals(filteredExpenses);
+      
       return (
         <FlatList
-          data={filteredExpenses}
-          renderItem={({ item: expense }) => (
-            <ExpenseCardCategory
-              item={expense}
+          data={monthGroups}
+          renderItem={({ item: monthData }) => (
+            <ExpenseCardCategoryMonthGroup
+              monthData={monthData}
               styles={styles}
-              groceryItems={groceryItems}
               onEdit={handleExpensePress}
               onDelete={deleteExpense}
               getCategoryIcon={getCategoryIcon}
-              cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
+              getExpenseCategoryColor={getExpenseCategoryColor}
+              currentTheme={currentTheme}
             />
           )}
-          keyExtractor={(expense) => `${category}-${expense.id}`}
+          keyExtractor={(monthData) => `${category}-${monthData.month}`}
           style={[styles.categoryExpensesList, { marginTop: -10 }]}
           contentContainerStyle={styles.categoryExpensesContent}
           showsVerticalScrollIndicator={false}

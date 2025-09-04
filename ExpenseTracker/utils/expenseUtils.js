@@ -58,6 +58,19 @@ export function getTopCategories(expenses, limit = 3) {
 }
 
 /**
+ * Get local date string in YYYY-MM-DD format
+ * @param {Date|string} date - Date object or date string
+ * @returns {string} Date string in YYYY-MM-DD format
+ */
+export function getLocalDateString(date) {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Group expenses by day
  * @param {Array} expenses - Array of expense objects
  * @returns {object} Object with date keys and expense arrays as values
@@ -66,13 +79,34 @@ export function groupExpensesByDay(expenses) {
   if (!expenses || !Array.isArray(expenses)) return {};
   
   return expenses.reduce((acc, expense) => {
-    const date = new Date(expense.timestamp);
-    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const dateKey = getLocalDateString(expense.timestamp);
     
     if (!acc[dateKey]) {
       acc[dateKey] = [];
     }
     acc[dateKey].push(expense);
+    return acc;
+  }, {});
+}
+
+/**
+ * Group expenses by month
+ * @param {Array} expenses - Array of expense objects
+ * @returns {object} Object with month keys (YYYY-MM format) and expense arrays as values
+ */
+export function groupExpensesByMonth(expenses) {
+  if (!expenses || !Array.isArray(expenses)) return {};
+  
+  return expenses.reduce((acc, expense) => {
+    const date = new Date(expense.timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const monthKey = `${year}-${month}`;
+    
+    if (!acc[monthKey]) {
+      acc[monthKey] = [];
+    }
+    acc[monthKey].push(expense);
     return acc;
   }, {});
 }
@@ -134,10 +168,10 @@ export function filterExpensesByDateRange(expenses, startDate, endDate) {
 export function getExpensesForDay(expenses, date) {
   if (!expenses || !Array.isArray(expenses)) return [];
   
-  const targetDate = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+  const targetDate = typeof date === 'string' ? date : getLocalDateString(date);
   
   return expenses.filter(expense => {
-    const expenseDate = new Date(expense.timestamp).toISOString().split('T')[0];
+    const expenseDate = getLocalDateString(expense.timestamp);
     return expenseDate === targetDate;
   });
 }
