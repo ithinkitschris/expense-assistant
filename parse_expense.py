@@ -124,7 +124,7 @@ def parse_expense(natural_input: str):
 
         Instructions:
         1. Extract the EXACT dollar amount mentioned (no estimation)
-        2. Determine the most appropriate category from the input and sort into ONLY the following categories: amazon, transportation, groceries, entertainment, fashion, travel, food, monthly, other. DO NOT CREATE NEW CATEGORIES.
+        2. Determine the most appropriate category from the input and sort into ONLY the following categories: amazon, transportation, groceries, entertainment, fashion, travel, food, monthly, personal. DO NOT CREATE NEW CATEGORIES.
         3. Create a clear, concise description including relevant details like store names, items, etc.
         4. If a date/time reference is mentioned (like "last week", "yesterday"), note it but don't include it in the description
 
@@ -168,7 +168,7 @@ def parse_expense(natural_input: str):
         
         # Ensure we have required fields
         if not result.get('category'):
-            result['category'] = 'other'
+            result['category'] = 'personal'
         
         if not result.get('description'):
             result['description'] = natural_input[:50]  # Fallback to truncated input
@@ -189,7 +189,7 @@ def parse_expense(natural_input: str):
         if amount_match:
             return {
                 'amount': float(amount_match.group(1)),
-                'category': 'other',
+                'category': 'personal',
                 'description': natural_input[:50],
                 'parsed_date': parsed_date
             }
@@ -208,7 +208,7 @@ def parse_multiple_expenses(natural_input: str):
         Instructions:
         1. Identify ALL separate expenses mentioned in the input
         2. For each expense, extract the EXACT dollar amount (no estimation)
-        3. Determine the most appropriate category from the input and sort into ONLY the following categories: amazon, transportation, groceries, entertainment, fashion, travel, food, monthly, other. DO NOT CREATE NEW CATEGORIES.
+        3. Determine the most appropriate category from the input and sort into ONLY the following categories: amazon, transportation, groceries, entertainment, fashion, travel, food, monthly, personal. DO NOT CREATE NEW CATEGORIES.
         4. If a date/time reference is mentioned, it applies to all expenses
 
         Return ONLY valid JSON array in this exact format:
@@ -251,7 +251,7 @@ def parse_multiple_expenses(natural_input: str):
                     continue  # Skip invalid expenses
                 
                 if not result.get('category'):
-                    result['category'] = 'other'
+                    result['category'] = 'personal'
                 
                 if not result.get('description'):
                     result['description'] = 'expense'

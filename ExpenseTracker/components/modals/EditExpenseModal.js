@@ -71,7 +71,7 @@ const EditExpenseModal = ({
           <View style={styles.modalField}>
             <Text style={styles.modalLabel}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'other', 'transportation', 'travel'].map((cat) => (
+              {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'personal', 'transportation', 'travel'].map((cat) => (
                 <Pressable
                   key={cat}
                   style={[

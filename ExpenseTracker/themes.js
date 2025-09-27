@@ -132,7 +132,7 @@ export const getExpenseCategoryColor = (category, theme) => {
     'furniture': theme.systemOrange,
     'groceries': theme.systemMint,
     'monthly': theme.systemGray,
-    'other': theme.systemGray,
+    'personal': theme.systemGray,
     'transportation': theme.systemIndigo,
     'travel': theme.systemCyan,
     'subscriptions': theme.systemYellow,

@@ -22,7 +22,7 @@ class ExpenseCategory(str, Enum):
     FOOD = "food"
     MONTHLY = "monthly"
     FURNITURE = "furniture"
-    OTHER = "other"
+    PERSONAL = "personal"
 
 
 class ExpenseCreate(BaseModel):

@@ -11,7 +11,7 @@
 // API CONFIGURATION
 // ============================================================================
 
-export const API_BASE_URL = 'http://10.1.71.125:8000/api/v1';
+export const API_BASE_URL = 'http://192.168.1.167:8000/api/v1';
 
 // 192.168.1.172
 // 172.20.10.2
@@ -48,7 +48,7 @@ export const APP_CONSTANTS = {
   DEFAULT_AMOUNT: '0',
   DEFAULT_QUANTITY: '1',
   DEFAULT_UNIT: 'pieces',
-  DEFAULT_CATEGORY: 'other',
+  DEFAULT_CATEGORY: 'personal',
   DEFAULT_VIEW_MODE: 'day', // 'day' or 'monthly'
   DEFAULT_TAB: 'expenses', // 'expenses' or 'pantry'
   
@@ -57,7 +57,7 @@ export const APP_CONSTANTS = {
   MIN_AMOUNT: 0,
   MAX_QUANTITY: 1000,
   MIN_QUANTITY: 0.1,
-  MAX_EXPENSES_LIMIT: 50,
+  MAX_EXPENSES_LIMIT: 200,
   
   // Date formats
   DATE_FORMAT: 'YYYY-MM-DD',
@@ -206,7 +206,7 @@ export const EXPENSE_CATEGORIES = [
   'food',
   'monthly',
   'furniture',
-  'other'
+  'personal'
 ];
 
 // ============================================================================
@@ -223,7 +223,7 @@ export const CATEGORY_ICONS = {
   food: 'fork.knife',
   monthly: 'calendar',
   furniture: 'bed.double.fill',
-  other: 'questionmark.circle.fill',
+  personal: 'person.fill',
   default: 'chart.bar.fill'
 };
 

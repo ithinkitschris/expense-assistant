@@ -36,7 +36,7 @@ export function calculateCategoryTotals(expenses) {
   if (!expenses || !Array.isArray(expenses)) return {};
   
   return expenses.reduce((acc, expense) => {
-    const category = expense.category || 'other';
+    const category = expense.category || 'personal';
     acc[category] = (acc[category] || 0) + (expense.amount || 0);
     return acc;
   }, {});
@@ -120,7 +120,7 @@ export function groupExpensesByCategory(expenses) {
   if (!expenses || !Array.isArray(expenses)) return {};
   
   return expenses.reduce((acc, expense) => {
-    const category = expense.category || 'other';
+    const category = expense.category || 'personal';
     
     if (!acc[category]) {
       acc[category] = [];
@@ -220,7 +220,7 @@ export function sortExpensesByAmount(expenses) {
 export function getUniqueCategories(expenses) {
   if (!expenses || !Array.isArray(expenses)) return [];
   
-  const categories = expenses.map(expense => expense.category || 'other');
+  const categories = expenses.map(expense => expense.category || 'personal');
   return [...new Set(categories)].sort();
 }
 
