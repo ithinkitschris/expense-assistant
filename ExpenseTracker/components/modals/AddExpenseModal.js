@@ -85,7 +85,7 @@ const AddExpenseModal = ({
           <View style={styles.modalField}>
             <Text style={styles.modalLabel}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {['amazon', 'entertainment', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'personal', 'transportation', 'travel'].map((cat) => (
+              {['amazon', 'personal', 'fashion', 'food', 'furniture', 'groceries', 'monthly', 'transportation', 'travel'].map((cat) => (
                 <Pressable
                   key={cat}
                   style={[

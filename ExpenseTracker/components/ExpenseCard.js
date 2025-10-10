@@ -162,10 +162,34 @@ const ExpenseCardCategory = ({
 
   return (
     <Pressable
-      style={styles.expenseCardCategory}
+      style={[
+        styles.expenseCardCategory,
+        { 
+          padding: 0, 
+          overflow: 'hidden',
+          borderColor: increaseBrightness(cardColor, 5)
+        }
+      ]}
       onPress={() => onPress && onPress(item)}
       onLongPress={() => onEdit && onEdit(item)}
     >
+      <LinearGradient
+        colors={[
+          cardColor + 'CC', // 80% opacity
+          shiftHue(cardColor, 15, 0.95) // 80% opacity for the second hue
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.2, y: 2 }}
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }
+        ]}
+      />
       {/* Main content container with icon, title on left, date + amount on right */}
       <View style={styles.expenseContentContainerCategory}>
         {/* Icon and Title Row */}
@@ -184,13 +208,13 @@ const ExpenseCardCategory = ({
           </View>
         </View>
         <View style={styles.expenseCardCategoryRightContainer}>
-          <Text style={[styles.date, styles.expenseCardCategoryDate]}>
+          <Text style={[styles.date, styles.expenseCardCategoryDate, { color: '#FFFFFF' }]}>
             {new Date(item.timestamp).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
             })}
           </Text>
-          <Text style={[styles.expenseCardCategoryAmount, styles.expenseCardCategoryAmountFlex, { color: cardColor || styles.expenseCardCategoryAmount.color }]}> 
+          <Text style={[styles.expenseCardCategoryAmount, styles.expenseCardCategoryAmountFlex, { color: '#FFFFFF' }]}> 
             {Number.isInteger(item.amount) ? `$${item.amount}` : `$${Number(item.amount).toFixed(2).replace(/\.00$/, '')}`}
           </Text>
         </View>

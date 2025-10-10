@@ -255,7 +255,7 @@ export const createStyles = (theme) => StyleSheet.create({
     position: 'absolute',
     bottom: 27,
     left: 20,
-    right: 245,
+    width: 173,
     zIndex: 5,
     borderRadius: 35,
     shadowColor: theme.shadowColor,
@@ -267,7 +267,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
   viewSelectorWrapperCompact: {
     borderRadius: 50, // Smaller compact radius to match background
-    right: 370, // Move further right when compact (smaller width)
+    width: 50, // Move further right when compact (smaller width)
     left: 20,   // Move further left to center the single option
   },
   
@@ -483,7 +483,7 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCardCategoryName: {
     fontSize: 14,
     fontWeight: '500',
-    color: theme.textSecondary,
+    color: '#FFFFFF',
     letterSpacing: -0.2,
     textTransform: 'capitalize',
     marginBottom: 10,
@@ -494,7 +494,7 @@ export const createStyles = (theme) => StyleSheet.create({
     fontSize: 30,
     fontWeight: '500',
     lineHeight: 32,
-    color: theme.text,
+    color: '#FFFFFF',
     letterSpacing: -0.1,
   },
   
@@ -518,7 +518,7 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseCardCategoryAmount: {
     fontSize: 34,
     fontWeight: '500',
-    color: theme.text,
+    color: '#FFFFFF',
     textAlign: 'right',
     letterSpacing: -0.5,
     flex: 0,
@@ -1051,12 +1051,12 @@ export const createStyles = (theme) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 8,
     paddingTop: 20,
   },
 
   modalTitle: {
-    fontSize: 52,
+    fontSize: 42,
     fontWeight: '500',
     letterSpacing: -0.3,
     color: theme.text,
@@ -1069,12 +1069,12 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   modalAddButton: {
-    fontSize: 20,
+    fontSize: 18,
     color: 'white',
     fontWeight: '500',
     backgroundColor: theme.appleBlue,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 50,
   },
 
@@ -1138,12 +1138,12 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   modalCategoryOption: {
-    paddingHorizontal: 22,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
     backgroundColor: theme.glassBackground,
     borderRadius: 50,
     marginRight: 10,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: theme.borderColorLighter,
   },
 
@@ -1504,8 +1504,8 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseTimeSelector: {
     position: 'absolute',
     bottom: 27,
-    left: 136,
-    right: 136,
+    left: 125,
+    width: 168,
     zIndex: 4,
     borderRadius: 35,
     shadowColor: theme.shadowColor,

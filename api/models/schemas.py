@@ -16,13 +16,12 @@ class ExpenseCategory(str, Enum):
     AMAZON = "amazon"
     TRANSPORTATION = "transportation"
     GROCERIES = "groceries"
-    ENTERTAINMENT = "entertainment"
+    PERSONAL = "personal"
     FASHION = "fashion"
     TRAVEL = "travel"
     FOOD = "food"
     MONTHLY = "monthly"
     FURNITURE = "furniture"
-    PERSONAL = "personal"
 
 
 class ExpenseCreate(BaseModel):

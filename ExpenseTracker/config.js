@@ -13,7 +13,7 @@
 
 export const API_BASE_URL = 'http://192.168.1.167:8000/api/v1';
 
-// 192.168.1.172
+// 192.168.1.167
 // 172.20.10.2
 // 204.147.202.57 (old IP)
 
@@ -200,13 +200,12 @@ export const EXPENSE_CATEGORIES = [
   'amazon',
   'transportation', 
   'groceries',
-  'entertainment',
+  'personal',
   'fashion',
   'travel',
   'food',
   'monthly',
-  'furniture',
-  'personal'
+  'furniture'
 ];
 
 // ============================================================================
@@ -217,13 +216,12 @@ export const CATEGORY_ICONS = {
   amazon: 'shippingbox.fill',
   transportation: 'tram.fill',
   groceries: 'cart.fill',
-  entertainment: 'gamecontroller.fill',
+  personal: 'gamecontroller.fill',
   fashion: 'tshirt.fill',
   travel: 'airplane',
   food: 'fork.knife',
   monthly: 'calendar',
   furniture: 'bed.double.fill',
-  personal: 'person.fill',
   default: 'chart.bar.fill'
 };
 

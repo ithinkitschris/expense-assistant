@@ -111,16 +111,16 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     flex: 1,
     position: 'relative',
-    marginTop: -30,
-    height: 150,
+    marginTop: -60,
+    height: 130,
   },
   picker: {
     flex: 1,
     
   },
   pickerItem: {
-    fontSize: 64,
-    fontWeight: '500',
+    fontSize: 50,
+    fontWeight: '400',
   },
   selectedItemOverlay: {
     position: 'absolute',
