@@ -2,12 +2,10 @@
 Expense Management API Routes
 
 These endpoints handle all expense-related operations:
-- Creating expenses (both structured and natural language)
-- Reading/listing expenses  
+- Creating expenses with structured data
+- Reading/listing expenses
 - Updating expenses
 - Deleting expenses
-
-All operations use your existing CLI functions and database.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends
@@ -17,11 +15,8 @@ from datetime import datetime, timedelta
 import sys
 import os
 
-# Import your existing CLI functions
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from add_expense import add_expense
+# Import dependencies
 from api.dependencies import get_db
-from api.utils.parsing import parse_grocery_items_and_categories
 
 # Define get_expense_by_id locally to avoid circular import
 def get_expense_by_id(expense_id: int, db: sqlite3.Connection):
@@ -34,7 +29,7 @@ def get_expense_by_id(expense_id: int, db: sqlite3.Connection):
 # Import our API schemas
 from api.models.schemas import (
     ExpenseCreate, ExpenseUpdate, ExpenseResponse, ExpenseListResponse,
-    NaturalLanguageExpense, SuccessResponse, ErrorResponse
+    SuccessResponse, ErrorResponse
 )
 
 # Create the router
@@ -52,33 +47,6 @@ def expense_row_to_dict(row):
         "description": row[3],
         "timestamp": datetime.fromisoformat(row[4]) if row[4] else None
     }
-
-
-@router.post("/expenses/parse", response_model=SuccessResponse)
-async def add_expense_natural_language(expense_input: NaturalLanguageExpense):
-    """
-    Add expense using natural language parsing (like your CLI)
-    
-    Example: "lunch at starbucks $12.50"
-    This uses your existing AI parsing logic!
-    """
-    try:
-        # Call your existing add_expense function!
-        # This handles all the AI parsing and database insertion
-        result = add_expense(expense_input.text)
-        
-        return SuccessResponse(
-            message="Expense parsed and added successfully!",
-            data={
-                "original_text": expense_input.text,
-                "parsed_result": str(result)
-            }
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Failed to parse expense: {str(e)}"
-        )
 
 
 @router.post("/expenses/", response_model=ExpenseResponse)
@@ -345,101 +313,11 @@ async def delete_expense(expense_id: int, db: sqlite3.Connection = Depends(get_d
             message=f"Expense {expense_id} deleted successfully",
             data={"deleted_expense_id": expense_id}
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete expense: {str(e)}"
-        ) 
-
-@router.post("/expenses/{expense_id}/parse-grocery-to-pantry", response_model=SuccessResponse)
-async def parse_grocery_to_pantry(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
-    """
-    Parse a grocery expense description and add the items to the pantry
-    """
-    try:
-        # Get the expense to extract the description
-        expense = get_expense_by_id(expense_id, db)
-        if not expense:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Expense with ID {expense_id} not found"
-            )
-        
-        description = expense[3]  # description is the 4th column (index 3)
-        if not description or not description.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Expense has no description to parse"
-            )
-        
-        # Parse the description into grocery items using the unified parsing function
-        parsed_items = parse_grocery_items_and_categories(description)
-        
-        if not parsed_items:
-            raise HTTPException(
-                status_code=400,
-                detail="No grocery items found in the expense description"
-            )
-        
-        # Add each parsed item to the pantry
-        c = db.cursor()
-        added_items = []
-        
-        for item in parsed_items:
-            grocery_type = item["category"]
-            item_name = item["item"]
-            
-            # Check if an item with the same name already exists (case-insensitive)
-            c.execute('SELECT id, quantity FROM pantry_items WHERE LOWER(name) = LOWER(?)', (item_name,))
-            existing_item = c.fetchone()
-            
-            if existing_item:
-                # Item exists, update quantity
-                item_id, existing_quantity = existing_item
-                new_quantity = existing_quantity + 1
-                
-                c.execute('''
-                    UPDATE pantry_items 
-                    SET quantity = ?, is_consumed = ?, grocery_type = ?
-                    WHERE id = ?
-                ''', (new_quantity, False, grocery_type, item_id))
-                
-                added_items.append({
-                    "name": item_name,
-                    "category": grocery_type,
-                    "action": "updated"
-                })
-            else:
-                # Item doesn't exist, create new one
-                c.execute('''
-                    INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
-                    VALUES (?, ?, ?, datetime('now'), ?, ?)
-                ''', (item_name, 1, 'pieces', False, grocery_type))
-                
-                added_items.append({
-                    "name": item_name,
-                    "category": grocery_type,
-                    "action": "created"
-                })
-        
-        db.commit()
-        
-        return SuccessResponse(
-            message=f"Successfully parsed and added {len(added_items)} items to pantry",
-            data={
-                "expense_id": expense_id,
-                "parsed_items": added_items,
-                "original_description": description
-            }
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to parse grocery to pantry: {str(e)}"
         ) 

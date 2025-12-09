@@ -46,22 +46,17 @@ export const DEV_FLAGS = {
 export const APP_CONSTANTS = {
   // Default values
   DEFAULT_AMOUNT: '0',
-  DEFAULT_QUANTITY: '1',
-  DEFAULT_UNIT: 'pieces',
   DEFAULT_CATEGORY: 'personal',
   DEFAULT_VIEW_MODE: 'day', // 'day' or 'monthly'
-  DEFAULT_TAB: 'expenses', // 'expenses' or 'pantry'
-  
+
   // Limits and ranges
   MAX_AMOUNT: 99999,
   MIN_AMOUNT: 0,
-  MAX_QUANTITY: 1000,
-  MIN_QUANTITY: 0.1,
   MAX_EXPENSES_LIMIT: 200,
-  
+
   // Date formats
   DATE_FORMAT: 'YYYY-MM-DD',
-  
+
   // Animation durations
   SCROLL_ANIMATION_DURATION: 300,
   BUTTON_ANIMATION_DURATION: 150,
@@ -72,57 +67,8 @@ export const APP_CONSTANTS = {
 // ============================================================================
 
 export const PICKER_OPTIONS = {
-  // Quantity picker options (0.1 to 100)
-  quantityOptions: (() => {
-    const options = [];
-    for (let i = 0.1; i <= 10; i += 0.1) {
-      options.push(parseFloat(i.toFixed(1)));
-    }
-    for (let i = 11; i <= 100; i += 1) {
-      options.push(i);
-    }
-    return options;
-  })(),
-  
   // Dollar picker options (0 to 9999)
-  dollarOptions: Array.from({ length: 10000 }, (_, i) => i),
-  
-  // Unit options for pantry items
-  unitOptions: [
-    'pieces',
-    'lbs',
-    'oz',
-    'kg',
-    'g',
-    'liters',
-    'ml',
-    'gallons',
-    'quarts',
-    'pints',
-    'cups',
-    'tablespoons',
-    'teaspoons',
-    'bottles',
-    'cans',
-    'bags',
-    'boxes',
-    'packages'
-  ],
-  
-  // Grocery type sort orders
-  groceryTypeSortOrder: {
-    'produce': 1,
-    'meat': 2,
-    'dairy': 3,
-    'bread': 4,
-    'staples': 5,
-    'pantry': 6,
-    'frozen': 7,
-    'beverages': 8,
-    'snacks': 9,
-    'condiments': 10,
-    'other': 11
-  }
+  dollarOptions: Array.from({ length: 10000 }, (_, i) => i)
 };
 
 // ============================================================================
@@ -136,14 +82,7 @@ export const VALIDATION_RULES = {
     max: APP_CONSTANTS.MAX_AMOUNT,
     errorMessage: `Please enter a value between $${APP_CONSTANTS.MIN_AMOUNT} and $${APP_CONSTANTS.MAX_AMOUNT.toLocaleString()}`
   },
-  
-  // Quantity validation
-  quantity: {
-    min: APP_CONSTANTS.MIN_QUANTITY,
-    max: APP_CONSTANTS.MAX_QUANTITY,
-    errorMessage: `Please enter a value between ${APP_CONSTANTS.MIN_QUANTITY} and ${APP_CONSTANTS.MAX_QUANTITY}`
-  },
-  
+
   // Text input validation
   text: {
     maxLength: 100,
@@ -225,23 +164,6 @@ export const CATEGORY_ICONS = {
   default: 'chart.bar.fill'
 };
 
-// ============================================================================
-// GROCERY CATEGORIES
-// ============================================================================
-
-export const GROCERY_CATEGORIES = {
-  produce: { displayName: 'Produce', icon: 'leaf' },
-  meat: { displayName: 'Meat', icon: 'fish' },
-  dairy: { displayName: 'Dairy', icon: 'drop' },
-  bread: { displayName: 'Bread', icon: 'birthday.cake' },
-  staples: { displayName: 'Staples', icon: 'grain' },
-  pantry: { displayName: 'Pantry', icon: 'cabinet' },
-  frozen: { displayName: 'Frozen', icon: 'snowflake' },
-  beverages: { displayName: 'Beverages', icon: 'cup.and.saucer' },
-  snacks: { displayName: 'Snacks', icon: 'candybarphone' },
-  condiments: { displayName: 'Condiments', icon: 'drop' },
-  other: { displayName: 'Other', icon: 'questionmark.circle' }
-};
 
 // ============================================================================
 // ERROR MESSAGES
@@ -253,17 +175,10 @@ export const ERROR_MESSAGES = {
     addExpense: 'Failed to add expense',
     updateExpense: 'Failed to update expense',
     deleteExpense: 'Failed to delete expense',
-    fetchExpenses: 'Failed to fetch expenses',
-    addPantryItem: 'Failed to add pantry item',
-    updatePantryItem: 'Failed to update pantry item',
-    deletePantryItem: 'Failed to delete pantry item',
-    fetchPantryItems: 'Failed to fetch pantry items',
-    parseGroceryItems: 'Failed to parse grocery items',
-    getGroceryCategories: 'Failed to get grocery categories'
+    fetchExpenses: 'Failed to fetch expenses'
   },
   validation: {
     invalidAmount: VALIDATION_RULES.amount.errorMessage,
-    invalidQuantity: VALIDATION_RULES.quantity.errorMessage,
     invalidText: VALIDATION_RULES.text.errorMessage
   }
 };
@@ -275,8 +190,5 @@ export const ERROR_MESSAGES = {
 export const SUCCESS_MESSAGES = {
   addExpense: 'Expense added successfully',
   updateExpense: 'Expense updated successfully',
-  deleteExpense: 'Expense deleted successfully',
-  addPantryItem: 'Pantry item added successfully',
-  updatePantryItem: 'Pantry item updated successfully',
-  deletePantryItem: 'Pantry item deleted successfully'
+  deleteExpense: 'Expense deleted successfully'
 }; 

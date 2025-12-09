@@ -17,16 +17,13 @@ const AddExpenseModal = ({
   isVisible,
   onClose,
   onAdd,
-  onGroceryNext,
   isLoading,
-  isParsingGroceries,
   addAmount,
   setAddAmount,
   addCategory,
   setAddCategory,
   addDescription,
   setAddDescription,
-  isGroceryStep,
   styles,
   currentTheme
 }) => {
@@ -34,8 +31,7 @@ const AddExpenseModal = ({
     onClose();
   };
 
-  const handleNext = () => {
-    // Grocery parsing disabled - all categories now use the regular expense flow
+  const handleAdd = () => {
     onAdd();
   };
 
@@ -56,11 +52,9 @@ const AddExpenseModal = ({
         {/* Header */}
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>New Expense</Text>
-          <Pressable onPress={handleNext} disabled={isLoading || isParsingGroceries}>
-            <Text style={[styles.modalAddButton, (isLoading || isParsingGroceries) && styles.modalAddButtonDisabled]}>
-              {isLoading ? 'Adding...' : 
-              isParsingGroceries ? 'Parsing...' : 
-              addCategory === 'groceries' ? '→' : 'Add'}
+          <Pressable onPress={handleAdd} disabled={isLoading}>
+            <Text style={[styles.modalAddButton, isLoading && styles.modalAddButtonDisabled]}>
+              {isLoading ? 'Adding...' : 'Add'}
             </Text>
           </Pressable>
         </View>
@@ -115,7 +109,7 @@ const AddExpenseModal = ({
               style={styles.modalInput}
               value={addDescription}
               onChangeText={setAddDescription}
-              placeholder={addCategory === 'groceries' ? 'Enter your grocery list here.' : 'What now?'}
+              placeholder="What did you buy?"
               multiline
               numberOfLines={3}
             />

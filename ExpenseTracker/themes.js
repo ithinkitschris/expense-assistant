@@ -102,25 +102,6 @@ export const themes = {
   }
 }; 
 
-// Centralized grocery category color mapping - single source of truth
-export const getGroceryCategoryColor = (type, theme) => {
-  const colorMap = {
-    'all': theme.appleBlue,
-    'produce': theme.systemMint,      // Green for fresh produce
-    'meat': theme.systemPink,         // Red for meat
-    'dairy': theme.systemGray,        // Blue for dairy
-    'staples': theme.systemBrown,     // Brown for staples (rice, pasta, bread, etc.)
-    'pantry': theme.systemOrange,     // Orange for pantry staples
-    'frozen': theme.systemCyan,       // Light blue for frozen
-    'beverages': theme.systemIndigo,  // Purple for beverages
-    'snacks': theme.systemPurple,     // Purple for snacks
-    'condiments': theme.systemPink,   // Pink for condiments
-    'other': theme.systemGray,        // Gray for other
-    'consumed': theme.systemGray      // Gray for consumed items
-  };
-  return colorMap[type] || colorMap['other'];
-};
-
 // Centralized expense category color mapping - single source of truth
 export const getExpenseCategoryColor = (category, theme) => {
   const colorMap = {
