@@ -11,7 +11,11 @@
 // API CONFIGURATION
 // ============================================================================
 
-export const API_BASE_URL = 'http://192.168.1.167:8000/api/v1';
+// Production API URL (deployed on Railway)
+export const API_BASE_URL = 'https://expense-assistant-production.up.railway.app/api/v1';
+
+// For local development, use your local IP:
+// export const API_BASE_URL = 'http://192.168.1.167:8000/api/v1';
 
 // 192.168.1.167
 // 172.20.10.2
