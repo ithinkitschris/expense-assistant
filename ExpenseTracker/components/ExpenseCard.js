@@ -3,8 +3,9 @@ import { View, Text, Pressable, TouchableOpacity, ActionSheetIOS, Platform, Aler
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { shiftHue, increaseBrightness } from '../utils/colorUtils';
+import { shiftHue, increaseBrightness, darkenAndSaturate } from '../utils/colorUtils';
 import { getLocalDateString } from '../utils/expenseUtils';
+import { themes } from '../themes';
 
 // Color utilities are now imported from utils/colorUtils.js
 
@@ -16,6 +17,7 @@ const ExpenseCardTotal = ({
   onDelete,
   getCategoryIcon,
   cardColor,
+  currentTheme,
   ...rest
 }) => {
 
@@ -64,8 +66,8 @@ const ExpenseCardTotal = ({
     >
       <LinearGradient
         colors={[
-          cardColor + 'CC', // 80% opacity
-          shiftHue(cardColor, 15, 0.95) // 80% opacity for the second hue
+          (currentTheme?.statusBarStyle === 'dark' ? darkenAndSaturate(cardColor, 15, 0) : cardColor) + 'CC', // 15% darker in light mode only, 80% opacity
+          shiftHue(currentTheme?.statusBarStyle === 'dark' ? darkenAndSaturate(cardColor, 20, 5) : cardColor, 15, 0.95) // 20% darker, 5% more saturated in light mode only, shifted hue, 95% opacity
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.2, y: 2 }}
@@ -125,6 +127,7 @@ const ExpenseCardCategory = ({
   onDelete,
   getCategoryIcon,
   cardColor,
+  currentTheme,
   ...rest
 }) => {
 
@@ -175,8 +178,8 @@ const ExpenseCardCategory = ({
     >
       <LinearGradient
         colors={[
-          cardColor + 'CC', // 80% opacity
-          shiftHue(cardColor, 15, 0.95) // 80% opacity for the second hue
+          (currentTheme?.statusBarStyle === 'dark' ? darkenAndSaturate(cardColor, 15, 0) : cardColor) + 'CC', // 15% darker in light mode only, 80% opacity
+          shiftHue(currentTheme?.statusBarStyle === 'dark' ? darkenAndSaturate(cardColor, 20, 5) : cardColor, 15, 0.95) // 20% darker, 5% more saturated in light mode only, shifted hue, 95% opacity
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.2, y: 2 }}
@@ -255,6 +258,7 @@ const ExpenseCardCategoryMonthGroup = ({
           onDelete={onDelete}
           getCategoryIcon={getCategoryIcon}
           cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
+          currentTheme={currentTheme}
         />
       ))}
     </View>

@@ -11,7 +11,8 @@ const GroceryView = ({
   groceryHeaderTranslateY,
   renderPantrySection,
   handleHeaderScroll,
-  styles
+  styles,
+  currentTheme
 }) => {
   if (isLoadingPantryItems) {
     return (
@@ -121,6 +122,7 @@ const GroceryView = ({
             subtitle="Tap the + button to add items to your pantry!"
             icon="basket"
             styles={styles}
+            theme={currentTheme}
           />
         }
       />

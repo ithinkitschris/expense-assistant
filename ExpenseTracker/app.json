@@ -25,6 +25,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "111f4783-d254-4b64-99e8-731a7c005e1a"
+      }
+    },
+    "owner": "ithinkitschris",
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }

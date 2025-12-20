@@ -102,6 +102,44 @@ export function increaseBrightness(hex, percentage) {
 }
 
 /**
+ * Darken a hex color by percentage
+ * @param {string} hex - Hex color string
+ * @param {number} percentage - Percentage to darken (0-100)
+ * @returns {string} New hex color with reduced lightness
+ */
+export function darken(hex, percentage) {
+  const { h, s, l } = hexToHSL(hex);
+  const newL = Math.max(0, l - percentage);
+  return hslToHex(h, s, newL);
+}
+
+/**
+ * Increase the saturation of a hex color by percentage
+ * @param {string} hex - Hex color string
+ * @param {number} percentage - Percentage to increase saturation (0-100)
+ * @returns {string} New hex color with increased saturation
+ */
+export function increaseSaturation(hex, percentage) {
+  const { h, s, l } = hexToHSL(hex);
+  const newS = Math.min(100, s + percentage);
+  return hslToHex(h, newS, l);
+}
+
+/**
+ * Darken and increase saturation of a hex color
+ * @param {string} hex - Hex color string
+ * @param {number} darkenPercentage - Percentage to darken (0-100)
+ * @param {number} saturationPercentage - Percentage to increase saturation (0-100)
+ * @returns {string} New hex color with adjusted darkness and saturation
+ */
+export function darkenAndSaturate(hex, darkenPercentage, saturationPercentage) {
+  const { h, s, l } = hexToHSL(hex);
+  const newL = Math.max(0, l - darkenPercentage);
+  const newS = Math.min(100, s + saturationPercentage);
+  return hslToHex(h, newS, newL);
+}
+
+/**
  * Convert hex color to RGB
  * @param {string} hex - Hex color string
  * @returns {object} RGB object with r, g, b properties (0-255)

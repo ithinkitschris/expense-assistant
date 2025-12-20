@@ -8,6 +8,7 @@ export const themes = {
     textInvert: '#FFFFFF', // System Background
     textSecondary: '#3C3C43', // Label (Secondary) 
     textTertiary: '#787880', // Label (Tertiary)
+    modalPillColor: '#A0A0A0', // Brighter gray for modal pill
     borderColorLighter: '#C6C6C8', // Separator
     glassBackground: 'rgba(255,255,255,0)', // System Background with transparency
     glassBorderColor: 'rgba(255,255,255,0.2)', // Separator with transparency
@@ -58,6 +59,7 @@ export const themes = {
     textInvert: '#000000', // System Background
     textSecondary: '#FFFFFF80', // Label (Secondary) (50% opacity)
     textTertiary: '#EBEBF560', // Label (Tertiary) with 60% opacity
+    modalPillColor: '#FFFFFF80', // Brighter white (80% opacity) for modal pill
     borderColorLighter: '#38383A', // Separator
     glassBackground: 'rgba(255,255,255,0.1)', // white with 20% opacity
     glassBorderColor: 'rgba(255,255,255,0.08)', // Separator with 20% white opacity

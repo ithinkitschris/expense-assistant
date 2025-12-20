@@ -1,57 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const createStyles = (theme) => StyleSheet.create({
-
-  // #region BASE STYLES
-  // Common text styles
-  textBase: {
-    color: theme.text,
-  },
-  
-  textSecondary: {
-    color: theme.textSecondary,
-  },
-  
-  textTertiary: {
-    color: theme.textTertiary,
-  },
-  
-  categoryIconColor: {
-    color: theme.categoryIconColor,
-  },
-  
-  // Common button styles
-  buttonBase: {
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  
-  buttonPrimary: {
-    backgroundColor: theme.appleBlue,
-    color: 'white',
-  },
-  
-  buttonSecondary: {
-    backgroundColor: theme.glassBackground,
-    borderWidth: 1,
-    borderColor: theme.borderColorLighter,
-  },
-  
-  // Common container styles
-  containerBase: {
-    backgroundColor: theme.background,
-  },
-  
-  cardBase: {
-    backgroundColor: theme.itemCardBackground,
-    borderRadius: 35,
-    borderWidth: 1,
-    borderColor: theme.borderColorLighter,
-  },
-  
-
-  // #endregion
 
   // #region CONTAINERS
   container: {
@@ -385,7 +334,7 @@ export const createStyles = (theme) => StyleSheet.create({
       fontSize: 30,
       fontWeight: '500',
       lineHeight: 32,
-      color: theme.text,
+      color: '#FFFFFF',
       letterSpacing: -0.2,
       marginTop: 10,
       flex: 4,
@@ -395,7 +344,7 @@ export const createStyles = (theme) => StyleSheet.create({
       fontSize: 34,
       fontWeight: '400',
       lineHeight: 48,
-      color: theme.text,
+      color: '#FFFFFF',
       textAlign: 'right',
       textAlignVertical: 'bottom',
       letterSpacing: -0.6,
@@ -425,7 +374,7 @@ export const createStyles = (theme) => StyleSheet.create({
 
     categoryText: {
       fontSize: 14,
-      color: theme.text,
+      color: '#FFFFFF',
       fontWeight: '500',
       letterSpacing: -0.2,
       textTransform: 'capitalize',
@@ -593,14 +542,6 @@ export const createStyles = (theme) => StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginBottom: 10, // Smaller gap between rows
-    },
-
-    expenseCardMonthlyInsightGradient: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
     },
 
     // Shared square base style
@@ -914,7 +855,6 @@ export const createStyles = (theme) => StyleSheet.create({
     bottom: 28,
     right: 19,
     zIndex: 1,
-    elevation: 5,
     margin: 2,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
@@ -927,8 +867,8 @@ export const createStyles = (theme) => StyleSheet.create({
   },
   
   addButton: {
-    width: 62,
-    height: 62,
+    width: 70,
+    height: 70,
     borderRadius: 50,
     overflow: 'hidden',
     backgroundColor: theme.glassBorderColor,
@@ -943,11 +883,11 @@ export const createStyles = (theme) => StyleSheet.create({
   
   addButtonText: {
     color: theme.text, 
-    fontSize: 50,
+    fontSize: 56,
     fontWeight: '300',
     textAlign: 'center',
     paddingLeft: 2,
-    lineHeight: 53,
+    lineHeight: 59,
   },
   
   addButtonDisabled: {
@@ -1038,12 +978,12 @@ export const createStyles = (theme) => StyleSheet.create({
   modalPill: {
     width: 40,
     height: 5,
-    backgroundColor: theme.textSecondary,
+    backgroundColor: theme.modalPillColor,
     borderRadius: 10,
     alignSelf: 'center',
-    marginTop: 14,
+    marginTop: 18,
     marginBottom: 0,
-    opacity: 0.3,
+    opacity: 1,
   },
 
   modalHeader: {
@@ -1073,8 +1013,8 @@ export const createStyles = (theme) => StyleSheet.create({
     color: 'white',
     fontWeight: '500',
     backgroundColor: theme.appleBlue,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 50,
   },
 
@@ -1132,19 +1072,15 @@ export const createStyles = (theme) => StyleSheet.create({
     color: theme.text,
   },
 
-  modalTextArea: {
-    height: 120,
-    textAlignVertical: 'top',
-  },
-
   modalCategoryOption: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: theme.glassBackground,
     borderRadius: 50,
     marginRight: 10,
     borderWidth: 0,
     borderColor: theme.borderColorLighter,
+    position: 'relative',
   },
 
   modalCategoryOptionSelected: {
@@ -1159,7 +1095,9 @@ export const createStyles = (theme) => StyleSheet.create({
   },
 
   modalCategoryTextSelected: {
-    color: theme.appleBlue,
+    color: 'white',
+    fontWeight: '600',
+    zIndex: 1,
   },
 
   // Grocery confirmation modal styles
@@ -1559,6 +1497,84 @@ export const createStyles = (theme) => StyleSheet.create({
   expenseTimeSelectorOptionTextSelected: {
     color: theme.appleBlue,
     fontWeight: '600',
+  },
+  // #endregion
+
+  // #region EXPORT/IMPORT MODAL STYLES
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+
+  modalBlurContainer: {
+    flex: 1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: theme.background,
+    maxHeight: '90%',
+  },
+
+  modalCloseButton: {
+    padding: 8,
+  },
+
+  modalScrollView: {
+    flex: 1,
+  },
+
+  exportImportSection: {
+    marginBottom: 40,
+  },
+
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 8,
+  },
+
+  sectionDescription: {
+    fontSize: 16,
+    color: theme.textSecondary,
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+
+  exportImportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.appleBlue,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+
+  exportImportButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.background,
+  },
+
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+
+  importTextInput: {
+    borderWidth: 1,
+    borderColor: theme.borderColorLighter,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    backgroundColor: theme.glassBackground,
+    color: theme.text,
+    minHeight: 200,
+    marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   // #endregion
 

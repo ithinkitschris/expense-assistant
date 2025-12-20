@@ -8,11 +8,15 @@
 //   ifconfig | grep "inet " | grep -v 127.0.0.1
 
 // ============================================================================
-// API CONFIGURATION
+// API CONFIGURATION (ARCHIVED - No longer used)
 // ============================================================================
 
+// ARCHIVED - Cloud API configuration (no longer used)
+// The app now uses local SQLite storage exclusively.
+// These are preserved for archival/reference purposes only.
+
 // Production API URL (deployed on Railway)
-export const API_BASE_URL = 'https://expense-assistant-production.up.railway.app/api/v1';
+// export const API_BASE_URL = 'https://expense-assistant-production.up.railway.app/api/v1';
 
 // For local development, use your local IP:
 // export const API_BASE_URL = 'http://192.168.1.167:8000/api/v1';
@@ -26,12 +30,12 @@ export const API_BASE_URL = 'https://expense-assistant-production.up.railway.app
 // If your IP is 172.20.10.2:   export const API_BASE_URL = 'http://172.20.10.2:8000/api/v1';
 
 // API Settings
-export const API_CONFIG = {
-  timeout: 30000,  // 30 seconds for AI processing
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
+// export const API_CONFIG = {
+//   timeout: 30000,  // 30 seconds for AI processing
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// };
 
 // ============================================================================
 // DEVELOPMENT FLAGS

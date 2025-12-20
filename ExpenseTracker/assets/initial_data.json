@@ -1,0 +1,1892 @@
+{
+  "version": "1.0",
+  "exported_at": "2025-12-20T14:21:40.352887",
+  "expenses": [
+    {
+      "id": 1,
+      "amount": 38.0,
+      "category": "personal",
+      "description": "Weed",
+      "timestamp": "2025-07-01T00:00:00"
+    },
+    {
+      "id": 2,
+      "amount": 59.0,
+      "category": "personal",
+      "description": "Lego",
+      "timestamp": "2025-07-01T00:00:00"
+    },
+    {
+      "id": 3,
+      "amount": 13.0,
+      "category": "fashion",
+      "description": "Uniqlo: Underwear",
+      "timestamp": "2025-07-01T04:00:00+00:00"
+    },
+    {
+      "id": 4,
+      "amount": 38.0,
+      "category": "monthly",
+      "description": "Gym",
+      "timestamp": "2025-07-03T03:03:11.978000+00:00"
+    },
+    {
+      "id": 5,
+      "amount": 25.0,
+      "category": "groceries",
+      "description": "Udon, Soba, sauce",
+      "timestamp": "2025-07-03T19:21:59.275427"
+    },
+    {
+      "id": 6,
+      "amount": 14.0,
+      "category": "food",
+      "description": "Curry Katsu",
+      "timestamp": "2025-07-03T19:21:59.279400"
+    },
+    {
+      "id": 7,
+      "amount": 338.0,
+      "category": "travel",
+      "description": "JFK > AMS",
+      "timestamp": "2025-06-24T00:00:00"
+    },
+    {
+      "id": 8,
+      "amount": 347.0,
+      "category": "travel",
+      "description": "CDG > JFK",
+      "timestamp": "2025-06-30T00:00:00"
+    },
+    {
+      "id": 9,
+      "amount": 150.0,
+      "category": "travel",
+      "description": "Amsterdam Hotel",
+      "timestamp": "2025-06-28T00:00:00"
+    },
+    {
+      "id": 10,
+      "amount": 172.0,
+      "category": "travel",
+      "description": "Frankfurt Hotel",
+      "timestamp": "2025-06-30T04:00:00+00:00"
+    },
+    {
+      "id": 11,
+      "amount": 235.0,
+      "category": "travel",
+      "description": "Paris Hotel",
+      "timestamp": "2025-06-30T04:00:00+00:00"
+    },
+    {
+      "id": 12,
+      "amount": 157.0,
+      "category": "travel",
+      "description": "Frankfurt Car Rental",
+      "timestamp": "2025-07-01T01:11:09.278000+00:00"
+    },
+    {
+      "id": 13,
+      "amount": 120.0,
+      "category": "travel",
+      "description": "Train Ticket from Frankfurt to Paris",
+      "timestamp": "2025-07-01T01:11:23.070000+00:00"
+    },
+    {
+      "id": 14,
+      "amount": 6.0,
+      "category": "food",
+      "description": "Double Cheeseburger Bacon + Apple Pie at McDonalds",
+      "timestamp": "2025-07-05T20:21:34.916175"
+    },
+    {
+      "id": 15,
+      "amount": 24.0,
+      "category": "furniture",
+      "description": "Home Depot, Shelf, Drill Bit.",
+      "timestamp": "2025-07-06T17:52:07.842994"
+    },
+    {
+      "id": 16,
+      "amount": 40.0,
+      "category": "groceries",
+      "description": "Trader Joe's: Ravioli, 2 Chocolates, Midnight Moo, Double Cream Brie, Shaved Steak, Sourdough Bread, White Bread, White Onion",
+      "timestamp": "2025-07-06T17:53:09.954136"
+    },
+    {
+      "id": 17,
+      "amount": 3.0,
+      "category": "groceries",
+      "description": "Milk",
+      "timestamp": "2025-07-07T19:12:40.485684"
+    },
+    {
+      "id": 18,
+      "amount": 19.0,
+      "category": "amazon",
+      "description": "Bandages, Antiseptic Wipe.",
+      "timestamp": "2025-07-07T19:13:43.532312"
+    },
+    {
+      "id": 19,
+      "amount": 87.0,
+      "category": "amazon",
+      "description": "Ninja Air Fryer AF141.",
+      "timestamp": "2025-07-08T10:49:15.953864"
+    },
+    {
+      "id": 20,
+      "amount": 6.0,
+      "category": "groceries",
+      "description": "Eggs",
+      "timestamp": "2025-07-08T21:07:54.277930"
+    },
+    {
+      "id": 21,
+      "amount": 7.0,
+      "category": "groceries",
+      "description": "Pistachio Ice Cream",
+      "timestamp": "2025-07-08T21:07:54.283727"
+    },
+    {
+      "id": 22,
+      "amount": 14.0,
+      "category": "amazon",
+      "description": "Nature's Bounty Gummy.",
+      "timestamp": "2025-07-09T10:12:30.972859"
+    },
+    {
+      "id": 23,
+      "amount": 8.0,
+      "category": "groceries",
+      "description": "Cheese",
+      "timestamp": "2025-07-10T02:24:21.968000+00:00"
+    },
+    {
+      "id": 24,
+      "amount": 75.0,
+      "category": "personal",
+      "description": "Comedy Cellar",
+      "timestamp": "2025-07-09T22:24:21.972728"
+    },
+    {
+      "id": 25,
+      "amount": 8.0,
+      "category": "personal",
+      "description": "New York Magazine.",
+      "timestamp": "2025-07-09T22:24:21.973309"
+    },
+    {
+      "id": 26,
+      "amount": 50.0,
+      "category": "transportation",
+      "description": "OMNY.",
+      "timestamp": "2025-07-10T09:30:08.503314"
+    },
+    {
+      "id": 27,
+      "amount": 6.0,
+      "category": "food",
+      "description": "Hungarian Bakery Cake.",
+      "timestamp": "2025-07-10T21:07:55.616665"
+    },
+    {
+      "id": 28,
+      "amount": 63.0,
+      "category": "groceries",
+      "description": "Weee: Minced Garlic, Beef Slices, Mid-joint wings, Kang Kong, Soy Beans, Seaweed Flakes, Enoki Mushroom, Radish Cake.",
+      "timestamp": "2025-07-11T16:13:18.510150"
+    },
+    {
+      "id": 29,
+      "amount": 20.0,
+      "category": "amazon",
+      "description": "Toilet Paper, Toothpaste. ",
+      "timestamp": "2025-07-13T09:47:30.132437"
+    },
+    {
+      "id": 30,
+      "amount": 3.0,
+      "category": "personal",
+      "description": "Q Train Magnet",
+      "timestamp": "2025-07-14T19:19:24.868787"
+    },
+    {
+      "id": 31,
+      "amount": 35.0,
+      "category": "transportation",
+      "description": "Metro-North to Beacon",
+      "timestamp": "2025-07-14T19:19:55.172752"
+    },
+    {
+      "id": 32,
+      "amount": 12.0,
+      "category": "personal",
+      "description": "DIA Beacon",
+      "timestamp": "2025-07-14T19:20:07.860162"
+    },
+    {
+      "id": 33,
+      "amount": 48.0,
+      "category": "groceries",
+      "description": "Trader Joes: Ground beef. Chicken thighs. Eggs. Brownies. Lemon batons. Red grapes. Red Onion. White onion. Wet wipes. Milk chocolate. 4x bananas.",
+      "timestamp": "2025-07-16T19:00:55.076193"
+    },
+    {
+      "id": 34,
+      "amount": 12.0,
+      "category": "food",
+      "description": "Halal Guys Beef Gyro ",
+      "timestamp": "2025-07-17T16:27:43.481904"
+    },
+    {
+      "id": 35,
+      "amount": 68.0,
+      "category": "furniture",
+      "description": "Kit Cat Clock",
+      "timestamp": "2025-07-17T16:28:05.904656"
+    },
+    {
+      "id": 36,
+      "amount": 8.0,
+      "category": "food",
+      "description": "Leo\u2019s Bagels Nova Spread",
+      "timestamp": "2025-07-19T16:06:09.039309"
+    },
+    {
+      "id": 37,
+      "amount": 54.0,
+      "category": "furniture",
+      "description": "IKEA: FRAKTA Storage bag, MOLNART LED Bulb, LUNNOM LED Bulb, Vase, Hangers, Papertowel Holder, Wok turner, Skadis elastic cord, Shoe rack.",
+      "timestamp": "2025-07-19T16:59:00+00:00"
+    },
+    {
+      "id": 38,
+      "amount": 7.0,
+      "category": "amazon",
+      "description": "Tissue Paper x3",
+      "timestamp": "2025-07-21T18:46:01.848473"
+    },
+    {
+      "id": 39,
+      "amount": 76.0,
+      "category": "monthly",
+      "description": "ConEd",
+      "timestamp": "2025-07-22T07:40:13.447603"
+    },
+    {
+      "id": 40,
+      "amount": 23.0,
+      "category": "fashion",
+      "description": "Aritzia: Top",
+      "timestamp": "2025-07-22T18:26:57.657479"
+    },
+    {
+      "id": 45,
+      "amount": 45.0,
+      "category": "groceries",
+      "description": "Trader Joes: Sourdough bread, Milk Chocolate, Crispy Rice Chocolate, Applewood Bacon, Chickpea Fusili, Shredded Hash Browns, Mango Yoghurt, Blueberry Yoghurt, Baby Bella mushrooms, Campari Tomatoes, Blueberries, Milk.",
+      "timestamp": "2025-07-24T00:38:52.283000+00:00"
+    },
+    {
+      "id": 46,
+      "amount": 40.0,
+      "category": "monthly",
+      "description": "Verizon",
+      "timestamp": "2025-07-25T08:55:25.663643"
+    },
+    {
+      "id": 47,
+      "amount": 20.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-07-26T22:45:09.959488"
+    },
+    {
+      "id": 48,
+      "amount": 14.0,
+      "category": "food",
+      "description": "Xi An Famous Foods: N1",
+      "timestamp": "2025-07-26T22:45:42.794487"
+    },
+    {
+      "id": 49,
+      "amount": 75.0,
+      "category": "fashion",
+      "description": "KIDA: Haircut ",
+      "timestamp": "2025-07-28T22:10:27.878533"
+    },
+    {
+      "id": 50,
+      "amount": 65.0,
+      "category": "groceries",
+      "description": "US1 Supermarket: Strawberries, Chicken Breast, Beef steak, Old town white coffee, Udon noodles, soba noodles, mixed taro balls, Enoki Mushroom, Laoganma.",
+      "timestamp": "2025-07-28T02:33:35.186000+00:00"
+    },
+    {
+      "id": 51,
+      "amount": 46.0,
+      "category": "furniture",
+      "description": "Wok",
+      "timestamp": "2025-08-01T14:09:06.522000+00:00"
+    },
+    {
+      "id": 52,
+      "amount": 12.0,
+      "category": "personal",
+      "description": "Film development + Scan",
+      "timestamp": "2025-08-01T14:09:41.592000+00:00"
+    },
+    {
+      "id": 53,
+      "amount": 20.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-08-02T21:10:02.767000+00:00"
+    },
+    {
+      "id": 54,
+      "amount": 20.0,
+      "category": "food",
+      "description": "Shake Shack\u2014JFK",
+      "timestamp": "2025-08-02T17:10:29.857249"
+    },
+    {
+      "id": 55,
+      "amount": 5.0,
+      "category": "amazon",
+      "description": "Ice Trays",
+      "timestamp": "2025-07-28T21:24:49.136000+00:00"
+    },
+    {
+      "id": 56,
+      "amount": 7.0,
+      "category": "amazon",
+      "description": "3M Hook",
+      "timestamp": "2025-07-28T21:25:13.034000+00:00"
+    },
+    {
+      "id": 57,
+      "amount": 10.0,
+      "category": "amazon",
+      "description": "3M Velcro",
+      "timestamp": "2025-07-30T21:25:32.403000+00:00"
+    },
+    {
+      "id": 58,
+      "amount": 46.0,
+      "category": "groceries",
+      "description": "Trader Joes: Black Sesame Mochi, Lemon Baton Wafer, Vegetable Gyoza, Palek Paneer, Tofu, Shredded Hash Browns, Channa Masala, Basil, Milk Chocolate, Crispy Rice Chocolate, Mango Yoghurt, Baby Bella Mushroom, Blueberry Yoghurt, Bananas",
+      "timestamp": "2025-08-17T00:24:40.999000+00:00"
+    },
+    {
+      "id": 59,
+      "amount": 31.0,
+      "category": "groceries",
+      "description": "Trader Joes: Minced Beef, Shaved Beef, Milk, Eggs, Baby Bella Mushrooms, Red Onion, Spaghetti, Banana, Potato",
+      "timestamp": "2025-08-15T00:28:02.924000+00:00"
+    },
+    {
+      "id": 60,
+      "amount": 45.0,
+      "category": "groceries",
+      "description": "Trader Joes: Salt and Pepper Chips, Chicken Thighs, Eggs, Meatless Bulgolgi, Smart Dogs, Mango Yoghurt, Spaghetti, Salad Avocado, Red Onion, White Onion, Fuji Apple, Banana, Baby Bella Mushroom, Shiitake Mushroom.",
+      "timestamp": "2025-08-23T00:31:12.620000+00:00"
+    },
+    {
+      "id": 61,
+      "amount": 73.0,
+      "category": "personal",
+      "description": "Film Development + Scan",
+      "timestamp": "2025-08-15T00:34:51.970000+00:00"
+    },
+    {
+      "id": 62,
+      "amount": 16.0,
+      "category": "food",
+      "description": "Xi An Famous Foods",
+      "timestamp": "2025-08-15T00:35:34.085000+00:00"
+    },
+    {
+      "id": 63,
+      "amount": 20.0,
+      "category": "monthly",
+      "description": "Laundry",
+      "timestamp": "2025-08-15T00:36:10.483000+00:00"
+    },
+    {
+      "id": 64,
+      "amount": 6.0,
+      "category": "personal",
+      "description": "Design of Everyday Things",
+      "timestamp": "2025-08-15T00:36:35.345000+00:00"
+    },
+    {
+      "id": 65,
+      "amount": 18.0,
+      "category": "food",
+      "description": "Tasty Hand-Pulled Noodles",
+      "timestamp": "2025-08-20T00:37:54.749000+00:00"
+    },
+    {
+      "id": 66,
+      "amount": 20.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-08-23T00:38:22.710000+00:00"
+    },
+    {
+      "id": 67,
+      "amount": 11.0,
+      "category": "amazon",
+      "description": "Gatsby Wax",
+      "timestamp": "2025-08-20T00:47:37.254000+00:00"
+    },
+    {
+      "id": 68,
+      "amount": 20.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-09-02T16:53:57.763253"
+    },
+    {
+      "id": 69,
+      "amount": 75.0,
+      "category": "travel",
+      "description": "East Sandwich Accomodations",
+      "timestamp": "2025-08-30T20:54:48.739000+00:00"
+    },
+    {
+      "id": 70,
+      "amount": 35.0,
+      "category": "travel",
+      "description": "Petrol",
+      "timestamp": "2025-08-30T20:55:10.463000+00:00"
+    },
+    {
+      "id": 71,
+      "amount": 20.0,
+      "category": "amazon",
+      "description": "Nishiki Rice + Bike Lubricant",
+      "timestamp": "2025-08-24T20:56:59.931000+00:00"
+    },
+    {
+      "id": 72,
+      "amount": 65.0,
+      "category": "amazon",
+      "description": "Myprotein",
+      "timestamp": "2025-08-24T20:57:25.628000+00:00"
+    },
+    {
+      "id": 73,
+      "amount": 40.0,
+      "category": "fashion",
+      "description": "Uniqlo: Jeans",
+      "timestamp": "2025-09-02T21:01:50.749000+00:00"
+    },
+    {
+      "id": 74,
+      "amount": 63.0,
+      "category": "furniture",
+      "description": "Bankers Lamp",
+      "timestamp": "2025-08-30T21:26:08.431000+00:00"
+    },
+    {
+      "id": 75,
+      "amount": 25.0,
+      "category": "food",
+      "description": "IHOP",
+      "timestamp": "2025-08-30T21:27:09.802000+00:00"
+    },
+    {
+      "id": 76,
+      "amount": 10.0,
+      "category": "food",
+      "description": "Lemon Cake",
+      "timestamp": "2025-08-30T21:27:21.154000+00:00"
+    },
+    {
+      "id": 77,
+      "amount": 28.0,
+      "category": "groceries",
+      "description": "Trader Joes: Sourdough Bread. Chicken, Chai Tea Mints, Gouda, Mango Yoghurt, Chocolate Peanut Granola, Milk, Banana.",
+      "timestamp": "2025-08-26T21:30:38.295000+00:00"
+    },
+    {
+      "id": 78,
+      "amount": 37.0,
+      "category": "groceries",
+      "description": "Trader Joes: Parsley Crackers, Applewood Bacon, Tofu, Soy Sauce, Sugar, Shredded Cheese, Raspberry Yoghurt, Butter, Capsicum, Shishito Peppers, Chicken Broth.",
+      "timestamp": "2025-08-27T13:25:36.520000+00:00"
+    },
+    {
+      "id": 79,
+      "amount": 16.0,
+      "category": "food",
+      "description": "Chiko: Eggplant Salad",
+      "timestamp": "2025-09-06T13:26:09.102000+00:00"
+    },
+    {
+      "id": 80,
+      "amount": 12.0,
+      "category": "groceries",
+      "description": "IPA Beer",
+      "timestamp": "2025-09-06T13:26:26.595000+00:00"
+    },
+    {
+      "id": 81,
+      "amount": 27.0,
+      "category": "groceries",
+      "description": "Trader Joes: Peanut Butter Chocolate Granola, Tofu, Spaghetti, Gouda, Cottage Cheese, Mango Yoghurt, Blueberry Yoghurt, Baby Bella Mushrooms, Campari Tomatoes, Yellow Onion, Banana.",
+      "timestamp": "2025-09-03T13:28:21.097000+00:00"
+    },
+    {
+      "id": 82,
+      "amount": 13.0,
+      "category": "food",
+      "description": "Chipotle",
+      "timestamp": "2025-09-04T13:28:49.775000+00:00"
+    },
+    {
+      "id": 83,
+      "amount": 18.0,
+      "category": "groceries",
+      "description": "Trader Joes: Black Sesame Mochi, Meatless Minced Beef, Milk, Vegetable Broth, Red Onion, Fuji Apple, Spiced Chai Tea.",
+      "timestamp": "2025-09-04T13:30:01.067000+00:00"
+    },
+    {
+      "id": 84,
+      "amount": 5.0,
+      "category": "food",
+      "description": "Trader Joes: Chicken Wrap",
+      "timestamp": "2025-09-08T19:45:43.911000+00:00"
+    },
+    {
+      "id": 85,
+      "amount": 40.0,
+      "category": "fashion",
+      "description": "Muji: Bucket Hat",
+      "timestamp": "2025-09-09T15:46:04.340220"
+    },
+    {
+      "id": 86,
+      "amount": 35.0,
+      "category": "personal",
+      "description": "LAMY Vista",
+      "timestamp": "2025-09-09T19:46:26.110000+00:00"
+    },
+    {
+      "id": 87,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Trader Joes: Ground Beef, Salt and Pepper chips.",
+      "timestamp": "2025-09-08T19:48:57.490000+00:00"
+    },
+    {
+      "id": 88,
+      "amount": 10.0,
+      "category": "amazon",
+      "description": "Toilet Paper",
+      "timestamp": "2025-09-07T19:49:43.961000+00:00"
+    },
+    {
+      "id": 89,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Listerine",
+      "timestamp": "2025-09-11T15:24:01.864115"
+    },
+    {
+      "id": 90,
+      "amount": 20.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-09-11T18:13:49.253907"
+    },
+    {
+      "id": 91,
+      "amount": 14.0,
+      "category": "groceries",
+      "description": "Trader Joes: 2x Salad, Honey Lemon Drops, Banana, Black Sesame Mochi. ",
+      "timestamp": "2025-09-11T18:14:20.703785"
+    },
+    {
+      "id": 92,
+      "amount": 11.0,
+      "category": "food",
+      "description": "Chick Fil A: Pretzel Spicy Burger. ",
+      "timestamp": "2025-09-15T15:23:47.908055"
+    },
+    {
+      "id": 93,
+      "amount": 18.0,
+      "category": "amazon",
+      "description": "USB C-3.5, Eartips.",
+      "timestamp": "2025-09-12T19:24:44.823000+00:00"
+    },
+    {
+      "id": 94,
+      "amount": 24.0,
+      "category": "amazon",
+      "description": "Durex, Pill.",
+      "timestamp": "2025-09-13T19:26:03.415000+00:00"
+    },
+    {
+      "id": 95,
+      "amount": 47.0,
+      "category": "furniture",
+      "description": "IKEA: Ivar Shelf",
+      "timestamp": "2025-09-14T19:28:00.021000+00:00"
+    },
+    {
+      "id": 96,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Trader Joes: Milk, Yoghurt, Banana, Tomatoes.",
+      "timestamp": "2025-09-15T14:15:25.159000+00:00"
+    },
+    {
+      "id": 97,
+      "amount": 49.0,
+      "category": "groceries",
+      "description": "Trader Joes: Beefless Ground Beef, Cream Chesse, Connamon bread, Pita bread, Mushrooms, Falafel, Chesse sticks, Pasta, Salad, Gouda, Shredded cheese, Avocado, Onion, cucumber, kale.",
+      "timestamp": "2025-09-16T14:16:49.538000+00:00"
+    },
+    {
+      "id": 98,
+      "amount": 41.0,
+      "category": "groceries",
+      "description": "Chicken Thighs, Eggs, Hash browns, Olive oil, Chocolate pretzels, Yoghurt, Canned tuna",
+      "timestamp": "2025-09-18T14:18:02.535000+00:00"
+    },
+    {
+      "id": 99,
+      "amount": 15.0,
+      "category": "amazon",
+      "description": "Shoe Dog: Phil Knight. ",
+      "timestamp": "2025-09-24T10:28:51.464091"
+    },
+    {
+      "id": 100,
+      "amount": 10.0,
+      "category": "food",
+      "description": "Midos: Lamb over rice.",
+      "timestamp": "2025-09-25T13:36:09+00:00"
+    },
+    {
+      "id": 101,
+      "amount": 50.0,
+      "category": "transportation",
+      "description": "OMNY",
+      "timestamp": "2025-09-24T13:36:34.450000+00:00"
+    },
+    {
+      "id": 102,
+      "amount": 10.0,
+      "category": "fashion",
+      "description": "Primark Sweater",
+      "timestamp": "2025-09-24T13:37:11.527000+00:00"
+    },
+    {
+      "id": 103,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Key Food: Milk, Kitchen roll.",
+      "timestamp": "2025-09-24T13:38:07.103000+00:00"
+    },
+    {
+      "id": 104,
+      "amount": 35.0,
+      "category": "personal",
+      "description": "Weed",
+      "timestamp": "2025-09-23T01:26:51.021000+00:00"
+    },
+    {
+      "id": 105,
+      "amount": 45.0,
+      "category": "groceries",
+      "description": "Trader Joes: Rosemary Potato Chips, Ground Beef, Peanut chocolate granola, Dips, Shoshito Peppers, Parsley, Yoghurt, Tomatoes, Avocado Salad, Mishrooms, Banana, Lettuce.",
+      "timestamp": "2025-09-28T01:28:31.174000+00:00"
+    },
+    {
+      "id": 106,
+      "amount": 195.0,
+      "category": "fashion",
+      "description": "Nike x Jacquemus Moon Shoe",
+      "timestamp": "2025-09-29T21:29:24.697560"
+    },
+    {
+      "id": 107,
+      "amount": 27.0,
+      "category": "amazon",
+      "description": "Designing Interactions: Bill Moggridge",
+      "timestamp": "2025-09-29T01:30:40.035000+00:00"
+    },
+    {
+      "id": 109,
+      "amount": 31.0,
+      "category": "groceries",
+      "description": "Trader Joes. ",
+      "timestamp": "2025-10-02T20:17:34.747862"
+    },
+    {
+      "id": 110,
+      "amount": 35.0,
+      "category": "fashion",
+      "description": "Aritzia: Black NY Cap",
+      "timestamp": "2025-10-02T20:18:15.789690"
+    },
+    {
+      "id": 111,
+      "amount": 54.0,
+      "category": "groceries",
+      "description": " Nespresso ",
+      "timestamp": "2025-10-04T19:20:23.884184"
+    },
+    {
+      "id": 112,
+      "amount": 65.0,
+      "category": "groceries",
+      "description": "Weee: Haidilao, Green Onion Pancake, Pork Belly, Beef Slices, Coconut Milk, Soy Sauce, White Pepper, Minced Garlic, Century Eggs.",
+      "timestamp": "2025-10-05T14:38:55.057000+00:00"
+    },
+    {
+      "id": 113,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Key Food: Orange Juice, Coke, Scallion.",
+      "timestamp": "2025-10-05T14:41:30.128000+00:00"
+    },
+    {
+      "id": 114,
+      "amount": 14.0,
+      "category": "food",
+      "description": "Bite: Middle Eastern Turkey II",
+      "timestamp": "2025-10-09T14:59:50.819000+00:00"
+    },
+    {
+      "id": 115,
+      "amount": 10.0,
+      "category": "groceries",
+      "description": "Trader Joes: Yoghurt, Chips, Bread Stick.",
+      "timestamp": "2025-10-09T15:00:18.922000+00:00"
+    },
+    {
+      "id": 116,
+      "amount": 10.0,
+      "category": "personal",
+      "description": "Emotional Design: Don Norman.",
+      "timestamp": "2025-10-08T15:01:55.191000+00:00"
+    }
+  ],
+  "pantry_items": [
+    {
+      "id": 2,
+      "name": "Red onion",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 4,
+      "name": "Brownie brookies",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": true,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 7,
+      "name": "Chicken thighs",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 8,
+      "name": "Red grapes",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 9,
+      "name": "Ground Beef",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 10,
+      "name": "Lemon wafers",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-16 23:00:58",
+      "is_consumed": true,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 11,
+      "name": "Minced garlic",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 12,
+      "name": "Soy Beans",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 13,
+      "name": "Seaweed flakes",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 14,
+      "name": "Radish cake",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 15,
+      "name": "Kang kong",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": true,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 16,
+      "name": "Beef slices",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 17,
+      "name": "Enoki mushroom",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 03:54:13",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 21,
+      "name": "White bread",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 13:28:42",
+      "is_consumed": true,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 26,
+      "name": "Lemon wafers",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 15:20:36",
+      "is_consumed": true,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 27,
+      "name": "Brie",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 15:20:36",
+      "is_consumed": true,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 30,
+      "name": "Shaved beef",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 15:20:36",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 31,
+      "name": "Mid joint wings",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-17 15:20:36",
+      "is_consumed": true,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 32,
+      "name": "White Onion",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:28:22",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 33,
+      "name": "Vegetable Gyoza",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:43",
+      "is_consumed": false,
+      "grocery_type": "frozen"
+    },
+    {
+      "id": 34,
+      "name": "Chicken Breast",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:45",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 35,
+      "name": "Impossible Nuggets",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:47",
+      "is_consumed": true,
+      "grocery_type": "frozen"
+    },
+    {
+      "id": 36,
+      "name": "Tomato Ravioli",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:49",
+      "is_consumed": true,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 38,
+      "name": "Honey Yogurt",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:53",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 39,
+      "name": "Hash Browns",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:55",
+      "is_consumed": false,
+      "grocery_type": "frozen"
+    },
+    {
+      "id": 40,
+      "name": "Blueberries",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:57",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 41,
+      "name": "Cheddar Sausage",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:32:59",
+      "is_consumed": true,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 42,
+      "name": "Kaya",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:01",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 43,
+      "name": "Butter",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:03",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 44,
+      "name": "Parmigiano Reggiano",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:05",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 45,
+      "name": "Mozzarella",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:06",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 46,
+      "name": "Rosemary Ham",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:08",
+      "is_consumed": true,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 47,
+      "name": "Black Forest Ham",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:33:11",
+      "is_consumed": true,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 48,
+      "name": "Salt and Pepper Chips",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:37:36",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 49,
+      "name": "Zhujiajiang Vinegar",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:02",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 50,
+      "name": "Hoi Sin Sauce",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:04",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 51,
+      "name": "Oyster Sauce",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:06",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 52,
+      "name": "Fish Sauce",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:07",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 53,
+      "name": "Soy Sauce",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:09",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 54,
+      "name": "Shaoxing Cooking Wine",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:10",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 55,
+      "name": "Sesame Oil",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:12",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 56,
+      "name": "Mirin Wine",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:14",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 57,
+      "name": "Honey",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:15",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 58,
+      "name": "Rice Vinegar",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:17",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 59,
+      "name": "Cardamom (Ground)",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:18",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 60,
+      "name": "Red Wine",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:22",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 61,
+      "name": "White Wine",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:23",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 62,
+      "name": "Ikan Bilis",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:25",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 63,
+      "name": "Peanut Butter",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:52:26",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 64,
+      "name": "Turmeric Powder",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:37",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 65,
+      "name": "Bay Leaves",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:38",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 66,
+      "name": "Potato",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:40",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 67,
+      "name": "Lemon Chilli Sauce",
+      "quantity": 4.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:41",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 68,
+      "name": "Mango Black Tea",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:44",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 69,
+      "name": "Old Town White Coffee",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:45",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 70,
+      "name": "Olive Oil",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:47",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 71,
+      "name": "Star Anise",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:49",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 72,
+      "name": "Cardamom Seeds",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:50",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 73,
+      "name": "Cinnamon Bark",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:52",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 74,
+      "name": "Cloves",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:54",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 75,
+      "name": "Dried Chilli",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:55",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 76,
+      "name": "Ajinomoto MSG",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:56:59",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 77,
+      "name": "Sea Salt",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:57:01",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 78,
+      "name": "Red Peppercorn",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-21 20:57:03",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 79,
+      "name": "Peanut Butter Chocolate Granola",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-22 11:00:08",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 80,
+      "name": "Blueberries",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-22 11:00:32",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 90,
+      "name": "eggs",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:31:07",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 94,
+      "name": "Sourdough Bread",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:03",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 96,
+      "name": "Crispy Rice Chocolate",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:08",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 97,
+      "name": "Applewood Bacon",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:10",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 98,
+      "name": "Chickpea Fusili",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:12",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 99,
+      "name": "Shredded Hash Browns",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:14",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 100,
+      "name": "Mango Yogurt",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:15",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 101,
+      "name": "Blueberry Yogurt",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:17",
+      "is_consumed": true,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 102,
+      "name": "Baby Bella Mushrooms",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:18",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 103,
+      "name": "Campari Tomatoes",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:20",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 104,
+      "name": "Blueberries",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:39:21",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 105,
+      "name": "Banana",
+      "quantity": 5.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 00:48:19",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 106,
+      "name": "Soba Noodles",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 16:43:21",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 107,
+      "name": "Arborio Rice",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 16:44:01",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 108,
+      "name": "Nespresso Rich Chocolate",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 16:44:38",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 109,
+      "name": "Nespresso Stormio",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-24 16:44:40",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 110,
+      "name": "White Rice",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:07",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 111,
+      "name": "Spaghetti",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:12",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 112,
+      "name": "Penne",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:21",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 113,
+      "name": "Linguine",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:30",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 114,
+      "name": "White Noodles",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:38",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 115,
+      "name": "Egg Noodles",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:45",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 116,
+      "name": "Chicken Broth",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:48",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 117,
+      "name": "Vegetable Broth",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-25 14:49:53",
+      "is_consumed": false,
+      "grocery_type": "pantry"
+    },
+    {
+      "id": 118,
+      "name": "Strawberries",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-29 02:33:39",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 119,
+      "name": "Beef Steaak",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-29 02:33:46",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 120,
+      "name": "Udon Noodles",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-29 02:33:58",
+      "is_consumed": false,
+      "grocery_type": "staples"
+    },
+    {
+      "id": 121,
+      "name": "Mixed Taro Balls",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-07-29 02:34:08",
+      "is_consumed": true,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 122,
+      "name": "Laoganma",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-29 02:34:16",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 123,
+      "name": "Broccoli",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:02",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 124,
+      "name": "Angus Meatballs",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:06",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 125,
+      "name": "Gouda",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:10",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 126,
+      "name": "Double Cream Brie",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:14",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 127,
+      "name": "Cod",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:18",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 128,
+      "name": "Cottage Cheese",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:23",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 129,
+      "name": "Tzatziki Dip",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:27",
+      "is_consumed": false,
+      "grocery_type": "condiments"
+    },
+    {
+      "id": 130,
+      "name": "Caesar Salad",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-07-30 17:23:34",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 131,
+      "name": "Black Sesame Mochi",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:24:53",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 132,
+      "name": "Lemon Baton Wafer",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:24:59",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 133,
+      "name": "Palek Paneer",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:25:16",
+      "is_consumed": true,
+      "grocery_type": "other"
+    },
+    {
+      "id": 134,
+      "name": "Tofu",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:25:22",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 135,
+      "name": "Channa Masala",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:25:39",
+      "is_consumed": true,
+      "grocery_type": "other"
+    },
+    {
+      "id": 136,
+      "name": "Basil",
+      "quantity": 0.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:25:45",
+      "is_consumed": true,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 137,
+      "name": "Milk Chocolate",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:25:51",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 138,
+      "name": "Mango Yoghurt",
+      "quantity": 3.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:26:04",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 139,
+      "name": "Baby Bella Mushroom",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:26:10",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 140,
+      "name": "Blueberry Yoghurt",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:26:16",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 141,
+      "name": "Minced Beef",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:28:09",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 142,
+      "name": "Milk",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:28:21",
+      "is_consumed": false,
+      "grocery_type": "dairy"
+    },
+    {
+      "id": 143,
+      "name": "Chicken Thiigs",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:31:24",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 144,
+      "name": "Meatless Bulgolgi",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:31:36",
+      "is_consumed": false,
+      "grocery_type": "meat"
+    },
+    {
+      "id": 145,
+      "name": "Smart Dogs",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:31:44",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 146,
+      "name": "Salad Avocado",
+      "quantity": 2.0,
+      "unit": "pieces",
+      "created_at": "2025-08-25 00:32:02",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    },
+    {
+      "id": 147,
+      "name": "Trader Joes: Sourdough Bread. Chicken",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-09-03 21:30:44",
+      "is_consumed": false,
+      "grocery_type": "bread"
+    },
+    {
+      "id": 148,
+      "name": "Chai Tea Mints",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-09-03 21:30:51",
+      "is_consumed": false,
+      "grocery_type": "beverages"
+    },
+    {
+      "id": 149,
+      "name": "Chocolate Peanut Granola",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-09-03 21:31:10",
+      "is_consumed": false,
+      "grocery_type": "snacks"
+    },
+    {
+      "id": 150,
+      "name": "Banana.",
+      "quantity": 1.0,
+      "unit": "pieces",
+      "created_at": "2025-09-03 21:31:23",
+      "is_consumed": false,
+      "grocery_type": "produce"
+    }
+  ]
+}

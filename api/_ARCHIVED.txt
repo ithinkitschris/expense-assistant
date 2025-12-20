@@ -1,0 +1,11 @@
+ARCHIVED - Cloud Backend Code
+==============================
+
+This directory contains the FastAPI backend code that was previously used
+for cloud-based storage via Railway and PostgreSQL.
+
+The ExpenseTracker app now uses local SQLite storage exclusively.
+
+These files are preserved for archival/reference purposes only.
+
+Archived: 2025-12-20

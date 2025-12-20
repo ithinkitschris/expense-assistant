@@ -10,7 +10,8 @@ const EmptyState = ({
   containerStyle = {},
   textStyle = {},
   subtitleStyle = {},
-  styles = {}
+  styles = {},
+  theme
 }) => {
   return (
     <View style={[styles.emptyContainer, containerStyle]}>
@@ -18,7 +19,7 @@ const EmptyState = ({
         name={icon}
         size={iconSize}
         type="outline"
-        tintColor={styles.textTertiary}
+        tintColor={theme?.textTertiary || '#787880'}
         fallback={null}
       />
       <Text style={[styles.emptyText, textStyle]}>

@@ -22,7 +22,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from add_expense import add_expense
 from api.dependencies import get_db
-from api.utils.parsing import parse_grocery_items_and_categories
 
 # Define get_expense_by_id locally to avoid circular import
 def get_expense_by_id(expense_id: int, db):
@@ -367,99 +366,4 @@ async def delete_expense(expense_id: int, db = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete expense: {str(e)}"
-        ) 
-
-@router.post("/expenses/{expense_id}/parse-grocery-to-pantry", response_model=SuccessResponse)
-async def parse_grocery_to_pantry(expense_id: int, db = Depends(get_db)):
-    """
-    Parse a grocery expense description and add the items to the pantry
-    """
-    try:
-        # Get the expense to extract the description
-        expense = get_expense_by_id(expense_id, db)
-        if not expense:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Expense with ID {expense_id} not found"
-            )
-        
-        # Handle both tuple and dict results
-        if isinstance(expense, dict):
-            description = expense["description"]
-        else:
-            description = expense[3]  # description is the 4th column (index 3)
-        if not description or not description.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Expense has no description to parse"
-            )
-        
-        # Parse the description into grocery items using the unified parsing function
-        parsed_items = parse_grocery_items_and_categories(description)
-        
-        if not parsed_items:
-            raise HTTPException(
-                status_code=400,
-                detail="No grocery items found in the expense description"
-            )
-        
-        # Add each parsed item to the pantry
-        c = db.cursor()
-        added_items = []
-        
-        for item in parsed_items:
-            grocery_type = item["category"]
-            item_name = item["item"]
-            
-            # Check if an item with the same name already exists (case-insensitive)
-            c.execute('SELECT id, quantity FROM pantry_items WHERE LOWER(name) = LOWER(%s)', (item_name,))
-            existing_item = c.fetchone()
-            
-            if existing_item:
-                # Item exists, update quantity
-                item_id = existing_item[0] if isinstance(existing_item, tuple) else existing_item["id"]
-                existing_quantity = existing_item[1] if isinstance(existing_item, tuple) else existing_item["quantity"]
-                new_quantity = existing_quantity + 1
-                
-                c.execute('''
-                    UPDATE pantry_items 
-                    SET quantity = %s, is_consumed = %s, grocery_type = %s
-                    WHERE id = %s
-                ''', (new_quantity, False, grocery_type, item_id))
-                
-                added_items.append({
-                    "name": item_name,
-                    "category": grocery_type,
-                    "action": "updated"
-                })
-            else:
-                # Item doesn't exist, create new one
-                c.execute('''
-                    INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type)
-                    VALUES (%s, %s, %s, CURRENT_TIMESTAMP, %s, %s)
-                ''', (item_name, 1, 'pieces', False, grocery_type))
-                
-                added_items.append({
-                    "name": item_name,
-                    "category": grocery_type,
-                    "action": "created"
-                })
-        
-        db.commit()
-        
-        return SuccessResponse(
-            message=f"Successfully parsed and added {len(added_items)} items to pantry",
-            data={
-                "expense_id": expense_id,
-                "parsed_items": added_items,
-                "original_description": description
-            }
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to parse grocery to pantry: {str(e)}"
         ) 

@@ -17,7 +17,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import route modules (we'll create these next)
 from api.routes import expenses, summary
-from api.routes.pantry import pantry_router
 
 # Create the FastAPI application
 app = FastAPI(
@@ -38,7 +37,6 @@ app.add_middleware(
 # Include your API routers
 app.include_router(expenses.router, prefix="/api/v1", tags=["Expenses"])
 app.include_router(summary.router, prefix="/api/v1", tags=["Summary"])
-app.include_router(pantry_router, prefix="/api/v1", tags=["Pantry"])
 
 @app.get("/")
 async def root():

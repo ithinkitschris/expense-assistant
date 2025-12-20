@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, FlatList, Pressable, TextInput, Alert, ScrollView, Animated, useColorScheme, Modal, KeyboardAvoidingView, Platform, Dimensions, TouchableOpacity } from 'react-native';
+import { Text, View, FlatList, Pressable, TextInput, Alert, ScrollView, Animated, useColorScheme, Modal, KeyboardAvoidingView, Platform, Dimensions, TouchableOpacity, Share } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import { expenseAPI } from './services/api';
+import { expenseAPI } from './services/database';
+import { importInitialData } from './services/importInitialData';
 import { createStyles } from './styles';
 import { themes, getGroceryCategoryColor, getExpenseCategoryColor } from './themes';
-import { 
-  DEV_FLAGS, 
-  APP_CONSTANTS, 
-  PICKER_OPTIONS, 
+import {
+  DEV_FLAGS,
+  APP_CONSTANTS,
+  PICKER_OPTIONS,
   VALIDATION_RULES,
   UI_CONSTANTS,
   ERROR_MESSAGES,
@@ -17,9 +18,9 @@ import {
 } from './config';
 import { shiftHue, increaseBrightness, hexToRGB, rgbToHex } from './utils/colorUtils';
 import { toSentenceCase, formatCurrency } from './utils/textUtils';
-import { 
-  calculateTotalAmount, 
-  calculateCategoryTotals, 
+import {
+  calculateTotalAmount,
+  calculateCategoryTotals,
   groupExpensesByDay,
   groupExpensesByMonth,
   getExpenseCountForDay,
@@ -29,21 +30,21 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import WheelAmountPicker from './components/WheelAmountPicker';
-import QuantityPicker from './components/QuantityPicker';
-import PantryCard from './components/PantryCard';
+// import QuantityPicker from './components/QuantityPicker';
+// import PantryCard from './components/PantryCard';
 import { ExpenseCardTotal, ExpenseCardCategory, ExpenseCardMonthly, ExpenseCardCategoryMonthGroup } from './components/ExpenseCard';
 import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import { ActionSheetIOS } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { 
-  AddExpenseModal, 
-  GroceryConfirmModal, 
-  EditExpenseModal, 
-  AddPantryModal, 
-  EditPantryModal 
+import {
+  AddExpenseModal,
+  // GroceryConfirmModal,
+  EditExpenseModal,
+  // AddPantryModal,
+  // EditPantryModal
 } from './components/modals';
-import { ExpensesView, GroceryView, MonthlySummaryView } from './components/views';
+import { ExpensesView, /* GroceryView, */ MonthlySummaryView } from './components/views';
 
 export default function App() {
   // #region STATE & SETUP
@@ -57,7 +58,6 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
-        const [groceryItems, setGroceryItems] = useState({});
     
     // #region Animated Values for Add Button
     const addButtonScale = useRef(new Animated.Value(UI_CONSTANTS.animations.addButtonScale.normal)).current;
@@ -68,9 +68,8 @@ export default function App() {
     // #endregion
     
     // Tab state
-    const [activeTab, setActiveTab] = useState(APP_CONSTANTS.DEFAULT_TAB);
-    const [allPantryItems, setAllPantryItems] = useState([]);
-    const [isLoadingPantryItems, setIsLoadingPantryItems] = useState(false);
+    // PANTRY TAB REMOVED - Force expenses tab always
+    const [activeTab, setActiveTab] = useState('expenses'); // Always expenses, pantry removed
     
     // Add expense modal state
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -78,28 +77,7 @@ export default function App() {
     const [addCategory, setAddCategory] = useState('');
     const [addDescription, setAddDescription] = useState('');
     
-    // Grocery flow state
-    const [isGroceryStep, setIsGroceryStep] = useState(1); // 1: input, 2: confirmation
-    const [parsedGroceryItems, setParsedGroceryItems] = useState([]);
-    const [isParsingGroceries, setIsParsingGroceries] = useState(false);
-    const [existingPantryItems, setExistingPantryItems] = useState([]);
     
-    // Grocery item editing state
-    const [editingGroceryItemIndex, setEditingGroceryItemIndex] = useState(-1);
-    const [editingGroceryItemText, setEditingGroceryItemText] = useState('');
-    const [isAddingNewItem, setIsAddingNewItem] = useState(false);
-    const [newItemText, setNewItemText] = useState('');
-    
-    // Add pantry item modal state
-    const [isAddPantryModalVisible, setIsAddPantryModalVisible] = useState(false);
-    const [addPantryItemName, setAddPantryItemName] = useState('');
-    const [addPantryItemQuantity, setAddPantryItemQuantity] = useState(APP_CONSTANTS.DEFAULT_QUANTITY);
-    const [addPantryItemUnit, setAddPantryItemUnit] = useState(APP_CONSTANTS.DEFAULT_UNIT);
-  
-    // Multi-item pantry entry state
-    const [isPantryStep, setIsPantryStep] = useState(1); // 1: input, 2: confirmation
-    const [parsedPantryItems, setParsedPantryItems] = useState([]);
-    const [isParsingPantryItems, setIsParsingPantryItems] = useState(false);
     
     // Edit modal state
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -107,6 +85,10 @@ export default function App() {
     const [editAmount, setEditAmount] = useState('');
     const [editCategory, setEditCategory] = useState('');
     const [editDescription, setEditDescription] = useState('');
+    
+    // Export/Import modal state
+    const [isExportImportModalVisible, setIsExportImportModalVisible] = useState(false);
+    const [importText, setImportText] = useState('');
     
     // Calendar state
     const [selectedDay, setSelectedDay] = useState(() => {
@@ -127,23 +109,15 @@ export default function App() {
     const programmaticScrollTimeout = useRef(null);
     const { width: screenWidth } = Dimensions.get('window');
 
-    // Add state for pantry edit modal
-    const [isEditPantryModalVisible, setIsEditPantryModalVisible] = useState(false);
-    const [editingPantryItem, setEditingPantryItem] = useState(null);
-    const [editPantryItemName, setEditPantryItemName] = useState('');
-    const [editPantryItemQuantity, setEditPantryItemQuantity] = useState(APP_CONSTANTS.DEFAULT_QUANTITY);
-    const [editPantryItemUnit, setEditPantryItemUnit] = useState(APP_CONSTANTS.DEFAULT_UNIT);
-    const [editPantryItemCategory, setEditPantryItemCategory] = useState(APP_CONSTANTS.DEFAULT_CATEGORY);
-    
-    // MinusQuantityPlus expansion state
-    const [expandedQuantityId, setExpandedQuantityId] = useState(null);
+    // MinusQuantityPlus expansion state - REMOVED (pantry only)
+    // const [expandedQuantityId, setExpandedQuantityId] = useState(null);
 
     // Add state for editTimestamp and picker visibility
     const [editTimestamp, setEditTimestamp] = useState('');
 
-    // Add state for grocery categories (fetched from backend)
-    const [groceryCategories, setGroceryCategories] = useState([]);
-    const [isLoadingGroceryCategories, setIsLoadingGroceryCategories] = useState(true);
+    // Add state for grocery categories (fetched from backend) - REMOVED (pantry only)
+    // const [groceryCategories, setGroceryCategories] = useState([]);
+    // const [isLoadingGroceryCategories, setIsLoadingGroceryCategories] = useState(true);
 
     // Add state for day/monthly view toggle
     const [viewMode, setViewMode] = useState(APP_CONSTANTS.DEFAULT_VIEW_MODE);
@@ -209,11 +183,11 @@ export default function App() {
               duration: 200,
               useNativeDriver: false,
             }),
-            Animated.timing(groceryHeaderTranslateY, {
-              toValue: -200,
-              duration: 200,
-              useNativeDriver: true,
-            }),
+            // Animated.timing(groceryHeaderTranslateY, {
+            //   toValue: -200,
+            //   duration: 200,
+            //   useNativeDriver: true,
+            // }),
             Animated.timing(topGradientTranslateY, {
               toValue: -150,
               duration: 200,
@@ -265,11 +239,11 @@ export default function App() {
               duration: 200,
               useNativeDriver: false,
             }),
-            Animated.timing(groceryHeaderTranslateY, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }),
+            // Animated.timing(groceryHeaderTranslateY, {
+            //   toValue: 0,
+            //   duration: 200,
+            //   useNativeDriver: true,
+            // }),
             Animated.timing(topGradientTranslateY, {
               toValue: 0,
               duration: 200,
@@ -375,7 +349,7 @@ export default function App() {
       const bottomGradientOpacity = useRef(new Animated.Value(1)).current;
       const bottomGradientTranslateY = useRef(new Animated.Value(0)).current;
       const dayTitleFontSize = useRef(new Animated.Value(32)).current; // Initial font size
-      const groceryHeaderTranslateY = useRef(new Animated.Value(0)).current;
+      // const groceryHeaderTranslateY = useRef(new Animated.Value(0)).current; // PANTRY REMOVED
       const topGradientTranslateY = useRef(new Animated.Value(0)).current;
       const lastScrollY = useRef(0);
       const lastScrollX = useRef(0);
@@ -391,22 +365,22 @@ export default function App() {
       const currentTheme = themes[isDarkMode ? 'dark' : 'light'];
       const styles = createStyles(currentTheme);
 
-      // Fetch grocery categories from backend on mount
-      useEffect(() => {
-        const fetchGroceryCategories = async () => {
-          setIsLoadingGroceryCategories(true);
-          try {
-            const data = await expenseAPI.getGroceryCategories();
-            setGroceryCategories(data);
-          } catch (error) {
-            console.error('Error fetching grocery categories:', error);
-            setGroceryCategories([]);
-          } finally {
-            setIsLoadingGroceryCategories(false);
-          }
-        };
-        fetchGroceryCategories();
-      }, []);
+      // Fetch grocery categories from backend on mount - REMOVED (pantry only)
+      // useEffect(() => {
+      //   const fetchGroceryCategories = async () => {
+      //     setIsLoadingGroceryCategories(true);
+      //     try {
+      //       const data = await expenseAPI.getGroceryCategories();
+      //       setGroceryCategories(data);
+      //     } catch (error) {
+      //       console.error('Error fetching grocery categories:', error);
+      //       setGroceryCategories([]);
+      //     } finally {
+      //       setIsLoadingGroceryCategories(false);
+      //     }
+      //   };
+      //   fetchGroceryCategories();
+      // }, []);
 
     // #endregion
 
@@ -670,17 +644,32 @@ export default function App() {
 
   // #region API OPERATIONS
 
+  // Import initial data on first launch (if database is empty)
+  useEffect(() => {
+    const importDataOnce = async () => {
+      try {
+        // Check if database is empty
+        const data = await expenseAPI.getExpenses(1);
+        if (data.expenses.length === 0) {
+          // Database is empty, import initial data
+          console.log('📥 Database is empty, importing initial data...');
+          await importInitialData();
+          // Reload expenses after import
+          await loadExpenses();
+        }
+      } catch (error) {
+        console.log('⚠️ Error checking/importing initial data:', error);
+        // Continue anyway - app will work with empty database
+      }
+    };
+    importDataOnce();
+  }, []);
+
   // Load expenses when app starts
   useEffect(() => {
     loadExpenses();
   }, []);
 
-  // Load all pantry items when switching to pantry tab
-  useEffect(() => {
-    if (activeTab === 'pantry') {
-      loadAllPantryItems();
-    }
-  }, [activeTab]);
 
   // Initialize selected day when expenses load
   useEffect(() => {
@@ -696,36 +685,7 @@ export default function App() {
     }
   }, [expenses]);
 
-  // Load all pantry items from API
-  const loadAllPantryItems = async () => {
-    try {
-      setIsLoadingPantryItems(true);
-      const response = await expenseAPI.getAllPantryItems();
-      setAllPantryItems(response || []);
-    } catch (error) {
-      console.log('Failed to load all pantry items:', error);
-      Alert.alert('Error', 'Failed to load pantry items');
-    } finally {
-      setIsLoadingPantryItems(false);
-    }
-  };
 
-  // Load grocery items for grocery expenses
-  const loadGroceryItems = async () => {
-    // This function is deprecated since we're using the new pantry system
-    // Grocery items are now stored in the pantry_items table
-    // We'll keep this function for backward compatibility but it won't do anything
-    console.log('loadGroceryItems called - using new pantry system instead');
-    setGroceryItems({});
-  };
-
-  // Load grocery items when expenses change
-  // This useEffect is deprecated since we're using the new pantry system
-  // useEffect(() => {
-  //   if (expenses.length > 0) {
-  //     loadGroceryItems();
-  //   }
-  // }, [expenses]);
 
   const loadExpenses = async () => {
     try {
@@ -739,239 +699,11 @@ export default function App() {
     }
   };
 
-  const handleGroceryNext = async () => {
-    // Validate form fields for grocery flow
-    if (!addAmount || addAmount === '0' || !addDescription.trim()) {
-      Alert.alert('Error', 'Please fill in all fields and enter an amount greater than $0');
-      return;
-    }
-
-    try {
-      setIsParsingGroceries(true);
-      console.log('🛒 Starting grocery parsing for:', addDescription);
-      console.log('🔍 Current state - isGroceryStep:', isGroceryStep, 'isParsingGroceries:', true);
-      
-      // Test API connection first
-      console.log('🔍 Testing API connection...');
-      const isConnected = await expenseAPI.testConnection();
-      if (!isConnected) {
-        throw new Error('Cannot connect to API server. Please check your network connection.');
-      }
-      console.log('✅ API connection successful');
-      
-      // Parse grocery items using the API service
-      const data = await expenseAPI.parseGroceryItemsFromDescription(addDescription);
-      console.log('✅ Parsed grocery data:', data);
-      
-      // Always use {name, category} structure
-      const items = (data.items || []).map(item => ({
-        name: (item.item || '').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-        category: item.category || 'other'
-      }));
-      
-      console.log('📦 Processed items:', items);
-      setParsedGroceryItems(items);
-      
-      // Load existing grocery items for context
-      await loadExistingGroceryItems();
-      setIsGroceryStep(2);
-      console.log('✅ Successfully moved to grocery step 2');
-      console.log('🔍 Modal states - isAddModalVisible:', isAddModalVisible, 'addCategory:', addCategory, 'isGroceryStep:', 2);
-    } catch (error) {
-      console.error('❌ Grocery parsing error:', error);
-      Alert.alert('Error', `Failed to parse grocery items: ${error.message}`);
-    } finally {
-      setIsParsingGroceries(false);
-      console.log('🔄 Reset parsing state');
-    }
-  };
-
-  const loadExistingGroceryItems = async () => {
-    try {
-      console.log('📦 Loading existing pantry items...');
-      const response = await expenseAPI.getAllPantryItems();
-      // Get unique item names and sort them
-      const uniqueItems = [...new Set(response.map(item => item.name))];
-      setExistingPantryItems(uniqueItems.sort());
-      console.log('✅ Loaded', uniqueItems.length, 'existing pantry items');
-    } catch (error) {
-      console.log('❌ Failed to load existing pantry items:', error);
-      setExistingPantryItems([]);
-    }
-  };
-
-  // Grocery item editing functions
-  const startEditingGroceryItem = (index, currentText) => {
-    setEditingGroceryItemIndex(index);
-    setEditingGroceryItemText(currentText.name);
-  };
-
-  const saveGroceryItemEdit = () => {
-    if (editingGroceryItemText.trim()) {
-      const updatedItems = [...parsedGroceryItems];
-      // Only update the name, keep the category
-      updatedItems[editingGroceryItemIndex] = {
-        ...updatedItems[editingGroceryItemIndex],
-        name: editingGroceryItemText.trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-      };
-      setParsedGroceryItems(updatedItems);
-    }
-    setEditingGroceryItemIndex(-1);
-    setEditingGroceryItemText('');
-  };
-
-  const cancelGroceryItemEdit = () => {
-    setEditingGroceryItemIndex(-1);
-    setEditingGroceryItemText('');
-  };
-
-  const deleteGroceryItem = (index) => {
-    const itemName = parsedGroceryItems[index].name;
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to delete "${itemName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => {
-          const updatedItems = parsedGroceryItems.filter((_, i) => i !== index);
-          setParsedGroceryItems(updatedItems);
-        }}
-      ]
-    );
-  };
-
-  const startAddingNewItem = () => {
-    setIsAddingNewItem(true);
-    setNewItemText('');
-  };
-
-  const saveNewItem = () => {
-    if (newItemText.trim()) {
-      // Add with default category 'other'
-      const sentenceCaseText = newItemText.trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-      setParsedGroceryItems([...parsedGroceryItems, { name: sentenceCaseText, category: 'other' }]);
-    }
-    setIsAddingNewItem(false);
-    setNewItemText('');
-  };
-
-  const cancelAddingNewItem = () => {
-    setIsAddingNewItem(false);
-    setNewItemText('');
-  };
-
-
-
-  const confirmGroceryList = async () => {
-    try {
-      setIsLoading(true);
-      console.log('🛒 Starting grocery expense confirmation...');
-      console.log('📝 Description:', addDescription);
-      console.log('💰 Amount:', addAmount);
-      console.log('📦 Items to add:', parsedGroceryItems);
-      
-      // Test API connection first
-      console.log('🔍 Testing API connection...');
-      const isConnected = await expenseAPI.testConnection();
-      if (!isConnected) {
-        throw new Error('Cannot connect to API server. Please check your network connection.');
-      }
-      
-      // Create the expense
-      const amount = parseInt(addAmount);
-      console.log('🚀 Creating expense...');
-      const response = await expenseAPI.addExpenseStructured(amount, 'groceries', addDescription);
-      console.log('✅ Expense created:', response);
-      
-      // Save the grocery items to pantry using parsedGroceryItems (array of {name, category})
-      console.log('🛒 Adding items to pantry...');
-      for (const item of parsedGroceryItems) {
-        console.log('📦 Adding item:', item.name);
-        try {
-          await expenseAPI.addPantryItemDirectly(
-            item.name,
-            1, // Default quantity to 1 for each grocery item
-            'pieces' // Default unit to 'pieces', or adjust as needed
-          );
-          console.log('✅ Item added successfully:', item.name);
-        } catch (itemError) {
-          console.log('❌ Failed to add item:', item.name, itemError);
-          throw itemError; // Re-throw to be caught by outer catch
-        }
-      }
-      
-      console.log('🎉 All items added successfully!');
-      
-      // Close modal and clear form
-      setIsAddModalVisible(false);
-      setIsGroceryStep(1);
-      setParsedGroceryItems([]);
-      setExistingPantryItems([]);
-      setAddAmount('0');
-      setAddCategory('');
-      setAddDescription('');
-      // Clear editing state
-      setEditingGroceryItemIndex(-1);
-      setEditingGroceryItemText('');
-      setIsAddingNewItem(false);
-      setNewItemText('');
-      // Reload expenses to show the new one
-      await loadExpenses();
-      // Show success alert
-      Alert.alert('Success', 'Grocery expense and pantry items added successfully!');
-    } catch (error) {
-      console.log('❌ Error in confirmGroceryList:', error);
-      console.log('❌ Error type:', typeof error);
-      console.log('❌ Error message:', error.message);
-      console.log('❌ Error stack:', error.stack);
-      console.log('❌ Error toString:', error.toString());
-      console.log('❌ Error constructor:', error.constructor.name);
-      
-      // Try to get more details about the error
-      if (error.response) {
-        console.log('❌ Error response status:', error.response.status);
-        console.log('❌ Error response data:', error.response.data);
-        console.log('❌ Error response headers:', error.response.headers);
-      }
-      
-      if (error.request) {
-        console.log('❌ Error request:', error.request);
-      }
-      
-      let errorMessage = 'Unknown error';
-      try {
-        if (error instanceof Error) {
-          errorMessage = error.message || 'Unknown error occurred';
-        } else if (typeof error === 'string') {
-          errorMessage = error;
-        } else if (error && typeof error === 'object') {
-          // Try to extract meaningful information from the error object
-          if (error.message) {
-            errorMessage = error.message;
-          } else if (error.detail) {
-            errorMessage = error.detail;
-          } else if (error.error) {
-            errorMessage = error.error;
-          } else {
-            errorMessage = JSON.stringify(error);
-          }
-        }
-      } catch (stringifyError) {
-        console.log('❌ Error stringifying error:', stringifyError);
-        errorMessage = 'Failed to process error message';
-      }
-      
-      console.log('📤 Final error message:', errorMessage);
-      Alert.alert('Error', `Failed to add grocery expense: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const addExpense = async () => {
     // Validate form fields
     if (!addAmount || addAmount === '0' || !addCategory.trim() || !addDescription.trim()) {
-      Alert.alert('Error', 'Please fill in all fields and enter an amount greater than $0');
+      Alert.alert('Unable to add expense', 'Enter a dollar amount, category and purchase description.');
       return;
     }
 
@@ -1001,7 +733,7 @@ export default function App() {
       setAddAmount('0');
       setAddCategory('');
       setAddDescription('');
-      
+
       // Reload expenses to show the new one
       await loadExpenses();
       Alert.alert('Success', 'Expense added successfully!');
@@ -1065,113 +797,61 @@ export default function App() {
     }
   };
 
-  const addPantryItem = async () => {
-    // Validate form fields
-    if (!addPantryItemName.trim()) {
-      Alert.alert('Error', 'Please enter pantry item(s)');
-      return;
-    }
-
+  const exportData = async () => {
     try {
       setIsLoading(true);
-      // Parse the items using the unified parsing function
-      const data = await expenseAPI.parseGroceryItemsFromDescription(addPantryItemName.trim());
+      const exportData = await expenseAPI.exportToJSON();
+      const jsonString = JSON.stringify(exportData, null, 2);
       
-      // Convert items to the format we need
-      const items = (data.items || []).map(item => ({
-        name: item.item || '',
-        category: item.category || 'other'
-      }));
+      // Share the JSON data
+      const result = await Share.share({
+        message: jsonString,
+        title: 'Export Expense Data'
+      });
       
-      // Add each item to the pantry
-      for (const item of items) {
-        await expenseAPI.addPantryItemDirectly(
-          item.name,
-          parseFloat(addPantryItemQuantity),
-          addPantryItemUnit
-        );
+      if (result.action === Share.sharedAction) {
+        Alert.alert('Success', 'Data exported successfully! You can now share this with your TestFlight app.');
       }
-      
-      // Close modal and clear form
-      setIsAddPantryModalVisible(false);
-      setAddPantryItemName('');
-      setAddPantryItemQuantity('1');
-      setAddPantryItemUnit('pieces');
-      setIsPantryStep(1);
-      setParsedPantryItems([]);
-      
-      // Reload pantry items to show the new one
-      await loadAllPantryItems();
-      
-      Alert.alert('Success', `Added ${items.length} item(s) to pantry successfully!`);
     } catch (error) {
-      Alert.alert('Error', `Failed to add pantry item: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      Alert.alert('Error', `Failed to export data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePantryNext = async () => {
-    // Validate form fields for pantry flow
-    if (!addPantryItemName.trim()) {
-      Alert.alert('Error', 'Please enter pantry item(s)');
-      return;
-    }
-  
+  const importData = async () => {
     try {
-      setIsParsingPantryItems(true);
-      
-      // Parse pantry items using the API service
-      const data = await expenseAPI.parseGroceryItemsFromDescription(addPantryItemName.trim());
-      // Convert all items to sentence case (first letter capitalized)
-      const sentenceCaseItems = (data.items || []).map(item => ({
-        name: (item.item || '').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-        category: item.category || 'other'
-      }));
-      setParsedPantryItems(sentenceCaseItems);
-      
-      setIsPantryStep(2);
-      
-    } catch (error) {
-      Alert.alert('Error', `Failed to parse pantry items: ${error.message}`);
-    } finally {
-      setIsParsingPantryItems(false);
-    }
-  };
-  
-  const confirmPantryList = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Add each item to the pantry
-      for (const item of parsedPantryItems) {
-        await expenseAPI.addPantryItemDirectly(
-          item.name,
-          parseFloat(addPantryItemQuantity),
-          addPantryItemUnit
-        );
+      if (!importText.trim()) {
+        Alert.alert('Error', 'Please paste the exported JSON data');
+        return;
       }
       
-      // Close modal and clear form
-      setIsAddPantryModalVisible(false);
-      setIsPantryStep(1);
-      setParsedPantryItems([]);
-      setAddPantryItemName('');
-      setAddPantryItemQuantity('1');
-      setAddPantryItemUnit('pieces');
+      setIsLoading(true);
+      const jsonData = JSON.parse(importText);
+      const result = await expenseAPI.importFromJSON(jsonData);
       
-      // Reload pantry items to show the new ones
-      await loadAllPantryItems();
+      // Reload expenses after import
+      await loadExpenses();
       
-      // Show success alert
-      Alert.alert('Success', `Added ${parsedPantryItems.length} item(s) to pantry successfully!`);
+      // Close modal and clear import text
+      setIsExportImportModalVisible(false);
+      setImportText('');
       
+      Alert.alert(
+        'Success', 
+        `Import complete!\nExpenses: ${result.expenses.imported} imported, ${result.expenses.skipped} skipped\nPantry items: ${result.pantry_items.imported} imported, ${result.pantry_items.skipped} skipped`
+      );
     } catch (error) {
-      Alert.alert('Error', `Failed to add pantry items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (error instanceof SyntaxError) {
+        Alert.alert('Error', 'Invalid JSON format. Please check your data and try again.');
+      } else {
+        Alert.alert('Error', `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
   // #endregion
 
   // #region EVENT HANDLERS
@@ -1182,8 +862,8 @@ export default function App() {
       return;
     }
     
-    // Handle scroll-based UI hiding for 'All' category and pantry view
-    if (selectedCategory !== 'All' && activeTab !== 'pantry') {
+    // Handle scroll-based UI hiding for 'All' category
+    if (selectedCategory !== 'All') {
       return;
     }
     
@@ -1264,133 +944,6 @@ export default function App() {
     }
   };
 
-  // Handle quantity changes (increase/decrease)
-  const handleQuantityChange = async (item, change) => {
-    const newQuantity = Math.max(0, item.quantity + change);
-    const isConsumed = newQuantity === 0;
-
-    // Optimistic update: update UI immediately
-    const updatedItems = allPantryItems.map(pantryItem => {
-      if (pantryItem.id === item.id) {
-        return {
-          ...pantryItem,
-          quantity: newQuantity,
-          is_consumed: isConsumed
-        };
-      }
-      return pantryItem;
-    });
-    setAllPantryItems(updatedItems);
-
-    try {
-      await expenseAPI.updatePantryItem(
-        item.id,
-        item.name,
-        newQuantity,
-        item.unit,
-        isConsumed,
-        item.grocery_type // Always use the item's current category
-      );
-    } catch (error) {
-      // Revert optimistic update on error
-      await loadAllPantryItems();
-      Alert.alert('Error', `Failed to update quantity: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
-  // Handler to show ActionSheet for pantry item
-  const showPantryActionSheet = (item) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Edit', 'Delete'],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: 2,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            // Edit
-            setEditingPantryItem(item);
-            setEditPantryItemName(item.name);
-            setEditPantryItemQuantity(item.quantity ? item.quantity.toString() : '1');
-            setEditPantryItemUnit(item.unit || 'pieces');
-            setEditPantryItemCategory(item.grocery_type || 'other');
-            setIsEditPantryModalVisible(true);
-          } else if (buttonIndex === 2) {
-            // Delete
-            Alert.alert(
-              'Delete Pantry Item',
-              `Are you sure you want to delete "${item.name}"?`,
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => deletePantryItem(item.id) },
-              ]
-            );
-          }
-        }
-      );
-    } else {
-      console.log('Action sheet not supported on Android');
-    }
-  };
-
-  // Delete pantry item handler
-  const deletePantryItem = async (itemId) => {
-    try {
-      setIsLoading(true);
-      await expenseAPI.deletePantryItem(itemId);
-      await loadAllPantryItems();
-      Alert.alert('Success', 'Pantry item deleted successfully!');
-    } catch (error) {
-      Alert.alert('Error', `Failed to delete pantry item: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Edit pantry item handler
-  const updatePantryItem = async () => {
-    if (!editingPantryItem || !editPantryItemName.trim()) {
-      Alert.alert('Error', 'Please enter a pantry item name');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await expenseAPI.updatePantryItem(
-        editingPantryItem.id, 
-        editPantryItemName.trim(),
-        parseFloat(editPantryItemQuantity),
-        editPantryItemUnit,
-        editingPantryItem.is_consumed,
-        editPantryItemCategory // Always use the selected/edited category
-      );
-      setIsEditPantryModalVisible(false);
-      setEditingPantryItem(null);
-      setEditPantryItemName('');
-      setEditPantryItemQuantity('1');
-      setEditPantryItemUnit('pieces');
-      setEditPantryItemCategory('other');
-      await loadAllPantryItems();
-      Alert.alert('Success', 'Pantry item updated successfully!');
-    } catch (error) {
-      Alert.alert('Error', `Failed to update pantry item: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle grocery category scroll with haptic feedback
-  const handleGroceryCategoryScroll = (event) => {
-    const currentScrollX = event.nativeEvent.contentOffset.x;
-    const scrollDifference = Math.abs(currentScrollX - (lastScrollX.current || 0));
-    
-    // Trigger haptic feedback when scrolling more than 30px horizontally
-    if (scrollDifference > 30) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      lastScrollX.current = currentScrollX;
-    }
-  };
   // #endregion
 
   // #region RENDER FUNCTIONS
@@ -1445,14 +998,15 @@ export default function App() {
 
     const renderViewSelector = () => {
       // When UI is hidden, only show active tab, otherwise show both
+      // PANTRY REMOVED - only expenses tab now
       const viewOptions = hideUI 
         ? [
             activeTab === 'expenses' && renderViewOption('expenses', 'creditcard.fill', 'Expenses'),
-            activeTab === 'pantry' && renderViewOption('pantry', 'basket.fill', 'Pantry'),
+            // activeTab === 'pantry' && renderViewOption('pantry', 'basket.fill', 'Pantry'),
           ].filter(Boolean)
         : [
             renderViewOption('expenses', 'creditcard.fill', 'Expenses'),
-            renderViewOption('pantry', 'basket.fill', 'Pantry'),
+            // renderViewOption('pantry', 'basket.fill', 'Pantry'),
           ];
 
       return (
@@ -1657,6 +1211,7 @@ export default function App() {
               subtitle="Add your first expense to get started"
               icon="chart.bar"
               styles={styles}
+              theme={currentTheme}
             />
           </View>
         );
@@ -1743,11 +1298,11 @@ export default function App() {
                     key={expense.id}
                     item={expense}
                     styles={styles}
-                    groceryItems={groceryItems}
                     onEdit={handleExpensePress}
                     onDelete={deleteExpense}
                     getCategoryIcon={getCategoryIcon}
                     cardColor={getExpenseCategoryColor(expense.category, currentTheme)}
+                    currentTheme={currentTheme}
                   />
                 ))}
               </View>
@@ -1788,136 +1343,6 @@ export default function App() {
       );
     };
 
-    // Render Pantry Cards
-    const renderPantrySection = ({ item: section }) => {
-      if (section.items.length === 0) return null;
-      
-      // Debug: Log the categories and section
-      console.log('Rendering pantry section:', section.groceryType, groceryCategories);
-      
-      // Get display name for grocery type
-      const getGroceryTypeDisplayName = (type) => {
-        if (type === 'consumed') return 'Consumed';
-        const found = groceryCategories.find(cat => cat.key === type);
-        return found ? found.label : type;
-      };
-      
-      // Get SF Symbol for grocery type
-      const getGroceryTypeIcon = (type) => {
-        const iconMap = {
-          'produce': 'leaf.fill',           // Leaf for fresh produce
-          'meat': 'fork.knife',             // Fork and knife for meat
-          'dairy': 'waterbottle.fill',      // Water bottle for dairy
-          'bread': 'birthday.cake.fill',    // Cake for bread/bakery
-          'staples': 'circle.grid.2x2.fill', // Grid for staples (rice, pasta, etc.)
-          'pantry': 'shippingbox.fill',     // Box for pantry staples
-          'frozen': 'snowflake',            // Snowflake for frozen
-          'beverages': 'cup.and.saucer.fill', // Cup for beverages
-          'snacks': 'popcorn.fill',         // Popcorn for snacks
-          'condiments': 'drop.circle.fill',   // Circle drop for condiments
-          'other': 'questionmark.circle.fill', // Question mark for other
-          'consumed': 'checkmark.circle.fill'  // Checkmark for consumed items
-        };
-        return iconMap[type] || iconMap['other'];
-      };
-
-      // Split items into two columns for vertical flow layout
-      const leftColumn = [];
-      const rightColumn = [];
-      
-      section.items.forEach((item, index) => {
-        if (index % 2 === 0) {
-          leftColumn.push(item);
-        } else {
-          rightColumn.push(item);
-        }
-      });
-      
-      // Color utilities are now imported from utils/colorUtils.js
-
-      return (
-        <View style={styles.pantrySectionContainer}>
-
-          {/* Section Header - Positioned at top */}
-          <View style={styles.pantrySectionHeaderOuter}>
-            <SymbolView
-              name={getGroceryTypeIcon(section.groceryType)}
-              size={25}
-              type="monochrome"
-              tintColor={getGroceryCategoryColor(section.groceryType, currentTheme)}
-              fallback={<Text style={[styles.fallbackIcon, { color: getGroceryCategoryColor(section.groceryType, currentTheme) }]}>•</Text>}
-            />
-            <Text style={[
-              styles.pantrySectionTitle,
-              { color: currentTheme.text } // Use theme text color for pantry section header
-            ]}>
-              {getGroceryTypeDisplayName(section.groceryType)}
-            </Text>
-          </View>
-          
-          {/* Section Content */}
-          <LinearGradient
-            colors={[
-              getGroceryCategoryColor(section.groceryType, currentTheme) + 'E6', // 90% opacity
-              shiftHue(getGroceryCategoryColor(section.groceryType, currentTheme), 20) + 'F2' // 20 degree hue shift, 95% opacity
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.pantrySectionBackground,
-              { borderColor: getGroceryCategoryColor(section.groceryType, currentTheme) }
-            ]}
-          >
-            <View style={styles.pantrySection}>
-              <View style={styles.pantryColumnsContainer}>
-                {/* Left Column */}
-                <View style={styles.pantryColumn}>
-                  {leftColumn.map((item) => (
-                    <View key={item.id} style={styles.pantryCardContainer}>
-                      <PantryCard
-                        item={item}
-                        theme={currentTheme}
-                        disabled={isLoading}
-                        isExpanded={expandedQuantityId === item.id}
-                        onExpand={() => setExpandedQuantityId(item.id)}
-                        onCollapse={() => setExpandedQuantityId(null)}
-                        onDecrease={() => handleQuantityChange(item, -1)}
-                        onIncrease={() => handleQuantityChange(item, 1)}
-                        onLongPress={() => showPantryActionSheet(item)}
-                        isConsumed={section.type === 'consumed'}
-                        groceryType={section.groceryType}
-                      />
-                    </View>
-                  ))}
-                </View>
-                
-                {/* Right Column */}
-                <View style={styles.pantryColumn}>
-                  {rightColumn.map((item) => (
-                    <View key={item.id} style={styles.pantryCardContainer}>
-                      <PantryCard
-                        item={item}
-                        theme={currentTheme}
-                        disabled={isLoading}
-                        isExpanded={expandedQuantityId === item.id}
-                        onExpand={() => setExpandedQuantityId(item.id)}
-                        onCollapse={() => setExpandedQuantityId(null)}
-                        onDecrease={() => handleQuantityChange(item, -1)}
-                        onIncrease={() => handleQuantityChange(item, 1)}
-                        onLongPress={() => showPantryActionSheet(item)}
-                        isConsumed={section.type === 'consumed'}
-                        groceryType={section.groceryType}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-
-      );
-    };
     // #endregion
 
     // #region HELPER FUNCTIONS
@@ -1959,30 +1384,19 @@ export default function App() {
         />
       </Animated.View>
       
-      {/* Content based on active tab */}
-      {activeTab === 'expenses' ? (
-        <ExpensesView
-          isLoadingExpenses={isLoadingExpenses}
-          categories={categories}
-          currentCategoryIndex={currentCategoryIndex}
-          categoryScrollRef={categoryScrollRef}
-          handleCategoryHorizontalScroll={handleCategoryHorizontalScroll}
-          screenWidth={screenWidth}
-          expenseCategorySelectorTranslateY={expenseCategorySelectorTranslateY}
-          renderExpenseCategorySelector={renderExpenseCategorySelector}
-          renderExpenseCategories={renderExpenseCategories}
-          styles={styles}
-        />
-      ) : (
-        <GroceryView
-          isLoadingPantryItems={isLoadingPantryItems}
-          allPantryItems={allPantryItems}
-          groceryHeaderTranslateY={groceryHeaderTranslateY}
-          renderPantrySection={renderPantrySection}
-          handleHeaderScroll={handleHeaderScroll}
-          styles={styles}
-        />
-      )}
+      {/* Content - Always expenses tab (pantry removed) */}
+      <ExpensesView
+        isLoadingExpenses={isLoadingExpenses}
+        categories={categories}
+        currentCategoryIndex={currentCategoryIndex}
+        categoryScrollRef={categoryScrollRef}
+        handleCategoryHorizontalScroll={handleCategoryHorizontalScroll}
+        screenWidth={screenWidth}
+        expenseCategorySelectorTranslateY={expenseCategorySelectorTranslateY}
+        renderExpenseCategorySelector={renderExpenseCategorySelector}
+        renderExpenseCategories={renderExpenseCategories}
+        styles={styles}
+      />
 
       {/* Global Add Button */}
       <Animated.View style={[
@@ -1999,17 +1413,17 @@ export default function App() {
           ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            if (activeTab === 'pantry') {
-              setIsAddPantryModalVisible(true);
-            } else {
-              setIsAddModalVisible(true);
-            }
+            setIsAddModalVisible(true);
+          }}
+          onLongPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setIsExportImportModalVisible(true);
           }}
         >
-          <BlurView intensity={20} tint={'light'} style={styles.blurContainer}>    
+          <BlurView intensity={20} tint={'light'} style={styles.blurContainer}>
             <SymbolView
               name="plus"
-              size={28}
+              size={32}
               type="monochrome"
               tintColor={currentTheme.text}
               fallback={<Text style={styles.addButtonText}>+</Text>}
@@ -2041,8 +1455,8 @@ export default function App() {
       {/* Expense Time Selector */}
       {renderExpenseTimeSelector()}
 
-      {/* Global View Selector */}
-      <Animated.View 
+      {/* Global View Selector - HIDDEN (code kept for future use) */}
+      {/* <Animated.View 
         style={[
           {
             transform: [{ translateY: viewSelectorTranslateY }]
@@ -2050,71 +1464,24 @@ export default function App() {
         ]}
       >
         {renderViewSelector()}
-      </Animated.View>
+      </Animated.View> */}
 
       {/* Add Modal */}
       <AddExpenseModal
-        isVisible={isAddModalVisible && !(addCategory === 'groceries' && isGroceryStep === 2)}
+        isVisible={isAddModalVisible}
         onClose={() => {
           setIsAddModalVisible(false);
-          setIsGroceryStep(1);
-          setParsedGroceryItems([]);
-          setExistingPantryItems([]);
         }}
         onAdd={addExpense}
-        onGroceryNext={handleGroceryNext}
         isLoading={isLoading}
-        isParsingGroceries={isParsingGroceries}
         addAmount={addAmount}
         setAddAmount={setAddAmount}
         addCategory={addCategory}
         setAddCategory={setAddCategory}
         addDescription={addDescription}
         setAddDescription={setAddDescription}
-        isGroceryStep={isGroceryStep}
         styles={styles}
         currentTheme={currentTheme}
-      />
-
-      {/* Grocery Confirm Modal */}
-      <GroceryConfirmModal
-        isVisible={isAddModalVisible && addCategory === 'groceries' && isGroceryStep === 2}
-        onClose={() => {
-          setIsAddModalVisible(false);
-          setIsGroceryStep(1);
-          setParsedGroceryItems([]);
-          setExistingPantryItems([]);
-          setEditingGroceryItemIndex(-1);
-          setEditingGroceryItemText('');
-          setIsAddingNewItem(false);
-          setNewItemText('');
-        }}
-        onConfirm={confirmGroceryList}
-        onBack={() => {
-          setIsGroceryStep(1);
-          setExistingPantryItems([]);
-          setEditingGroceryItemIndex(-1);
-          setEditingGroceryItemText('');
-          setIsAddingNewItem(false);
-          setNewItemText('');
-        }}
-        isLoading={isLoading}
-        parsedGroceryItems={parsedGroceryItems}
-        existingPantryItems={existingPantryItems}
-        editingGroceryItemIndex={editingGroceryItemIndex}
-        editingGroceryItemText={editingGroceryItemText}
-        setEditingGroceryItemText={setEditingGroceryItemText}
-        isAddingNewItem={isAddingNewItem}
-        newItemText={newItemText}
-        setNewItemText={setNewItemText}
-        onStartEditingGroceryItem={startEditingGroceryItem}
-        onSaveGroceryItemEdit={saveGroceryItemEdit}
-        onCancelGroceryItemEdit={cancelGroceryItemEdit}
-        onDeleteGroceryItem={deleteGroceryItem}
-        onStartAddingNewItem={startAddingNewItem}
-        onSaveNewItem={saveNewItem}
-        onCancelAddingNewItem={cancelAddingNewItem}
-        styles={styles}
       />
 
       {/* Edit Modal */}
@@ -2134,43 +1501,99 @@ export default function App() {
         styles={styles}
       />
 
-      {/* Add Pantry Modal */}
-      <AddPantryModal
-        isVisible={isAddPantryModalVisible}
-        onClose={() => {
-          setIsAddPantryModalVisible(false);
-          setIsPantryStep(1);
-          setParsedPantryItems([]);
-          setAddPantryItemName('');
-          setAddPantryItemQuantity('1');
-          setAddPantryItemUnit('pieces');
-        }}
-        onNext={handlePantryNext}
-        onConfirm={confirmPantryList}
-        isLoading={isLoading}
-        isParsingPantryItems={isParsingPantryItems}
-        isPantryStep={isPantryStep}
-        addPantryItemName={addPantryItemName}
-        setAddPantryItemName={setAddPantryItemName}
-        parsedPantryItems={parsedPantryItems}
-        styles={styles}
-      />
+      {/* Export/Import Modal */}
+      <Modal
+        visible={isExportImportModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsExportImportModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <BlurView intensity={20} tint="light" style={styles.modalBlurContainer}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Export / Import Data</Text>
+                  <Pressable
+                    onPress={() => {
+                      setIsExportImportModalVisible(false);
+                      setImportText('');
+                    }}
+                    style={styles.modalCloseButton}
+                  >
+                    <SymbolView
+                      name="xmark"
+                      size={24}
+                      type="monochrome"
+                      tintColor={currentTheme.text}
+                    />
+                  </Pressable>
+                </View>
 
-      {/* Edit Pantry Modal */}
-      <EditPantryModal
-        isVisible={isEditPantryModalVisible}
-        onClose={() => setIsEditPantryModalVisible(false)}
-        onSave={updatePantryItem}
-        isLoading={isLoading}
-        isLoadingGroceryCategories={isLoadingGroceryCategories}
-        editPantryItemName={editPantryItemName}
-        setEditPantryItemName={setEditPantryItemName}
-        editPantryItemCategory={editPantryItemCategory}
-        setEditPantryItemCategory={setEditPantryItemCategory}
-        groceryCategories={groceryCategories}
-        handleGroceryCategoryScroll={handleGroceryCategoryScroll}
-        styles={styles}
-      />
+                <ScrollView style={styles.modalScrollView}>
+                  {/* Export Section */}
+                  <View style={styles.exportImportSection}>
+                    <Text style={styles.sectionTitle}>Export</Text>
+                    <Text style={styles.sectionDescription}>
+                      Export your data to share with TestFlight app. Long-press the + button to access this menu.
+                    </Text>
+                    <Pressable
+                      onPress={exportData}
+                      disabled={isLoading}
+                      style={[styles.exportImportButton, isLoading && styles.buttonDisabled]}
+                    >
+                      <SymbolView
+                        name="square.and.arrow.up"
+                        size={20}
+                        type="monochrome"
+                        tintColor={currentTheme.background}
+                      />
+                      <Text style={styles.exportImportButtonText}>Export Data</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Import Section */}
+                  <View style={styles.exportImportSection}>
+                    <Text style={styles.sectionTitle}>Import</Text>
+                    <Text style={styles.sectionDescription}>
+                      Paste the exported JSON data below to import into this app.
+                    </Text>
+                    <TextInput
+                      style={styles.importTextInput}
+                      multiline
+                      numberOfLines={10}
+                      placeholder="Paste exported JSON data here..."
+                      placeholderTextColor={currentTheme.textSecondary}
+                      value={importText}
+                      onChangeText={setImportText}
+                      textAlignVertical="top"
+                    />
+                    <Pressable
+                      onPress={importData}
+                      disabled={isLoading || !importText.trim()}
+                      style={[
+                        styles.exportImportButton,
+                        (!importText.trim() || isLoading) && styles.buttonDisabled
+                      ]}
+                    >
+                      <SymbolView
+                        name="square.and.arrow.down"
+                        size={20}
+                        type="monochrome"
+                        tintColor={currentTheme.background}
+                      />
+                      <Text style={styles.exportImportButtonText}>Import Data</Text>
+                    </Pressable>
+                  </View>
+                </ScrollView>
+              </View>
+            </BlurView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <StatusBar style={currentTheme.statusBarStyle} />
     </View>
