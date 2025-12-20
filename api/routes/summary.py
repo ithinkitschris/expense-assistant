@@ -10,11 +10,11 @@ These endpoints provide AI-powered insights and analytics:
 All operations use your existing summarize() function and AI logic.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Import your existing CLI functions
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -23,6 +23,9 @@ from summarize import summarize
 # Import our API schemas
 from api.models.schemas import SummaryRequest, SummaryResponse, SuccessResponse
 
+# Import dependencies
+from api.dependencies import get_db
+
 # Create the router
 router = APIRouter()
 
@@ -30,7 +33,8 @@ router = APIRouter()
 @router.get("/summary/quick", response_model=SummaryResponse)
 async def get_quick_summary(
     days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)"),
-    category: Optional[str] = Query(None, description="Filter by specific category")
+    category: Optional[str] = Query(None, description="Filter by specific category"),
+    db = Depends(get_db)
 ):
     """
     Get a quick 3-4 sentence summary of expenses
@@ -42,28 +46,25 @@ async def get_quick_summary(
         summary_text = summary_result if summary_result is not None else "Unable to generate summary"
         
         # Get basic statistics for the response
-        import sqlite3
-        from datetime import timedelta
-        
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with filters
         query = "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE 1=1"
         params = []
         
         if category:
-            query += " AND category = ?"
+            query += " AND category = %s"
             params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
         c.execute(query, params)
-        count, total_amount = c.fetchone()
-        conn.close()
+        result = c.fetchone()
+        count = result[0] if result else 0
+        total_amount = result[1] if result else 0
         
         # Determine time period description
         if days:
@@ -89,7 +90,8 @@ async def get_quick_summary(
 @router.get("/summary/insights", response_model=SummaryResponse)
 async def get_insights_summary(
     days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)"),
-    category: Optional[str] = Query(None, description="Filter by specific category")
+    category: Optional[str] = Query(None, description="Filter by specific category"),
+    db = Depends(get_db)
 ):
     """
     Get detailed spending insights and patterns
@@ -101,28 +103,25 @@ async def get_insights_summary(
         summary_text = summary_result if summary_result is not None else "Unable to generate insights"
         
         # Get basic statistics for the response
-        import sqlite3
-        from datetime import timedelta
-        
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with filters
         query = "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE 1=1"
         params = []
         
         if category:
-            query += " AND category = ?"
+            query += " AND category = %s"
             params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
         c.execute(query, params)
-        count, total_amount = c.fetchone()
-        conn.close()
+        result = c.fetchone()
+        count = result[0] if result else 0
+        total_amount = result[1] if result else 0
         
         # Determine time period description
         if days:
@@ -148,7 +147,8 @@ async def get_insights_summary(
 @router.get("/summary/budget", response_model=SummaryResponse)
 async def get_budget_analysis(
     days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)"),
-    category: Optional[str] = Query(None, description="Filter by specific category")
+    category: Optional[str] = Query(None, description="Filter by specific category"),
+    db = Depends(get_db)
 ):
     """
     Get budget analysis and recommendations
@@ -160,28 +160,25 @@ async def get_budget_analysis(
         summary_text = summary_result if summary_result is not None else "Unable to generate budget analysis"
         
         # Get basic statistics for the response
-        import sqlite3
-        from datetime import timedelta
-        
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with filters
         query = "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE 1=1"
         params = []
         
         if category:
-            query += " AND category = ?"
+            query += " AND category = %s"
             params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
         c.execute(query, params)
-        count, total_amount = c.fetchone()
-        conn.close()
+        result = c.fetchone()
+        count = result[0] if result else 0
+        total_amount = result[1] if result else 0
         
         # Determine time period description
         if days:
@@ -208,7 +205,8 @@ async def get_budget_analysis(
 async def get_custom_summary(
     prompt: str = Query(..., description="Custom analysis prompt"),
     days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)"),
-    category: Optional[str] = Query(None, description="Filter by specific category")
+    category: Optional[str] = Query(None, description="Filter by specific category"),
+    db = Depends(get_db)
 ):
     """
     Get custom AI analysis with your own prompt
@@ -220,28 +218,25 @@ async def get_custom_summary(
         summary_text = summary_result if summary_result is not None else "Unable to generate custom summary"
         
         # Get basic statistics for the response
-        import sqlite3
-        from datetime import timedelta
-        
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with filters
         query = "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE 1=1"
         params = []
         
         if category:
-            query += " AND category = ?"
+            query += " AND category = %s"
             params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
         c.execute(query, params)
-        count, total_amount = c.fetchone()
-        conn.close()
+        result = c.fetchone()
+        count = result[0] if result else 0
+        total_amount = result[1] if result else 0
         
         # Determine time period description
         if days:
@@ -266,17 +261,14 @@ async def get_custom_summary(
 
 @router.get("/summary/categories", response_model=dict)
 async def get_category_breakdown(
-    days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)")
+    days: Optional[int] = Query(None, ge=1, description="Number of days to look back (default: all time)"),
+    db = Depends(get_db)
 ):
     """
     Get spending breakdown by category
     """
     try:
-        import sqlite3
-        from datetime import timedelta
-        
-        conn = sqlite3.connect('expenses.db')
-        c = conn.cursor()
+        c = db.cursor()
         
         # Build query with optional time filter
         query = """
@@ -288,14 +280,13 @@ async def get_category_breakdown(
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
         query += " GROUP BY category ORDER BY total DESC"
         
         c.execute(query, params)
         results = c.fetchall()
-        conn.close()
         
         # Format results
         categories = []
