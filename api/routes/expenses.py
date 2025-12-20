@@ -196,10 +196,11 @@ async def list_expenses(
             count_params.append(cutoff_date)
         
         c.execute(count_query, count_params)
-        total_count = c.fetchone()[0]
+        count_result = c.fetchone()
+        total_count = count_result['count'] if isinstance(count_result, dict) else count_result[0]
         
         # Calculate total amount
-        amount_query = "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE 1=1"
+        amount_query = "SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE 1=1"
         amount_params = []
         
         if category:
@@ -212,7 +213,8 @@ async def list_expenses(
             amount_params.append(cutoff_date)
         
         c.execute(amount_query, amount_params)
-        total_amount = c.fetchone()[0] or 0
+        amount_result = c.fetchone()
+        total_amount = (amount_result['total'] if isinstance(amount_result, dict) else amount_result[0]) or 0
         
         # Convert rows to response format
         expenses = []
