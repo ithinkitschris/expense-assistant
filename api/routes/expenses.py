@@ -127,7 +127,8 @@ async def create_expense_structured(request: dict, db = Depends(get_db)):
             RETURNING id
         ''', (expense.amount, expense.category.value, expense.description, timestamp.isoformat()))
         
-        expense_id = c.fetchone()[0]
+        result = c.fetchone()
+        expense_id = result['id'] if result else None
         db.commit()
         
         # Return the created expense
