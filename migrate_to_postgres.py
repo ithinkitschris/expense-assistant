@@ -35,9 +35,14 @@ else:
 # Migrate pantry_items table
 print("Migrating pantry_items...")
 sqlite_cursor.execute('SELECT name, quantity, unit, created_at, is_consumed, grocery_type FROM pantry_items')
-pantry_items = sqlite_cursor.fetchall()
+pantry_items_raw = sqlite_cursor.fetchall()
 
-if pantry_items:
+if pantry_items_raw:
+    # Convert SQLite integer booleans (0/1) to Python booleans for PostgreSQL
+    pantry_items = [
+        (name, quantity, unit, created_at, bool(is_consumed), grocery_type)
+        for name, quantity, unit, created_at, is_consumed, grocery_type in pantry_items_raw
+    ]
     execute_values(
         postgres_cursor,
         'INSERT INTO pantry_items (name, quantity, unit, created_at, is_consumed, grocery_type) VALUES %s',
