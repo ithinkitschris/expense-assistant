@@ -53,13 +53,18 @@ async def health_check():
     # Test database connection
     try:
         from api.dependencies import get_db
-        db = next(get_db())
+        db_generator = get_db()
+        db = next(db_generator)
         c = db.cursor()
         c.execute("SELECT COUNT(*) FROM expenses")
         result = c.fetchone()
         expense_count = result[0] if result else 0
-        db.close()
         database_status = "healthy"
+        # Let the generator close the connection
+        try:
+            next(db_generator)
+        except StopIteration:
+            pass
     except Exception as e:
         expense_count = None
         database_status = f"error: {str(e)}"
