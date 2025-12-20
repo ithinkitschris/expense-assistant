@@ -28,13 +28,7 @@ app = FastAPI(
 # Configure CORS to allow React Native to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React web development
-        "http://localhost:8081",  # Expo development server
-        "http://localhost:19000", # Expo development server alternative
-        "http://192.168.*",       # Local network (for testing on real device)
-        "exp://",                 # Expo Go app
-    ],
+    allow_origins=["*"],  # Allow all origins for production (or specify your app's domain)
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
@@ -56,14 +50,13 @@ async def health_check():
     """
     # Test database connection
     try:
-        import sqlite3
-        # Database is in the parent directory of the api folder
-        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'expenses.db')
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
+        from api.dependencies import get_db
+        db = next(get_db())
+        c = db.cursor()
         c.execute("SELECT COUNT(*) FROM expenses")
-        expense_count = c.fetchone()[0]
-        conn.close()
+        result = c.fetchone()
+        expense_count = result[0] if result else 0
+        db.close()
         database_status = "healthy"
     except Exception as e:
         expense_count = None

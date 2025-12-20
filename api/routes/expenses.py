@@ -10,7 +10,8 @@ These endpoints handle all expense-related operations:
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 import sys
 import os
@@ -19,10 +20,10 @@ import os
 from api.dependencies import get_db
 
 # Define get_expense_by_id locally to avoid circular import
-def get_expense_by_id(expense_id: int, db: sqlite3.Connection):
+def get_expense_by_id(expense_id: int, db):
     """Get expense details by ID"""
     c = db.cursor()
-    c.execute("SELECT id, amount, category, description, timestamp FROM expenses WHERE id = ?", (expense_id,))
+    c.execute("SELECT id, amount, category, description, timestamp FROM expenses WHERE id = %s", (expense_id,))
     expense = c.fetchone()
     return expense
 
@@ -37,20 +38,30 @@ router = APIRouter()
 
 
 def expense_row_to_dict(row):
-    """Convert SQLite row to dictionary"""
+    """Convert database row to dictionary"""
     if not row:
         return None
-    return {
-        "id": row[0],
-        "amount": row[1],
-        "category": row[2], 
-        "description": row[3],
-        "timestamp": datetime.fromisoformat(row[4]) if row[4] else None
-    }
+    # Handle both tuple (from fetchone) and dict (from RealDictCursor)
+    if isinstance(row, dict):
+        return {
+            "id": row["id"],
+            "amount": row["amount"],
+            "category": row["category"],
+            "description": row["description"],
+            "timestamp": datetime.fromisoformat(row["timestamp"]) if row["timestamp"] else None
+        }
+    else:
+        return {
+            "id": row[0],
+            "amount": row[1],
+            "category": row[2], 
+            "description": row[3],
+            "timestamp": datetime.fromisoformat(row[4]) if row[4] else None
+        }
 
 
 @router.post("/expenses/", response_model=ExpenseResponse)
-async def create_expense_structured(request: dict, db: sqlite3.Connection = Depends(get_db)):
+async def create_expense_structured(request: dict, db = Depends(get_db)):
     """
     Add expense using structured data (form input)
     """
@@ -80,10 +91,11 @@ async def create_expense_structured(request: dict, db: sqlite3.Connection = Depe
         # Insert the expense
         c.execute('''
             INSERT INTO expenses (amount, category, description, timestamp)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
         ''', (expense.amount, expense.category.value, expense.description, timestamp.isoformat()))
         
-        expense_id = c.lastrowid
+        expense_id = c.fetchone()[0]
         db.commit()
         
         # Return the created expense
@@ -111,7 +123,7 @@ async def list_expenses(
     offset: int = Query(0, ge=0, description="Number of expenses to skip"),
     category: Optional[str] = Query(None, description="Filter by category"),
     days: Optional[int] = Query(None, ge=1, description="Filter by days back"),
-    db: sqlite3.Connection = Depends(get_db)
+    db = Depends(get_db)
 ):
     """
     List expenses with optional filtering
@@ -125,15 +137,15 @@ async def list_expenses(
         params = []
         
         if category:
-            query += " AND category = ?"
+            query += " AND category = %s"
             params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            query += " AND timestamp >= ?"
+            query += " AND timestamp >= %s"
             params.append(cutoff_date)
         
-        query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY timestamp DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
         
         c.execute(query, params)
@@ -143,11 +155,11 @@ async def list_expenses(
         count_query = "SELECT COUNT(*) FROM expenses WHERE 1=1"
         count_params = []
         if category:
-            count_query += " AND category = ?"
+            count_query += " AND category = %s"
             count_params.append(category)
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            count_query += " AND timestamp >= ?"
+            count_query += " AND timestamp >= %s"
             count_params.append(cutoff_date)
         
         c.execute(count_query, count_params)
@@ -158,12 +170,12 @@ async def list_expenses(
         amount_params = []
         
         if category:
-            amount_query += " AND category = ?"
+            amount_query += " AND category = %s"
             amount_params.append(category)
         
         if days:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            amount_query += " AND timestamp >= ?"
+            amount_query += " AND timestamp >= %s"
             amount_params.append(cutoff_date)
         
         c.execute(amount_query, amount_params)
@@ -189,7 +201,7 @@ async def list_expenses(
 
 
 @router.get("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def get_expense(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def get_expense(expense_id: int, db = Depends(get_db)):
     """
     Get a specific expense by ID
     Uses your existing get_expense_by_id function
@@ -216,7 +228,7 @@ async def get_expense(expense_id: int, db: sqlite3.Connection = Depends(get_db))
 
 
 @router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db: sqlite3.Connection = Depends(get_db)):
+async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db = Depends(get_db)):
     """
     Update an existing expense
     """
@@ -236,19 +248,19 @@ async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db: sql
         params = []
         
         if expense_update.amount is not None:
-            update_fields.append("amount = ?")
+            update_fields.append("amount = %s")
             params.append(expense_update.amount)
         
         if expense_update.category is not None:
-            update_fields.append("category = ?")
+            update_fields.append("category = %s")
             params.append(expense_update.category.value)
         
         if expense_update.description is not None:
-            update_fields.append("description = ?")
+            update_fields.append("description = %s")
             params.append(expense_update.description)
         
         if expense_update.timestamp is not None:
-            update_fields.append("timestamp = ?")
+            update_fields.append("timestamp = %s")
             params.append(expense_update.timestamp.isoformat())
         
         if not update_fields:
@@ -259,7 +271,7 @@ async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db: sql
             return ExpenseResponse(**expense_dict)
         
         # Execute update
-        query = f"UPDATE expenses SET {', '.join(update_fields)} WHERE id = ?"
+        query = f"UPDATE expenses SET {', '.join(update_fields)} WHERE id = %s"
         params.append(expense_id)
         
         c.execute(query, params)
@@ -282,7 +294,7 @@ async def update_expense(expense_id: int, expense_update: ExpenseUpdate, db: sql
 
 
 @router.delete("/expenses/{expense_id}", response_model=SuccessResponse)
-async def delete_expense(expense_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def delete_expense(expense_id: int, db = Depends(get_db)):
     """
     Delete an expense by ID
     Uses similar logic to your CLI delete function
@@ -299,7 +311,7 @@ async def delete_expense(expense_id: int, db: sqlite3.Connection = Depends(get_d
         c = db.cursor()
         
         # Delete the expense
-        c.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+        c.execute("DELETE FROM expenses WHERE id = %s", (expense_id,))
         
         if c.rowcount == 0:
             raise HTTPException(

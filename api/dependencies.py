@@ -1,17 +1,16 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
 
-DATABASE_URL = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'expenses.db')
-)
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 def get_db():
     """
     FastAPI dependency to get a database connection.
     Yields a connection and ensures it's closed.
     """
-    db = sqlite3.connect(DATABASE_URL, check_same_thread=False)
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     try:
-        yield db
+        yield conn
     finally:
-        db.close()
+        conn.close()
