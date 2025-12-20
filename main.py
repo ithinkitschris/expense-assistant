@@ -36,7 +36,7 @@ def validate_amount(amount_str: str) -> float:
 
 def validate_category(category: str) -> str:
     """Validate category against allowed values"""
-        valid_categories = ['amazon', 'transportation', 'groceries', 'entertainment', 'fashion', 
+    valid_categories = ['amazon', 'transportation', 'groceries', 'entertainment', 'fashion', 
                         'travel', 'food', 'monthly', 'personal']
     category = category.lower().strip()
     if category not in valid_categories:
