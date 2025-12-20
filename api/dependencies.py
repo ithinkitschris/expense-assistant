@@ -2,7 +2,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Try DATABASE_PUBLIC_URL first (Railway public proxy), fall back to DATABASE_URL
+DATABASE_URL = os.getenv('DATABASE_PUBLIC_URL') or os.getenv('DATABASE_URL')
 
 def get_db():
     """
