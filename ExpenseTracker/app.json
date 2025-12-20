@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.ExpenseTracker"
+      "bundleIdentifier": "com.ithinkitschris.ExpenseTracker"
     },
     "android": {
       "adaptiveIcon": {
